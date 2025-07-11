@@ -1,0 +1,17 @@
+.main-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.logout-btn {
+    --bs-btn-color: #f87171;
+    --bs-btn-border-color: #f87171;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #ef4444;
+    --bs-btn-hover-border-color: #ef4444;
+    --bs-btn-active-bg: #dc2626;
+    --bs-btn-active-border-color: #dc2626;
+    font-weight: 500;
+}

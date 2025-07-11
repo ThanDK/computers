@@ -1,0 +1,27 @@
+.app-container {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  transition: grid-template-columns 0.3s ease;
+}
+
+.app-container.sidebar-collapsed {
+  grid-template-columns: var(--sidebar-width-collapsed) 1fr;
+}
+
+.content-wrapper {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 1300px) {
+    /* Hide the entire admin panel layout */
+    .app-container {
+        display: none;
+    }
+
+    /* Show our custom warning message */
+    .screen-size-warning {
+        display: flex; /* This overrides 'display: none' from its own CSS file */
+    }
+}

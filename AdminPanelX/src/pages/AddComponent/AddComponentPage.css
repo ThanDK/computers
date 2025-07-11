@@ -1,0 +1,94 @@
+.form-card {
+  background-color: var(--secondary-bg);
+  border: 1px solid #4a5a76;
+  border-radius: 12px;
+  color: var(--text-primary);
+  padding: 1.5rem 2rem;
+}
+
+.form-card .form-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.form-card .step-label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.form-card .form-control,
+.form-card .form-select {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    border: 1px solid #4a5a76;
+}
+
+.form-card .form-control:focus,
+.form-card .form-select:focus {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    border-color: #8884d8;
+    box-shadow: 0 0 0 0.2rem rgba(136, 132, 216, 0.25);
+}
+
+.form-card .form-select option {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+}
+
+.section-header {
+  color: #868dfb;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #4a5a76;
+}
+
+.form-divider {
+    border-top: 1px solid #4a5a76;
+}
+
+.form-card .btn-primary {
+    background-color: #3e4396;
+    border-color: #3e4396;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+}
+
+.form-card .btn-primary:hover {
+    background-color: #4a5a76;
+    border-color: #4a5a76;
+}
+
+/* --- NEW STYLES FOR IMAGE PREVIEW --- */
+
+.image-preview-container-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--primary-bg);
+  border: 1px solid #4a5a76;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.image-preview {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 2px solid #5a6a86;
+}
+
+.image-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.image-actions .btn {
+  font-weight: 500;
+}

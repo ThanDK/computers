@@ -1,0 +1,58 @@
+services:
+  # The "computers" Spring Boot API service
+  computers-api:
+    build:
+      context: ./computers
+      dockerfile: Dockerfile
+    container_name: computers-api-container
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - computers-network
+
+  # NEW: The React Admin Panel Frontend service
+  admin-panel-frontend:
+    build:
+      context: ./AdminPanelX
+      dockerfile: Dockerfile
+    container_name: admin-panel-container
+    ports:
+      # Map local port 5173 to port 80 inside the container (where Nginx runs)
+      - "5173:80"
+    restart: unless-stopped
+    networks:
+      - computers-network
+
+  # The MongoDB database service
+  mongo:
+    image: mongo:latest
+    container_name: mongo-db-container
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    networks:
+      - computers-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+# The shared network for all services to communicate
+networks:
+  computers-network:
+    driver: bridge
+
+# The persistent data volume for MongoDB
+volumes:
+  mongo-data:
+    driver: local

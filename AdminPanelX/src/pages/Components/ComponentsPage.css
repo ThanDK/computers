@@ -1,0 +1,206 @@
+.page-header-container {
+    flex-grow: 1;
+}
+
+.table-controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem; /* MODIFICATION: Added gap for spacing */
+}
+
+/* MODIFICATION: New container for search and filter */
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1; /* Allow it to take available space */
+}
+
+.search-bar {
+    max-width: 400px;
+    flex-grow: 1; /* Allow search bar to grow */
+}
+
+/* MODIFICATION: Styles for the new Type filter dropdown */
+.type-filter {
+    max-width: 200px;
+    background-color: var(--primary-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid #4a5a76 !important;
+    box-shadow: none !important;
+}
+
+/* --- Table Container & Main Styles --- */
+.table-container {
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.custom-table {
+    --bs-table-bg: var(--secondary-bg);
+    --bs-table-striped-bg: #344258;
+    --bs-table-hover-bg: #3a4a63;
+    border: none !important;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.custom-table th, 
+.custom-table td {
+    border-bottom: 1px solid #4a5a76 !important;
+    vertical-align: middle;
+    padding: 1rem !important;
+}
+
+.custom-table th {
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid #4a5a76 !important;
+    white-space: nowrap;
+}
+
+.custom-table td {
+    word-wrap: break-word;
+}
+
+/* --- Text Truncation (With Hover effect) --- */
+.truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    margin: -0.25rem -0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.truncate-text:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Stock Status Dot --- */
+.status-dot-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.status-dot-container:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-dot-active {
+    background-color: #22c55e; /* Green */
+}
+
+.status-dot-inactive {
+    background-color: #ef4444; /* Red */
+}
+
+/* --- Alignment & Action Buttons --- */
+.text-center-header, 
+.text-center-cell { 
+    text-align: center; 
+}
+
+.text-center-cell > * { 
+    margin: auto; 
+}
+
+.action-btn {
+    font-weight: 500;
+    min-width: 65px;
+}
+
+.action-btn-edit {
+    --bs-btn-color: #60a5fa;
+    --bs-btn-border-color: #60a5fa;
+    --bs-btn-hover-bg: #3b82f6;
+    --bs-btn-hover-border-color: #3b82f6;
+    --bs-btn-hover-color: #fff;
+}
+
+.action-btn-delete {
+    --bs-btn-color: #f87171;
+    --bs-btn-border-color: #f87171;
+    --bs-btn-hover-bg: #ef4444;
+    --bs-btn-hover-border-color: #ef4444;
+    --bs-btn-hover-color: #fff;
+}
+
+/* --- Other Styles --- */
+.clickable-image { 
+    cursor: pointer; 
+    transition: transform 0.2s ease-in-out; 
+}
+.clickable-image:hover { 
+    transform: scale(1.1); 
+}
+
+.image-modal .modal-content { 
+    background-color: transparent; 
+    border: none; 
+}
+.image-modal .modal-header { 
+    border-bottom: none; 
+}
+.image-modal .btn-close { 
+    filter: invert(1) grayscale(100%) brightness(200%); 
+    font-size: 1.5rem; 
+}
+.image-modal .modal-body { 
+    padding: 0; 
+    text-align: center; 
+}
+.fullscreen-image { 
+    max-width: 100%; 
+    max-height: 80vh; 
+    border-radius: 8px; 
+}
+
+.search-input {
+    background-color: var(--primary-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid #4a5a76 !important;
+    box-shadow: none !important;
+}
+.search-input::placeholder { 
+    color: var(--text-secondary); 
+}
+.search-input-group-text {
+    background-color: var(--primary-bg) !important;
+    border: 1px solid #4a5a76 !important;
+    border-left: none !important;
+    color: var(--text-secondary) !important;
+}
+
+.pagination-btn {
+    --bs-btn-color: var(--text-secondary);
+    --bs-btn-border-color: #4a5a76;
+    --bs-btn-hover-bg: var(--secondary-bg);
+    --bs-btn-hover-border-color: var(--accent-color);
+    --bs-btn-hover-color: var(--text-primary);
+}
+.pagination-btn:disabled {
+    --bs-btn-disabled-color: #4a5a76;
+    --bs-btn-disabled-border-color: #344258;
+}
+
