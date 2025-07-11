@@ -40,7 +40,7 @@ public class PaypalServiceImpl implements PaypalService {
 
         // 4. ประกอบทุกอย่างเข้าด้วยกันเป็นอ็อบเจกต์ Payment หลัก
         Payment payment = new Payment();
-        // ** FIX HERE: เพิ่มการตั้งค่า intent ซึ่งเป็น field ที่จำเป็น **
+
         payment.setIntent(intent);
         payment.setPayer(payer);
         payment.setTransactions(transactions);

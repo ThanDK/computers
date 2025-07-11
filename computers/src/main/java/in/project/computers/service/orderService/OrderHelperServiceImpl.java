@@ -90,7 +90,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                 .userAddress(request.getUserAddress())
                 .phoneNumber(request.getPhoneNumber())
                 .email(currentUser.getEmail())
-                .lineItems(lineItems) // Changed from .orderItems()
+                .lineItems(lineItems)
                 .totalAmount(totalAmount)
                 .currency(this.currency)
                 .orderStatus(OrderStatus.PENDING_PAYMENT)
@@ -257,7 +257,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
         String saleId = extractSaleIdFromPaypalPayment(originalPayment, order.getId());
         Refund refund = paypalService.refundPayment(saleId, null, order.getCurrency());
         if ("completed".equalsIgnoreCase(refund.getState()) || "pending".equalsIgnoreCase(refund.getState())) {
-            paymentDetails.setProviderStatus("refunded: " + refund.getState());
+            paymentDetails.setProviderStatus(refund.getState());
             paymentDetails.setTransactionId(refund.getId());
         } else {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "PayPal refund failed. State: " + refund.getState());
