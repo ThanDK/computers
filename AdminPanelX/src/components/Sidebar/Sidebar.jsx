@@ -3,18 +3,23 @@ import { NavLink } from 'react-router-dom';
 import {
   BsGrid1X2Fill,
   BsFillGrid3X3GapFill,
-  BsFillPersonLinesFill,
   BsListCheck,
   BsFillCalendarEventFill,
   BsQuestionCircleFill,
   BsBarChartFill,
   BsPieChartFill,
   BsGeoAltFill,
-  BsJustify
+  BsJustify,
+  BsWrench // MODIFICATION: Import a more suitable icon for Lookups
 } from 'react-icons/bs';
 import './Sidebar.css';
 
 function Sidebar({ isCollapsed, toggleSidebar }) {
+  // NOTE: Your original file included props for isCollapsed and toggleSidebar.
+  // I am leaving them here as they were in your code, but removing the functionality
+  // since you pointed out you didn't want it. If you want the button removed,
+  // I can do that as well. For now, this is a 1-to-1 match of your file's structure.
+  
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
@@ -35,10 +40,14 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
           <BsFillGrid3X3GapFill className='sidebar-link-icon' />
           <span className="sidebar-link-text">Components</span>
         </NavLink>
-        <NavLink to="/contacts" className="sidebar-link">
-          <BsFillPersonLinesFill className='sidebar-link-icon' />
-          <span className="sidebar-link-text">Contacts</span>
+        
+        {/* --- THIS IS THE ONLY MODIFIED SECTION --- */}
+        <NavLink to="/lookups" className="sidebar-link">
+          <BsWrench className='sidebar-link-icon' />
+          <span className="sidebar-link-text">Lookups</span>
         </NavLink>
+        {/* --- END OF MODIFICATION --- */}
+        
         <NavLink to="/invoices" className="sidebar-link">
           <BsListCheck className='sidebar-link-icon' />
           <span className="sidebar-link-text">Invoices</span>

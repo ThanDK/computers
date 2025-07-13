@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'; // Added useCallback
+// src/pages/ComponentsPage/ComponentsPage.js
+
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAllComponents, deleteComponent, updateComponentStock } from '../../services/ComponentService';
@@ -6,16 +8,13 @@ import { notifySuccess, notifyError } from '../../services/NotificationService';
 
 import PageHeader from '../../components/PageHeader/PageHeader';
 import MainHeader from '../../components/MainHeader/MainHeader';
-import { Alert, Spinner, Button, Table, Form, InputGroup, Modal } from 'react-bootstrap';
+import ReusableTable from '../../components/ReusableTable/ReusableTable'; // <-- IMPORT THE NEW COMPONENT
+import { Alert, Spinner, Button, Form, InputGroup, Modal } from 'react-bootstrap';
 import { BsSearch, BsPlusCircleFill, BsCheck, BsX, BsArrowCounterclockwise } from 'react-icons/bs';
 
 import './ComponentsPage.css';
 
-import {
-    useReactTable, getCoreRowModel, getFilteredRowModel,
-    getPaginationRowModel, getSortedRowModel, flexRender
-} from '@tanstack/react-table';
-
+// TruncatedText component remains the same
 const TruncatedText = ({ text }) => {
     const handleDoubleClick = () => {
         navigator.clipboard.writeText(text);
@@ -39,14 +38,15 @@ function ComponentsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     
+    // Table state remains here
     const [sorting, setSorting] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [columnFilters, setColumnFilters] = useState([]);
     
+    // Component-specific state remains here
     const [editingRowId, setEditingRowId] = useState(null);
     const [showImageModal, setShowImageModal] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
-
     const stockEditWrapperRef = useRef(null);
     const stockValueInputRef = useRef(null);
 
@@ -56,17 +56,14 @@ function ComponentsPage() {
         return Array.from(types).sort();
     }, [components]);
 
-    // MODIFICATION: Extracted data fetching logic into a reusable function.
-    // useCallback is used for optimization, so this function isn't recreated on every render.
     const loadData = useCallback(async () => {
         if (!token) return;
         setLoading(true);
-        setError(''); // Clear previous errors on refetch
+        setError('');
         try {
-            // Promise.all ensures we wait for both the API call AND the minimum delay
             const [data] = await Promise.all([
                 fetchAllComponents(token),
-                new Promise(resolve => setTimeout(resolve, 20)) // Your 0.02s "fun" spinner delay
+                new Promise(resolve => setTimeout(resolve, 20))
             ]);
             setComponents(data);
         } catch (err) {
@@ -76,13 +73,12 @@ function ComponentsPage() {
         }
     }, [token]);
 
-
-    // MODIFICATION: This useEffect now just calls our reusable function.
     useEffect(() => {
         loadData();
-    }, [loadData]); // The dependency is now the stable loadData function.
+    }, [loadData]);
 
     useEffect(() => {
+        // ... (useEffect for click away logic is unchanged)
         const handleClickAway = (event) => {
             if (editingRowId && stockEditWrapperRef.current && !stockEditWrapperRef.current.contains(event.target)) {
                 setEditingRowId(null);
@@ -101,12 +97,14 @@ function ComponentsPage() {
         };
     }, [editingRowId]);
 
+    // All handlers remain here as they are specific to "Components"
     const handleImageClick = (imageUrl) => {
         setSelectedImage(imageUrl);
         setShowImageModal(true);
     };
 
     const handleDelete = async (component) => {
+        // ... (unchanged)
         try {
             const wasDeleted = await deleteComponent(component, token);
             if (wasDeleted) {
@@ -118,20 +116,18 @@ function ComponentsPage() {
     };
     
     const handleStockUpdate = async (row, newStockValueStr) => {
+        // ... (unchanged)
         const newStockValue = Number(newStockValueStr);
         const component = row.original;
-
         if (isNaN(newStockValue) || newStockValue < 0) {
             notifyError("Invalid stock. Please enter a positive number.");
             return;
         }
-
         const quantityChange = newStockValue - component.quantity;
         if (quantityChange === 0) {
             setEditingRowId(null);
             return;
         }
-
         try {
             const updatedComponent = await updateComponentStock(component.id, quantityChange, token);
             setComponents(prev => prev.map(c => c.id === updatedComponent.id ? updatedComponent : c));
@@ -142,16 +138,17 @@ function ComponentsPage() {
         }
     };
     
-    // MODIFICATION: The reset handler now also calls loadData to refetch from the server.
     const handleResetFilters = () => {
         setGlobalFilter('');
         setColumnFilters([]);
-        loadData(); // This triggers the refetch!
+        loadData();
     };
+
 
     const columns = useMemo(() => [
         { 
-            accessorKey: 'imageUrl', header: 'Image', enableSorting: false, meta: { cellClassName: 'text-center-cell' },
+            accessorKey: 'imageUrl', header: 'Image', enableSorting: false, 
+            meta: { cellClassName: 'text-center-cell', width: '10%' }, // <-- Control width here
             cell: ({ row }) => {
                 const imageUrl = row.original.imageUrl;
                 return imageUrl ? 
@@ -161,45 +158,44 @@ function ComponentsPage() {
         },
         { 
             accessorKey: 'name', header: 'Name',
+            meta: { width: '20%' }, // <-- Control width here
             cell: info => <TruncatedText text={info.getValue()} />
         },
         { 
             accessorKey: 'mpn', header: 'MPN',
+            meta: { width: '15%' }, // <-- Control width here
             cell: info => <TruncatedText text={info.getValue()} />
         },
-        { accessorKey: 'type', header: 'Type' },
-        { accessorKey: 'price', header: 'Price', cell: info => `฿ ${Number(info.getValue()).toFixed(2)}` },
         { 
-            accessorKey: 'quantity', header: 'Stock', meta: { cellClassName: 'text-center-cell' },
+            accessorKey: 'type', header: 'Type',
+            meta: { width: '15%' } // <-- Control width here
+        },
+        { 
+            accessorKey: 'price', header: 'Price', 
+            meta: { width: '10%' }, // <-- Control width here
+            cell: info => `฿ ${Number(info.getValue()).toFixed(2)}` 
+        },
+        { 
+            accessorKey: 'quantity', header: 'Stock', 
+            meta: { cellClassName: 'text-center-cell', width: '10%' }, // <-- Control width here
             cell: ({ row }) => {
+                 // ... (stock editing cell logic is unchanged)
                 const isEditing = editingRowId === row.id;
                 const component = row.original;
-                
                 if (isEditing) {
                     return (
                         <div ref={stockEditWrapperRef}>
                             <InputGroup size="sm" style={{width: '120px'}}>
-                                <Form.Control 
-                                    ref={stockValueInputRef}
-                                    type="number" 
-                                    defaultValue={component.quantity} 
-                                    autoFocus 
-                                    onKeyDown={e => {
-                                        if (e.key === 'Enter') handleStockUpdate(row, e.target.value);
-                                    }} 
-                                />
+                                <Form.Control ref={stockValueInputRef} type="number" defaultValue={component.quantity} autoFocus 
+                                    onKeyDown={e => { if (e.key === 'Enter') handleStockUpdate(row, e.target.value); }} />
                                 <Button variant="outline-success" onClick={() => handleStockUpdate(row, stockValueInputRef.current.value)}><BsCheck /></Button>
                                 <Button variant="outline-light" onClick={() => setEditingRowId(null)}><BsX /></Button>
                             </InputGroup>
                         </div>
                     );
                 }
-
                 return (
-                    <div className="status-dot-container" title="Double-click to edit stock" onDoubleClick={(e) => { 
-                        e.stopPropagation(); 
-                        setEditingRowId(row.id); 
-                    }}>
+                    <div className="status-dot-container" title="Double-click to edit stock" onDoubleClick={(e) => { e.stopPropagation(); setEditingRowId(row.id); }}>
                         <div className={`status-dot ${component.quantity > 0 ? 'status-dot-active' : 'status-dot-inactive'}`}></div>
                         <span>{component.quantity}</span>
                     </div>
@@ -207,7 +203,8 @@ function ComponentsPage() {
             }
         },
         { 
-            id: 'actions', header: 'Actions', meta: { cellClassName: 'text-center-cell' },
+            id: 'actions', header: 'Actions', 
+            meta: { cellClassName: 'text-center-cell', width: 'auto' }, // <-- Control width here
             cell: ({ row }) => (
                 <div className="d-flex gap-2 justify-content-center">
                     <Button variant="outline-primary" size="sm" className="action-btn action-btn-edit" onClick={() => navigate(`/edit-component/${row.original.id}`)}>Edit</Button>
@@ -215,25 +212,13 @@ function ComponentsPage() {
                 </div>
             )
         }
-    ], [editingRowId, token, navigate]);
+    ], [editingRowId, token, navigate]); // Dependencies are unchanged
 
-    const table = useReactTable({
-        data: components,
-        columns,
-        state: { sorting, globalFilter, columnFilters },
-        onSortingChange: setSorting,
-        onGlobalFilterChange: setGlobalFilter,
-        onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-    });
 
-    const typeFilterValue = table.getColumn('type')?.getFilterValue() || '';
+    const typeFilterValue = columnFilters.find(f => f.id === 'type')?.value || '';
 
-    // MODIFICATION: Check loading state first to show the spinner during refetch.
-    if (loading) return (
+    // The main loading/error checks can happen here before rendering the whole page layout
+    if (loading && !components.length) return (
         <>
             <MainHeader />
             <PageHeader title="Manage Components" subtitle="View, search, and manage product components" />
@@ -241,7 +226,7 @@ function ComponentsPage() {
         </>
     );
 
-    if (error) return (
+    if (error && !components.length) return (
          <>
             <MainHeader />
             <PageHeader title="Manage Components" subtitle="View, search, and manage product components" />
@@ -254,6 +239,7 @@ function ComponentsPage() {
             <MainHeader />
             <PageHeader title="Manage Components" subtitle="View, search, and manage product components" />
             
+            {/* Filter controls remain here as they control this page's state */}
             <div className="table-controls-container">
                 <div className="filter-controls">
                     <InputGroup className="search-bar">
@@ -272,7 +258,10 @@ function ComponentsPage() {
                         value={typeFilterValue}
                         onChange={e => {
                             const value = e.target.value;
-                            table.getColumn('type')?.setFilterValue(value || undefined);
+                            // Update the columnFilters state
+                            setColumnFilters(prev => 
+                                prev.filter(f => f.id !== 'type').concat(value ? [{ id: 'type', value }] : [])
+                            );
                         }}
                     >
                         <option value="">All Types</option>
@@ -291,53 +280,18 @@ function ComponentsPage() {
                 </Button>
             </div>
 
-            <div className="table-container">
-                <Table striped hover responsive variant="dark" className="custom-table">
-                    <thead>
-                        {table.getHeaderGroups().map(headerGroup => (
-                            <tr key={headerGroup.id}>
-                                {headerGroup.headers.map(header => (
-                                    <th key={header.id} style={{
-                                        width: 
-                                            header.id === 'imageUrl' ? '10%' :
-                                            header.id === 'name' ? '25%' :
-                                            header.id === 'mpn' ? '15%' :
-                                            header.id === 'type' ? '15%' :
-                                            header.id === 'price' ? '10%' :
-                                            header.id === 'quantity' ? '10%' :
-                                            'auto'
-                                    }} className={header.column.columnDef.meta?.cellClassName}
-                                    onClick={header.column.getToggleSortingHandler()}>
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                        {{ asc: ' ▲', desc: ' ▼' }[header.column.getIsSorted()] ?? ''}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody>
-                        {table.getRowModel().rows.map(row => (
-                            <tr key={row.id}>
-                                {row.getVisibleCells().map(cell => (
-                                    <td key={cell.id} className={cell.column.columnDef.meta?.cellClassName}>
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            </div>
-
-            <div className="d-flex justify-content-end align-items-center mt-3 gap-2">
-                <Button className="pagination-btn" variant="outline-light" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Previous</Button>
-                <span className="mx-2">Page{' '}
-                    <strong>
-                        {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-                    </strong>
-                </span>
-                <Button className="pagination-btn" variant="outline-light" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Next</Button>
-            </div>
+            <ReusableTable
+                columns={columns}
+                data={components}
+                isLoading={loading}
+                error={error}
+                sorting={sorting}
+                setSorting={setSorting}
+                globalFilter={globalFilter}
+                setGlobalFilter={setGlobalFilter}
+                columnFilters={columnFilters}
+                setColumnFilters={setColumnFilters}
+            />
 
             <Modal show={showImageModal} onHide={() => setShowImageModal(false)} centered size="lg" className="image-modal">
                 <Modal.Header closeButton></Modal.Header>

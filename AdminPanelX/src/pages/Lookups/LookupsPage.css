@@ -1,0 +1,111 @@
+.lookups-tabs .nav-link {
+    color: var(--text-secondary);
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-bottom: none;
+}
+
+.lookups-tabs .nav-link:hover {
+    border-color: #4a5a76;
+    border-bottom: none;
+}
+
+.lookups-tabs .nav-link.active {
+    color: var(--accent-color);
+    background-color: transparent;
+    border-color: #4a5a76 #4a5a76 transparent;
+}
+
+.table-controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1;
+}
+
+.search-bar {
+    max-width: 400px;
+    flex-grow: 1;
+}
+
+/* --- NEW: Copied from ComponentsPage.css for consistency --- */
+.type-filter {
+    max-width: 200px;
+    background-color: var(--primary-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid #4a5a76 !important;
+    box-shadow: none !important;
+}
+
+/* --- Dark Theme Modal Styles --- */
+.lookup-modal .modal-content {
+    background-color: var(--secondary-bg);
+    color: var(--text-primary);
+    border: 1px solid #4a5a76;
+    border-radius: 12px;
+}
+
+.lookup-modal .modal-header {
+    border-bottom: 1px solid #4a5a76;
+}
+
+.lookup-modal .modal-footer {
+    border-top: 1px solid #4a5a76;
+}
+
+.lookup-modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.lookup-modal .form-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.lookup-modal .form-control,
+.lookup-modal .form-select {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    border: 1px solid #4a5a76;
+}
+
+.lookup-modal .form-control:focus,
+.lookup-modal .form-select:focus {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.2rem rgba(136, 132, 216, 0.25);
+}
+
+.lookup-modal .form-select option {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+}
+
+.lookup-modal .btn-secondary {
+    background-color: #4a5a76;
+    border-color: #4a5a76;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+.lookup-modal .btn-secondary:hover {
+    background-color: #5a6a86;
+    border-color: #5a6a86;
+}
+.lookup-modal .btn-primary {
+    background-color: #3e4396;
+    border-color: #3e4396;
+    font-weight: 500;
+}
+.lookup-modal .btn-primary:hover {
+    background-color: #4f55b3;
+    border-color: #4f55b3;
+}
