@@ -21,6 +21,7 @@ public interface OrderRepository extends CrudRepository<Order, String> {
     // Finds the top 5 most recent orders for the dashboard widget.
     List<Order> findTop5ByOrderByCreatedAtDesc();
 
-    // Efficiently counts orders with specific statuses for the stat card.
+
     long countByOrderStatusIn(List<OrderStatus> statuses);
+
 }

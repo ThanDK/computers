@@ -24,10 +24,12 @@ const yAxisFormatter = (value) => {
 
 const RevenueChart = ({ data }) => {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    // Set a fixed height to prevent vertical stretching
+    <ResponsiveContainer width="100%" height={300}>
       <AreaChart
         data={data}
-        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        // Adjust margins for better spacing with a fixed height
+        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
       >
         <defs>
           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">

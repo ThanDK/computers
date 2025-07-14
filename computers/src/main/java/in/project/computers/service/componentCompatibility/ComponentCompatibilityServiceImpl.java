@@ -4,7 +4,7 @@ import in.project.computers.dto.builds.CompatibilityResult;
 import in.project.computers.entity.component.*;
 import in.project.computers.entity.computerBuild.ComputerBuild;
 import in.project.computers.entity.lookup.StorageInterface;
-import in.project.computers.repository.ComponentRepo.lookup.StorageInterfaceRepository;
+import in.project.computers.repository.lookup.StorageInterfaceRepository;
 import in.project.computers.repository.generalRepo.ComputerBuildRepository;
 import in.project.computers.service.userAuthenticationService.UserService;
 import jakarta.annotation.PostConstruct;

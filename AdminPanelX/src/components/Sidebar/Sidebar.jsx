@@ -1,16 +1,13 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  BsGrid1X2Fill,
-  BsFillGrid3X3GapFill,
-  BsListCheck,
-  BsFillCalendarEventFill,
-  BsQuestionCircleFill,
-  BsBarChartFill,
-  BsPieChartFill,
-  BsGeoAltFill,
+  BsGrid1X2Fill,        // Dashboard
+  BsFillGrid3X3GapFill, // Components
+  BsWrench,             // Lookups
+  BsListCheck,          // Orders
+  BsReceipt,            // Invoices
+  BsPeopleFill,         // Users
   BsJustify,
-  BsWrench // MODIFICATION: Import a more suitable icon for Lookups
 } from 'react-icons/bs';
 import './Sidebar.css';
 
@@ -30,51 +27,39 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
       </div>
 
       <nav className="sidebar-nav">
-        <NavLink to="/" className="sidebar-link">
+        {/* --- Top Level Link --- */}
+        <NavLink to="/dashboard" className="sidebar-link" end>
           <BsGrid1X2Fill className='sidebar-link-icon' />
           <span className="sidebar-link-text">Dashboard</span>
         </NavLink>
 
-        <div className="sidebar-category">Data</div>
+        {/* --- Component Management Section --- */}
+        <div className="sidebar-category">Component Management</div>
         <NavLink to="/components" className="sidebar-link">
           <BsFillGrid3X3GapFill className='sidebar-link-icon' />
           <span className="sidebar-link-text">Components</span>
         </NavLink>
-        
-        {/* --- THIS IS THE ONLY MODIFIED SECTION --- */}
         <NavLink to="/lookups" className="sidebar-link">
           <BsWrench className='sidebar-link-icon' />
           <span className="sidebar-link-text">Lookups</span>
         </NavLink>
-        {/* --- END OF MODIFICATION --- */}
         
-        <NavLink to="/invoices" className="sidebar-link">
+        {/* --- Order Management Section --- */}
+        <div className="sidebar-category">Order Management</div>
+        <NavLink to="/orders" className="sidebar-link">
           <BsListCheck className='sidebar-link-icon' />
+          <span className="sidebar-link-text">Orders</span>
+        </NavLink>
+        <NavLink to="/invoices" className="sidebar-link">
+          <BsReceipt className='sidebar-link-icon' />
           <span className="sidebar-link-text">Invoices</span>
         </NavLink>
 
-        <div className="sidebar-category">Pages</div>
-        <NavLink to="/calendar" className="sidebar-link">
-          <BsFillCalendarEventFill className='sidebar-link-icon' />
-          <span className="sidebar-link-text">Calendar</span>
-        </NavLink>
-        <NavLink to="/faq" className="sidebar-link">
-          <BsQuestionCircleFill className='sidebar-link-icon' />
-          <span className="sidebar-link-text">FAQ Page</span>
-        </NavLink>
-
-        <div className="sidebar-category">Charts</div>
-        <NavLink to="/bar" className="sidebar-link">
-          <BsBarChartFill className='sidebar-link-icon' />
-          <span className="sidebar-link-text">Bar Chart</span>
-        </NavLink>
-        <NavLink to="/pie" className="sidebar-link">
-          <BsPieChartFill className='sidebar-link-icon' />
-          <span className="sidebar-link-text">Pie Chart</span>
-        </NavLink>
-        <NavLink to="/geo" className="sidebar-link">
-          <BsGeoAltFill className='sidebar-link-icon' />
-          <span className="sidebar-link-text">Geography</span>
+        {/* --- User Management Section --- */}
+        <div className="sidebar-category">User Management</div>
+        <NavLink to="/users" className="sidebar-link">
+          <BsPeopleFill className='sidebar-link-icon' />
+          <span className="sidebar-link-text">Users</span>
         </NavLink>
       </nav>
     </aside>

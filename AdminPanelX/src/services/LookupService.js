@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api/lookups';
+const API_BASE_URL = 'http://localhost:8080/api/admin/lookups';
 
 export const fetchAllLookups = async (token) => {
     const response = await fetch(API_BASE_URL, {
@@ -21,7 +21,6 @@ const apiRequest = async (url, method = 'GET', body = null, token) => {
     }
     const response = await fetch(url, options);
 
-    // For DELETE, a 204 No Content is a success with no body
     if (response.status === 204) {
         return true;
     }

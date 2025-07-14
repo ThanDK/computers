@@ -3,13 +3,14 @@ package in.project.computers.service.componentService;
 import in.project.computers.dto.lookup.*;
 import in.project.computers.entity.lookup.*;
 import in.project.computers.repository.ComponentRepo.ComponentRepository;
-import in.project.computers.repository.ComponentRepo.lookup.FormFactorRepository;
-import in.project.computers.repository.ComponentRepo.lookup.RamTypeRepository;
-import in.project.computers.repository.ComponentRepo.lookup.SocketRepository;
-import in.project.computers.repository.ComponentRepo.lookup.StorageInterfaceRepository;
+import in.project.computers.repository.generalRepo.OrderRepository;
+import in.project.computers.repository.lookup.*;
+import in.project.computers.service.AWSS3Bucket.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
@@ -27,6 +28,9 @@ public class LookupServiceImpl implements LookupService {
     private final FormFactorRepository formFactorRepository;
     private final StorageInterfaceRepository storageInterfaceRepository;
     private final ComponentRepository componentRepository;
+    private final OrderRepository orderRepository; // <-- ADD THIS
+    private final ShippingProviderRepository shippingProviderRepository; // <-- ADD THIS
+    private final S3Service s3Service;
 
     @Override
     public Map<String, Object> getAllLookups() {
@@ -37,6 +41,7 @@ public class LookupServiceImpl implements LookupService {
         Map<FormFactorType, List<FormFactor>> groupedFormFactors = formFactorRepository.findAll().stream()
                 .collect(Collectors.groupingBy(FormFactor::getType));
         lookups.put("formFactors", groupedFormFactors);
+        lookups.put("shippingProviders", shippingProviderRepository.findAll());
         lookups.put("radiatorSizes", List.of(120, 140, 240, 280, 360, 420));
         return lookups;
     }
@@ -49,6 +54,8 @@ public class LookupServiceImpl implements LookupService {
     public List<FormFactor> getAllFormFactors() { return formFactorRepository.findAll(); }
     @Override
     public List<StorageInterface> getAllStorageInterfaces() { return storageInterfaceRepository.findAll(); }
+    @Override
+    public List<ShippingProvider> getAllShippingProviders() { return shippingProviderRepository.findAll(); }
 
     @Override
     public Socket createSocket(SocketRequest request) {
@@ -179,5 +186,75 @@ public class LookupServiceImpl implements LookupService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete Storage Interface. It is currently in use by one or more components.");
         }
         storageInterfaceRepository.deleteById(id);
+    }
+    @Override
+    public ShippingProvider createShippingProvider(ShippingProviderRequest request, MultipartFile image) {
+        if (shippingProviderRepository.findByName(request.getName()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Shipping Provider with name '" + request.getName() + "' already exists.");
+        }
+
+        String imageUrl = null;
+        if (image != null && !image.isEmpty()) {
+            imageUrl = s3Service.uploadFile(image);
+        } else if (StringUtils.hasText(request.getImageUrl())) {
+            imageUrl = request.getImageUrl();
+        }
+
+        ShippingProvider provider = new ShippingProvider(null, request.getName(), imageUrl, request.getTrackingUrl());
+        return shippingProviderRepository.save(provider);
+    }
+
+    @Override
+    public ShippingProvider updateShippingProvider(String id, ShippingProviderRequest request, MultipartFile image) {
+        ShippingProvider provider = shippingProviderRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shipping Provider not found with id: " + id));
+
+        Optional<ShippingProvider> existingByName = shippingProviderRepository.findByName(request.getName());
+        if (existingByName.isPresent() && !existingByName.get().getId().equals(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Another Shipping Provider with name '" + request.getName() + "' already exists.");
+        }
+
+        String imageUrl = provider.getImageUrl();
+
+        if (image != null && !image.isEmpty()) {
+
+            if (StringUtils.hasText(provider.getImageUrl()) && provider.getImageUrl().contains("s3.amazonaws.com")) {
+                String oldKey = extractKeyFromUrl(provider.getImageUrl());
+                s3Service.deleteFile(oldKey);
+            }
+            imageUrl = s3Service.uploadFile(image);
+        } else if (request.getImageUrl() != null) {
+            imageUrl = request.getImageUrl();
+        }
+
+        provider.setName(request.getName());
+        provider.setImageUrl(imageUrl);
+        provider.setTrackingUrl(request.getTrackingUrl());
+
+        return shippingProviderRepository.save(provider);
+    }
+
+    @Override
+    public void deleteShippingProvider(String id) {
+        ShippingProvider provider = shippingProviderRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shipping Provider not found with id: " + id));
+
+        if (StringUtils.hasText(provider.getImageUrl()) && provider.getImageUrl().contains("s3.amazonaws.com")) {
+            String keyToDelete = extractKeyFromUrl(provider.getImageUrl());
+            s3Service.deleteFile(keyToDelete);
+        }
+
+        shippingProviderRepository.deleteById(id);
+    }
+
+    private String extractKeyFromUrl(String fileUrl) {
+        if (!StringUtils.hasText(fileUrl)) {
+            return null;
+        }
+        try {
+            return fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

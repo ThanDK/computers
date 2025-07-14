@@ -1,4 +1,4 @@
-package in.project.computers.repository.ComponentRepo.lookup;
+package in.project.computers.repository.lookup;
 
 import in.project.computers.entity.lookup.FormFactor;
 import in.project.computers.entity.lookup.FormFactorType;

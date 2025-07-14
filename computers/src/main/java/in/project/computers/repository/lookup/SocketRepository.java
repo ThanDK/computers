@@ -1,4 +1,4 @@
-package in.project.computers.repository.ComponentRepo.lookup;
+package in.project.computers.repository.lookup;
 
 import in.project.computers.entity.lookup.Socket;
 import org.springframework.data.mongodb.repository.MongoRepository;

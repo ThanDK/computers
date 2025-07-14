@@ -1,35 +1,39 @@
 package in.project.computers.controller.AdminController;
 
-import in.project.computers.dto.lookup.FormFactorRequest;
-import in.project.computers.dto.lookup.RamTypeRequest;
-import in.project.computers.dto.lookup.SocketRequest;
-import in.project.computers.dto.lookup.StorageInterfaceRequest;
-import in.project.computers.entity.lookup.FormFactor;
-import in.project.computers.entity.lookup.RamType;
-import in.project.computers.entity.lookup.Socket;
-import in.project.computers.entity.lookup.StorageInterface;
+import in.project.computers.dto.lookup.*;
+import in.project.computers.entity.lookup.*;
 import in.project.computers.service.componentService.LookupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/lookups")
+@RequestMapping("/api/admin/lookups")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class LookupController {
 
     private final LookupService lookupService;
 
+    /**
+     * Endpoint to fetch all lookup data in a structured map.
+     * Useful for populating entire forms on the frontend at once.
+     */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllLookupsForFormComponent() {
         return ResponseEntity.ok(lookupService.getAllLookups());
     }
 
+    // --- Sockets Management ---
+    // =================================================================
 
     @GetMapping("/sockets")
     public ResponseEntity<List<Socket>> getAllSockets() {
@@ -55,6 +59,8 @@ public class LookupController {
     }
 
     // --- RAM Types Management ---
+    // =================================================================
+
     @GetMapping("/ram-types")
     public ResponseEntity<List<RamType>> getAllRamTypes() {
         return ResponseEntity.ok(lookupService.getAllRamTypes());
@@ -79,6 +85,8 @@ public class LookupController {
     }
 
     // --- Form Factors Management ---
+    // =================================================================
+
     @GetMapping("/form-factors")
     public ResponseEntity<List<FormFactor>> getAllFormFactors() {
         return ResponseEntity.ok(lookupService.getAllFormFactors());
@@ -103,6 +111,8 @@ public class LookupController {
     }
 
     // --- Storage Interfaces Management ---
+    // =================================================================
+
     @GetMapping("/storage-interfaces")
     public ResponseEntity<List<StorageInterface>> getAllStorageInterfaces() {
         return ResponseEntity.ok(lookupService.getAllStorageInterfaces());
@@ -123,6 +133,39 @@ public class LookupController {
     @DeleteMapping("/storage-interfaces/{id}")
     public ResponseEntity<Void> deleteStorageInterface(@PathVariable String id) {
         lookupService.deleteStorageInterface(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- Shipping Providers Management ---
+    // =================================================================
+
+    @GetMapping("/shipping-providers")
+    public ResponseEntity<List<ShippingProvider>> getAllShippingProviders() {
+        return ResponseEntity.ok(lookupService.getAllShippingProviders());
+    }
+
+    @PostMapping(value = "/shipping-providers", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ShippingProvider> createShippingProvider(
+            @RequestPart("provider") @Valid ShippingProviderRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+
+        ShippingProvider createdProvider = lookupService.createShippingProvider(request, image);
+        return new ResponseEntity<>(createdProvider, HttpStatus.CREATED);
+    }
+
+    @PutMapping(value = "/shipping-providers/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ShippingProvider> updateShippingProvider(
+            @PathVariable String id,
+            @RequestPart("provider") @Valid ShippingProviderRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+
+        ShippingProvider updatedProvider = lookupService.updateShippingProvider(id, request, image);
+        return ResponseEntity.ok(updatedProvider);
+    }
+
+    @DeleteMapping("/shipping-providers/{id}")
+    public ResponseEntity<Void> deleteShippingProvider(@PathVariable String id) {
+        lookupService.deleteShippingProvider(id);
         return ResponseEntity.noContent().build();
     }
 }
