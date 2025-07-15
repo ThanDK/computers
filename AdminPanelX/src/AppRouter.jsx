@@ -8,7 +8,9 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import ComponentsPage from './pages/Components/ComponentsPage';
 import AddComponentPage from './pages/AddComponent/AddComponentPage';
 import EditComponentPage from './pages/EditComponent/EditComponentPage';
-import LookupsPage from './pages/Lookups/LookupsPage'; // <-- IMPORT NEW PAGE
+import LookupsPage from './pages/Lookups/LookupsPage';
+import OrdersPage from './pages/OrdersPage/OrdersPage';
+import OrderDetailPage from './pages/OrderDetailPage/OrderDetailPage';
 
 // ... PrivateRoute component is unchanged ...
 const PrivateRoute = () => {
@@ -36,8 +38,9 @@ const AppRouter = () => {
         <Route path="components" element={<ComponentsPage />} />
         <Route path="add-component" element={<AddComponentPage />} />
         <Route path="edit-component/:id" element={<EditComponentPage />} />
-        <Route path="lookups" element={<LookupsPage />} /> {/* <-- REPLACE 'contacts' WITH 'lookups' */}
-        {/* Remove other unused routes like /invoices, /calendar etc. if you wish */}
+        <Route path="lookups" element={<LookupsPage />} /> 
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="order-details/:orderId" element={<OrderDetailPage />} /> {/* <-- ADD NEW ROUTE */}
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -3,7 +3,6 @@ package in.project.computers.service.componentService;
 import in.project.computers.dto.lookup.*;
 import in.project.computers.entity.lookup.*;
 import in.project.computers.repository.ComponentRepo.ComponentRepository;
-import in.project.computers.repository.generalRepo.OrderRepository;
 import in.project.computers.repository.lookup.*;
 import in.project.computers.service.AWSS3Bucket.S3Service;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +27,7 @@ public class LookupServiceImpl implements LookupService {
     private final FormFactorRepository formFactorRepository;
     private final StorageInterfaceRepository storageInterfaceRepository;
     private final ComponentRepository componentRepository;
-    private final OrderRepository orderRepository; // <-- ADD THIS
-    private final ShippingProviderRepository shippingProviderRepository; // <-- ADD THIS
+    private final ShippingProviderRepository shippingProviderRepository;
     private final S3Service s3Service;
 
     @Override

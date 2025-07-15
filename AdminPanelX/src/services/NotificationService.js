@@ -39,5 +39,5 @@ export const notifyError = (message) => {
 
 
 export const handlePromise = (promise, messages) => {
-    toast.promise(promise, messages);
+    return toast.promise(promise, messages);
 };

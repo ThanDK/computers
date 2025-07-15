@@ -1,4 +1,4 @@
-package in.project.computers.controller.AdminController;
+package in.project.computers.controller.pageController;
 
 import in.project.computers.dto.dashboard.DashboardResponse;
 import in.project.computers.service.dashboard.DashboardService;

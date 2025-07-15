@@ -3,8 +3,8 @@ package in.project.computers.service.dashboard;
 import in.project.computers.dto.dashboard.DashboardResponse;
 import in.project.computers.entity.component.Component;
 import in.project.computers.entity.component.Inventory;
+import in.project.computers.entity.order.LineItemType; // <-- IMPORT THIS
 import in.project.computers.entity.order.Order;
-import in.project.computers.entity.order.OrderLineItem;
 import in.project.computers.entity.order.OrderStatus;
 import in.project.computers.entity.order.PaymentStatus;
 import in.project.computers.repository.ComponentRepo.ComponentRepository;
@@ -22,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap; // <-- IMPORT THIS
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -74,6 +75,8 @@ public class DashboardServiceImpl implements DashboardService {
         List<Order> ordersToExport = orderRepository.findByCreatedAtBetween(startDate, endDate);
         return formatRecentOrders(ordersToExport);
     }
+
+
 
     private List<DashboardResponse.LowStockProduct> getLowStockProducts() {
         List<Inventory> lowStockInventories = inventoryRepository.findAll()
@@ -147,8 +150,6 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<OrderStatus> pendingStatuses = List.of(OrderStatus.PROCESSING, OrderStatus.REFUND_REQUESTED);
 
-        // --- THIS IS THE FINAL, CORRECTED LOGIC ---
-        // It now correctly counts pending orders from the filtered list for the selected date range.
         long pendingOrdersCount = currentOrders.stream()
                 .filter(o -> pendingStatuses.contains(o.getOrderStatus()))
                 .count();
@@ -183,21 +184,38 @@ public class DashboardServiceImpl implements DashboardService {
                 .collect(Collectors.toList());
     }
 
+    // --- THE FIX IS HERE: This method is rewritten ---
     private List<DashboardResponse.ChartData> processTopSellingChartData(List<Order> orders) {
-        return orders.stream()
-                .filter(o -> o.getPaymentStatus() == PaymentStatus.COMPLETED)
+        // Step 1: Create a map to hold the quantities for each component.
+        Map<String, Integer> componentQuantities = new HashMap<>();
+
+        // Step 2: Filter for completed orders and iterate through them.
+        orders.stream()
+                .filter(order -> order.getPaymentStatus() == PaymentStatus.COMPLETED)
                 .flatMap(order -> order.getLineItems().stream())
-                .collect(Collectors.groupingBy(
-                        OrderLineItem::getName,
-                        Collectors.summingInt(OrderLineItem::getQuantity)
-                ))
-                .entrySet().stream()
+                .forEach(item -> {
+                    // Step 3: Check the type of each line item.
+                    if (item.getItemType() == LineItemType.COMPONENT) {
+                        // If it's a single component, add its quantity to the map.
+                        componentQuantities.merge(item.getName(), item.getQuantity(), Integer::sum);
+                    } else if (item.getItemType() == LineItemType.BUILD && item.getContainedItems() != null) {
+                        // If it's a build, iterate through its contained parts.
+                        item.getContainedItems().forEach(part -> {
+                            // The total quantity for this part is (part's qty in one build * number of builds ordered).
+                            int totalPartQuantity = part.getQuantity() * item.getQuantity();
+                            componentQuantities.merge(part.getName(), totalPartQuantity, Integer::sum);
+                        });
+                    }
+                });
+
+        // Step 4: Convert the map into the ChartData format and sort to find the top sellers.
+        return componentQuantities.entrySet().stream()
                 .map(entry -> DashboardResponse.ChartData.builder()
                         .name(entry.getKey())
                         .value(entry.getValue())
                         .build())
                 .sorted(Comparator.comparingDouble(DashboardResponse.ChartData::getValue).reversed())
-                .limit(5)
+                .limit(5) // Limit to the top 5
                 .collect(Collectors.toList());
     }
 }

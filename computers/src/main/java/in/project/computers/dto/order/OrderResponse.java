@@ -24,7 +24,7 @@ public class OrderResponse {
     private OrderStatus orderStatus;
     private PaymentStatus paymentStatus;
     private PaymentDetails paymentDetails;
-    private ShippingDetails shippingDetails; // <-- เพิ่ม field นี้
+    private ShippingDetails shippingDetails;
     private Instant createdAt;
     private Instant updatedAt;
 }

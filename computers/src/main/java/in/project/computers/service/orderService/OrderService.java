@@ -5,6 +5,7 @@ import in.project.computers.dto.order.CreateOrderRequest;
 import in.project.computers.dto.order.CreateOrderResponse;
 import in.project.computers.dto.order.OrderResponse;
 import in.project.computers.dto.order.ShipOrderRequest;
+import in.project.computers.entity.order.OrderStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -196,4 +197,30 @@ public interface OrderService {
      * @return {@link OrderResponse} ที่มีรายละเอียดทั้งหมดของ Order นั้น
      */
     OrderResponse getAnyOrderByIdForAdmin(String orderId);
+
+    /**
+     * [สำหรับ Admin] แก้ไขข้อมูลการจัดส่งสำหรับ Order ที่จัดส่งไปแล้ว
+     *
+     * @param orderId ID ของ Order ที่ต้องการแก้ไข
+     * @param request DTO ที่มีข้อมูล shippingProvider และ trackingNumber ใหม่
+     * @return {@link OrderResponse} ที่มีข้อมูลการจัดส่งที่อัปเดตแล้ว
+     */
+    OrderResponse updateShippingDetails(String orderId, ShipOrderRequest request);
+
+    /**
+     * [สำหรับ Admin] เปลี่ยนสถานะของ Order ไปยังสถานะถัดไปที่ถูกต้องด้วยตนเอง
+     *
+     * @param orderId ID ของ Order ที่ต้องการเปลี่ยนสถานะ
+     * @param newStatus สถานะใหม่ที่ต้องการจะเปลี่ยนไป
+     * @return {@link OrderResponse} ที่มีสถานะใหม่
+     */
+    OrderResponse updateOrderStatus(String orderId, OrderStatus newStatus);
+
+    /**
+     * [สำหรับ Admin] ดึงรายการสถานะที่เป็นไปได้ถัดไปสำหรับ Order ที่กำหนด
+     *
+     * @param orderId ID ของ Order ที่ต้องการตรวจสอบ
+     * @return List ของ OrderStatus ที่สามารถเปลี่ยนไปได้
+     */
+    List<OrderStatus> getValidNextStatuses(String orderId);
 }

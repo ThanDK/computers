@@ -1,4 +1,4 @@
-package in.project.computers.controller;
+package in.project.computers.controller.pageController;
 
 import in.project.computers.dto.builds.ComputerBuildDetailResponse;
 import in.project.computers.dto.builds.ComputerBuildRequest;

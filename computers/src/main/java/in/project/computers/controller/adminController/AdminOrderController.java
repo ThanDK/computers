@@ -1,8 +1,10 @@
-package in.project.computers.controller.orderController;
+package in.project.computers.controller.adminController;
 
 import com.paypal.base.rest.PayPalRESTException;
 import in.project.computers.dto.order.OrderResponse;
 import in.project.computers.dto.order.ShipOrderRequest;
+import in.project.computers.dto.order.UpdateOrderStatusRequest;
+import in.project.computers.entity.order.OrderStatus;
 import in.project.computers.service.orderService.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.List; // Import List
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <h3>Admin Order Controller (Final Version)</h3>
@@ -112,5 +117,59 @@ public class AdminOrderController {
         log.info("Admin action: Rejecting refund for order ID: {}", orderId);
         OrderResponse response = orderService.rejectRefund(orderId);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * <h4>[PUT] /api/admin/orders/update-shipping/{orderId}</h4>
+     * <p>Endpoint สำหรับ Admin เพื่อแก้ไขข้อมูลการจัดส่งของ Order ที่จัดส่งไปแล้ว</p>
+     * <p><b>การทำงาน:</b> ใช้ในกรณีที่ต้องการแก้ไขชื่อบริษัทขนส่งหรือหมายเลขพัสดุ หลังจากที่ได้บันทึกไปครั้งแรกแล้ว</p>
+     * @param orderId ID ของ Order ที่ต้องการแก้ไขข้อมูลการจัดส่ง
+     * @param request DTO ที่มีข้อมูล shippingProvider และ trackingNumber ที่อัปเดตแล้ว
+     * @return ResponseEntity ที่มี OrderResponse พร้อมข้อมูลการจัดส่งที่อัปเดตแล้ว
+     */
+    @PutMapping("/update-shipping/{orderId}")
+    public ResponseEntity<OrderResponse> updateShippingDetails(@PathVariable String orderId, @Valid @RequestBody ShipOrderRequest request) {
+        log.info("Admin action: Updating shipping details for order ID: {}", orderId);
+        OrderResponse response = orderService.updateShippingDetails(orderId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * <h4>[POST] /api/admin/orders/status/{orderId}</h4>
+     * <p>Endpoint สำหรับ Admin เพื่อเปลี่ยนสถานะของ Order ด้วยตนเอง (Manual Update)</p>
+     * <p><b>การทำงาน:</b> ระบบจะตรวจสอบก่อนว่าการเปลี่ยนจากสถานะปัจจุบันไปยังสถานะใหม่นั้นได้รับอนุญาตหรือไม่ (ตาม Logic ใน Service)</p>
+     * @param orderId ID ของ Order ที่ต้องการเปลี่ยนสถานะ
+     * @param request DTO ที่มีสถานะใหม่ (`newStatus`)
+     * @return ResponseEntity ที่มี OrderResponse พร้อมสถานะที่อัปเดตแล้ว
+     */
+    @PostMapping("/status/{orderId}")
+    public ResponseEntity<OrderResponse> updateOrderStatus(@PathVariable String orderId, @Valid @RequestBody UpdateOrderStatusRequest request) {
+        log.info("Admin action: Manually updating status for order ID {} to {}", orderId, request.getNewStatus());
+        OrderResponse response = orderService.updateOrderStatus(orderId, request.getNewStatus());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * <h4>[GET] /api/admin/orders/next-statuses/{orderId}</h4>
+     * <p>Endpoint สำหรับดึงรายการสถานะถัดไปที่ Order สามารถเปลี่ยนไปได้</p>
+     * <p><b>การทำงาน:</b> เป็น Helper endpoint สำหรับ Frontend เพื่อใช้สร้าง Dropdown หรือตัวเลือกให้ Admin สามารถเปลี่ยนสถานะ Order ได้อย่างถูกต้อง</p>
+     * @param orderId ID ของ Order ที่ต้องการตรวจสอบ
+     * @return ResponseEntity ที่มี List ของ OrderStatus ที่เป็นไปได้
+     */
+    @GetMapping("/next-statuses/{orderId}")
+    public ResponseEntity<List<OrderStatus>> getValidNextStatuses(@PathVariable String orderId) {
+        List<OrderStatus> statuses = orderService.getValidNextStatuses(orderId);
+        return ResponseEntity.ok(statuses);
+    }
+
+    /**
+     * <h4>[GET] /api/admin/orders/statuses</h4>
+     * <p>Endpoint สำหรับดึงรายการสถานะ Order ทั้งหมดที่มีในระบบ</p>
+     * <p><b>การทำงาน:</b> เป็น Helper endpoint สำหรับ Frontend เพื่อใช้สร้างตัวเลือกในการกรอง (Filter) รายการ Order ตามสถานะ</p>
+     * @return ResponseEntity ที่มี List ของชื่อสถานะทั้งหมด (String)
+     */
+    @GetMapping("/statuses")
+    public ResponseEntity<List<String>> getAllOrderStatuses() {
+        return ResponseEntity.ok(Arrays.stream(OrderStatus.values()).map(Enum::name).collect(Collectors.toList()));
     }
 }

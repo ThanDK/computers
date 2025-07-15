@@ -1,6 +1,6 @@
 // src/main/java/in/project/computers/controller/AdminController/ComponentManagementController.java
 
-package in.project.computers.controller.AdminController;
+package in.project.computers.controller.adminController;
 
 import in.project.computers.dto.component.componentRequest.ComponentRequest;
 // ComponentUpdateRequest and PriceUpdateRequest are no longer needed
@@ -23,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin("*")
-public class ComponentManagementController {
+public class AdminComponentController {
 
     private final ComponentService componentService;
 
