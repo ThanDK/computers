@@ -22,7 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap; // <-- IMPORT THIS
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -43,7 +43,6 @@ public class DashboardServiceImpl implements DashboardService {
     public DashboardResponse getDashboardData(Instant startDate, Instant endDate) {
         log.info("Fetching dashboard data from {} to {}", startDate, endDate);
 
-        // Fetch orders for the CURRENT selected period
         List<Order> ordersInRange = orderRepository.findByCreatedAtBetween(startDate, endDate);
 
         long durationInDays = Math.max(1, ChronoUnit.DAYS.between(startDate, endDate));
@@ -184,38 +183,36 @@ public class DashboardServiceImpl implements DashboardService {
                 .collect(Collectors.toList());
     }
 
-    // --- THE FIX IS HERE: This method is rewritten ---
+
     private List<DashboardResponse.ChartData> processTopSellingChartData(List<Order> orders) {
-        // Step 1: Create a map to hold the quantities for each component.
         Map<String, Integer> componentQuantities = new HashMap<>();
 
-        // Step 2: Filter for completed orders and iterate through them.
+
         orders.stream()
                 .filter(order -> order.getPaymentStatus() == PaymentStatus.COMPLETED)
                 .flatMap(order -> order.getLineItems().stream())
                 .forEach(item -> {
-                    // Step 3: Check the type of each line item.
+
                     if (item.getItemType() == LineItemType.COMPONENT) {
-                        // If it's a single component, add its quantity to the map.
                         componentQuantities.merge(item.getName(), item.getQuantity(), Integer::sum);
                     } else if (item.getItemType() == LineItemType.BUILD && item.getContainedItems() != null) {
-                        // If it's a build, iterate through its contained parts.
+
                         item.getContainedItems().forEach(part -> {
-                            // The total quantity for this part is (part's qty in one build * number of builds ordered).
+
                             int totalPartQuantity = part.getQuantity() * item.getQuantity();
                             componentQuantities.merge(part.getName(), totalPartQuantity, Integer::sum);
                         });
                     }
                 });
 
-        // Step 4: Convert the map into the ChartData format and sort to find the top sellers.
+
         return componentQuantities.entrySet().stream()
                 .map(entry -> DashboardResponse.ChartData.builder()
                         .name(entry.getKey())
                         .value(entry.getValue())
                         .build())
                 .sorted(Comparator.comparingDouble(DashboardResponse.ChartData::getValue).reversed())
-                .limit(5) // Limit to the top 5
+                .limit(5)
                 .collect(Collectors.toList());
     }
 }

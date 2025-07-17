@@ -55,7 +55,6 @@ public class OrderHelperServiceImpl implements OrderHelperService {
     @Value("${app.currency:THB}")
     private String currency;
 
-    // --- [NEW] Inject Tax Rate from properties file ---
     // ดึงค่า tax rate จาก application.properties
     @Value("${app.tax-rate:0.00}")
     private BigDecimal taxRate;
@@ -73,7 +72,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
         Map<String, Component> allNeededComponents = fetchAllRequiredComponents(request);
         Map<String, Inventory> allNeededInventories = fetchAllRequiredInventories(allNeededComponents.keySet());
 
-        // --- Calculate Subtotal from all line items ---
+
         if (request.getBuildItems() != null && !request.getBuildItems().isEmpty()) {
             List<ComputerBuild> builds = buildRepository.findAllById(request.getBuildItems().keySet());
             for (ComputerBuild build : builds) {
@@ -97,10 +96,10 @@ public class OrderHelperServiceImpl implements OrderHelperService {
 
 
         BigDecimal taxAmount = subtotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
-        // The total amount is the sum of subtotal and tax, with no shipping cost.
+
         BigDecimal totalAmount = subtotal.add(taxAmount);
 
-        // --- Build the final Order object ---
+
         Order order = Order.builder()
                 .userId(currentUser.getId())
                 .userAddress(request.getUserAddress())

@@ -27,7 +27,7 @@ public class AdminComponentController {
 
     private final ComponentService componentService;
 
-    // ... getAllComponents and getComponentById methods are unchanged ...
+
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ComponentResponse>> getAllComponents() {
@@ -75,7 +75,7 @@ public class AdminComponentController {
         return ResponseEntity.ok(updatedComponent);
     }
 
-    // ... adjustStock and deleteComponent methods are unchanged ...
+
     @PatchMapping("/stock/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ComponentResponse> adjustStock(

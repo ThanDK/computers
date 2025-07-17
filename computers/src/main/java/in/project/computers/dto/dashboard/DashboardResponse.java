@@ -46,7 +46,7 @@ public class DashboardResponse {
     public static class LowStockProduct {
         private String id;
         private String name;
-        private String mpn;     // Component MPN
+        private String mpn;
         private int stock;
     }
 }
