@@ -1,4 +1,4 @@
-// src/main/java/in/project/computers/service/componentService/ComponentServiceImpl.java
+
 
 package in.project.computers.service.componentService;
 
@@ -43,9 +43,7 @@ public class ComponentServiceImpl implements ComponentService {
         return componentConverter.convertEntityToResponse(savedComponent);
     }
 
-    // =========================================================
-    // SECTION: REFACTORED METHOD
-    // =========================================================
+
     @Override
     @Transactional
     public ComponentResponse updateComponent(String componentId, ComponentRequest request, MultipartFile imageFile, boolean removeImage) {
@@ -55,13 +53,13 @@ public class ComponentServiceImpl implements ComponentService {
         // 1. Handle Image Logic
         handleImageUpdate(component, imageFile, removeImage);
 
-        // 2. Handle Data Update by delegating to the converter
+ 
         componentConverter.updateEntityFromRequest(component, request);
 
-        // 3. Save the updated component entity
+
         Component updatedComponent = componentRepository.save(component);
 
-        // 4. Update the price in the separate Inventory table
+
         Inventory inventory = findInventoryByComponentId(componentId);
         if (request.getPrice() != null && !request.getPrice().equals(inventory.getPrice())) {
             inventory.setPrice(request.getPrice());
