@@ -1,9 +1,7 @@
-// src/main/java/in/project/computers/controller/AdminController/ComponentManagementController.java
 
 package in.project.computers.controller.adminController;
 
 import in.project.computers.dto.component.componentRequest.ComponentRequest;
-// ComponentUpdateRequest and PriceUpdateRequest are no longer needed
 import in.project.computers.dto.component.componentRequest.StockAdjustmentRequest;
 import in.project.computers.dto.component.componentResponse.ComponentResponse;
 import in.project.computers.service.componentService.ComponentService;
@@ -54,15 +52,7 @@ public class AdminComponentController {
         return new ResponseEntity<>(newComponent, HttpStatus.CREATED);
     }
 
-    /**
-     * <h4>[PUT] /api/components/{id}</h4>
-     * <p>Admin endpoint to fully update a component's details and/or image.</p>
-     * @param id The ID of the component to update.
-     * @param request The full JSON data for the component.
-     * @param imageFile A new image file to replace the old one (optional).
-     * @param removeImage A boolean flag (sent as a query parameter) to remove the existing image.
-     * @return The updated component.
-     */
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ComponentResponse> updateComponent(
