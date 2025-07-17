@@ -495,23 +495,24 @@ public class OrderServiceImpl implements OrderService {
      * เมธอดภายในสำหรับจัดการกระบวนการสร้าง Payment กับ PayPal
      */
     private CreateOrderResponse initiatePaypalPayment(Order order) throws PayPalRESTException {
-        // === [INIT-PAYPAL-1] บันทึกออเดอร์ก่อนเพื่อสร้าง ID ===
         if (order.getId() == null) {
             orderRepository.save(order);
             log.info("Order ID {} generated and saved before initiating PayPal payment.", order.getId());
         }
 
-        // === [INIT-PAYPAL-2] เตรียม Callback URL ===
         String formattedSuccessUrl = String.format(successUrl, order.getId());
         String formattedCancelUrl = String.format(cancelUrl, order.getId());
 
-        // === [INIT-PAYPAL-3] เรียกใช้ PaypalService เพื่อสร้าง Payment ===
+        // === [INIT-PAYPAL-3] [MODIFIED] เรียกใช้ PaypalService ด้วย Order object ทั้งหมด ===
+        // The service now has all the data it needs to build a detailed transaction.
         Payment payment = paypalService.createPayment(
-                order.getTotalAmount(), order.getCurrency(), "sale", "Order #" + order.getId(),
-                formattedCancelUrl, formattedSuccessUrl
+                order, // Pass the entire order object
+                "sale",
+                "Order #" + order.getId(),
+                formattedCancelUrl,
+                formattedSuccessUrl
         );
 
-        // === [INIT-PAYPAL-4] ดึงลิงก์สำหรับให้ผู้ใช้ไปชำระเงิน (approval_url) ===
         String approvalLink = "";
         for (Links link : payment.getLinks()) {
             if ("approval_url".equals(link.getRel())) {
@@ -524,14 +525,12 @@ public class OrderServiceImpl implements OrderService {
             throw new PayPalRESTException("Could not get approval link or payment ID from PayPal.");
         }
 
-        // === [INIT-PAYPAL-5] อัปเดตออเดอร์ด้วย PayPal Payment ID ===
         PaymentDetails details = order.getPaymentDetails();
         details.setTransactionId(paypalPaymentId);
         details.setProviderStatus("CREATED_IN_PAYPAL");
         orderRepository.save(order);
         log.info("Updated order ID {} with PayPal Payment ID: {}", order.getId(), paypalPaymentId);
 
-        // === [INIT-PAYPAL-6] สร้าง Response ส่งกลับไปให้ Client ===
         return CreateOrderResponse.builder()
                 .orderId(order.getId())
                 .paypalOrderId(paypalPaymentId)

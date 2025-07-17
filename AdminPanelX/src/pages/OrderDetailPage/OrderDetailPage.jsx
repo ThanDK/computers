@@ -1,18 +1,21 @@
+// src/pages/OrderDetailPage/OrderDetailPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchOrderById } from '../../services/OrderService';
 import { notifyError } from '../../services/NotificationService';
+import { Spinner, Alert } from 'react-bootstrap';
 
+// Import the page's components
 import MainHeader from '../../components/MainHeader/MainHeader';
 import PageHeader from '../../components/PageHeader/PageHeader';
-import OrderSummary from './OrderSummary';
-import OrderItemsTable from './OrderItemsTable';
-import OrderActions from './OrderActions';
-import OrderTotals from './OrderTotals';
-import OrderStatusCard from './OrderStatusCard';
+import OrderActions from './components/OrderActions/OrderActions';
+import OrderItemsTable from './components/OrderItemsTable/OrderItemsTable';
+import OrderStatusCard from './components/OrderStatusCard/OrderStatusCard';
+import OrderSummary from './components/OrderSummary/OrderSummary';
+import OrderTotals from './components/OrderTotals/OrderTotals';
 
-import { Spinner, Alert } from 'react-bootstrap';
+// Import the main layout CSS for this page
 import './OrderDetailPage.css';
 
 function OrderDetailPage() {
@@ -21,26 +24,18 @@ function OrderDetailPage() {
     const { token } = useAuth();
 
     const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true); // For initial page load
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    
-    // --- FIX: State for the refresh button's loading indicator ---
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // --- FIX: Updated data loading function with delay ---
     const loadOrderData = useCallback(async () => {
         if (!token || !orderId) return;
-        
-        // This controls the button's spinner, not the full page
-        setIsRefreshing(true); 
+        setIsRefreshing(true);
         setError('');
-
         try {
-            // Promise.all adds a small artificial delay for better UX,
-            // ensuring the spinner is visible for at least 200ms.
             const [data] = await Promise.all([
                 fetchOrderById(orderId, token),
-                new Promise(resolve => setTimeout(resolve, 200)) 
+                new Promise(resolve => setTimeout(resolve, 200))
             ]);
             setOrder(data);
         } catch (err) {
@@ -48,28 +43,23 @@ function OrderDetailPage() {
             setError(errorMessage);
             notifyError(errorMessage);
         } finally {
-            // Always turn off the refreshing state
             setIsRefreshing(false);
         }
     }, [orderId, token]);
 
-    // This useEffect is for the very first page load
     useEffect(() => {
         const initialLoad = async () => {
             setLoading(true);
-            await loadOrderData(); // This will also handle the refresh state internally
+            await loadOrderData();
             setLoading(false);
         };
         initialLoad();
-    }, [loadOrderData]); // Note: dependency is on the memoized function
+    }, [loadOrderData]);
 
-    // --- FIX: Handler for the refresh button click ---
     const handleRefresh = () => {
-        // Prevent multiple refresh clicks while one is in progress
         if (isRefreshing) return;
         loadOrderData();
     };
-
 
     if (loading) {
         return (
@@ -80,25 +70,20 @@ function OrderDetailPage() {
             </>
         );
     }
-
-    if (error) {
+    
+    if (error || !order) {
         return (
             <>
                 <MainHeader />
                 <PageHeader title="Error" subtitle="Could not load order details" />
-                <Alert variant="danger" className="m-4">{error}</Alert>
+                <Alert variant="danger" className="m-4">{error || "Order not found."}</Alert>
             </>
         );
     }
 
-    if (!order) {
-        return null; // Should not happen if loading/error states are handled
-    }
-
     return (
-        <>
+        <div className="order-detail-page-content">
             <MainHeader />
-            {/* --- FIX: Pass new props to PageHeader --- */}
             <PageHeader
                 title={`Order #${order.id.slice(-8)}`}
                 subtitle={`Current Status: ${order.orderStatus.replace(/_/g, ' ')}`}
@@ -123,7 +108,7 @@ function OrderDetailPage() {
                     <OrderSummary order={order} />
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 

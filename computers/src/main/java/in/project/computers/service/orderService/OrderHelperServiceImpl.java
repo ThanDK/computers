@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,56 +51,56 @@ public class OrderHelperServiceImpl implements OrderHelperService {
     private final APIContext apiContext;
 
     // --- Config Properties ---
+
     @Value("${app.currency:THB}")
     private String currency;
 
+    // --- [NEW] Inject Tax Rate from properties file ---
+    // ดึงค่า tax rate จาก application.properties
+    @Value("${app.tax-rate:0.00}")
+    private BigDecimal taxRate;
+
     @Override
     public Order createAndValidateBaseOrder(CreateOrderRequest request, UserEntity currentUser) {
-        // === [HELPER-CREATE-1] ตรวจสอบว่าคำสั่งซื้อมีสินค้าหรือไม่ ===
         if ((request.getBuildItems() == null || request.getBuildItems().isEmpty()) &&
                 (request.getComponentItems() == null || request.getComponentItems().isEmpty())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order cannot be empty.");
         }
 
-        // === [HELPER-CREATE-2] เตรียมตัวแปรสำหรับรวบรวมข้อมูล ===
         List<OrderLineItem> lineItems = new ArrayList<>();
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal subtotal = BigDecimal.ZERO;
 
-        // === [HELPER-CREATE-3] [Optimization] ดึงข้อมูล Component ทั้งหมดที่ต้องการในครั้งเดียว ===
         Map<String, Component> allNeededComponents = fetchAllRequiredComponents(request);
-        // === [HELPER-CREATE-4] [Optimization] ดึงข้อมูล Inventory (ราคา, สต็อก) ทั้งหมดที่ต้องการในครั้งเดียว ===
         Map<String, Inventory> allNeededInventories = fetchAllRequiredInventories(allNeededComponents.keySet());
 
-        // === [HELPER-CREATE-5] ประมวลผลรายการสินค้าที่เป็นชุดประกอบ (Build) ===
+        // --- Calculate Subtotal from all line items ---
         if (request.getBuildItems() != null && !request.getBuildItems().isEmpty()) {
             List<ComputerBuild> builds = buildRepository.findAllById(request.getBuildItems().keySet());
             for (ComputerBuild build : builds) {
                 int quantityOrdered = request.getBuildItems().get(build.getId());
-                // สร้าง Line Item สำหรับชุดประกอบ
                 OrderLineItem buildLineItem = createBuildLineItem(build, quantityOrdered, allNeededInventories);
                 lineItems.add(buildLineItem);
-                // เพิ่มราคารวม
-                totalAmount = totalAmount.add(buildLineItem.getUnitPrice().multiply(BigDecimal.valueOf(quantityOrdered)));
+                subtotal = subtotal.add(buildLineItem.getUnitPrice().multiply(BigDecimal.valueOf(quantityOrdered)));
             }
         }
-
-        // === [HELPER-CREATE-6] ประมวลผลรายการสินค้าที่เป็นชิ้นส่วนเดี่ยว (Component) ===
         if (request.getComponentItems() != null && !request.getComponentItems().isEmpty()) {
             for (Map.Entry<String, Integer> entry : request.getComponentItems().entrySet()) {
                 String componentId = entry.getKey();
                 int quantity = entry.getValue();
-                // สร้าง Line Item สำหรับชิ้นส่วน
                 OrderLineItem componentLineItem = createComponentLineItem(componentId, quantity, allNeededComponents, allNeededInventories);
                 lineItems.add(componentLineItem);
-                // เพิ่มราคารวม
-                totalAmount = totalAmount.add(componentLineItem.getUnitPrice().multiply(BigDecimal.valueOf(quantity)));
+                subtotal = subtotal.add(componentLineItem.getUnitPrice().multiply(BigDecimal.valueOf(quantity)));
             }
         }
 
-        // === [HELPER-CREATE-7] ตรวจสอบสต็อกรวมทั้งหมดอีกครั้งก่อนสร้าง Order ===
         validateOverallStock(request, allNeededInventories);
 
-        // === [HELPER-CREATE-8] สร้างอ็อบเจกต์ Order ที่สมบูรณ์ ===
+
+        BigDecimal taxAmount = subtotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
+        // The total amount is the sum of subtotal and tax, with no shipping cost.
+        BigDecimal totalAmount = subtotal.add(taxAmount);
+
+        // --- Build the final Order object ---
         Order order = Order.builder()
                 .userId(currentUser.getId())
                 .userAddress(request.getUserAddress())
@@ -107,6 +108,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                 .email(currentUser.getEmail())
                 .lineItems(lineItems)
                 .totalAmount(totalAmount)
+                .taxAmount(taxAmount)
                 .currency(this.currency)
                 .orderStatus(OrderStatus.PENDING_PAYMENT)
                 .paymentStatus(PaymentStatus.PENDING)
@@ -114,8 +116,8 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                 .updatedAt(Instant.now())
                 .build();
 
-        log.info("Structured base order created for user: {}. Total: {} {}. Line Items: {}",
-                currentUser.getEmail(), totalAmount, this.currency, lineItems.size());
+        log.info("Structured base order created for user: {}. Subtotal: {}, Tax: {}, Total: {} {}",
+                currentUser.getEmail(), subtotal, taxAmount, totalAmount, this.currency);
         return order;
     }
 
@@ -384,6 +386,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                 .lineItems(order.getLineItems())
                 .totalAmount(order.getTotalAmount())
                 .currency(order.getCurrency())
+                .taxAmount(order.getTaxAmount())
                 .orderStatus(order.getOrderStatus())
                 .shippingDetails(order.getShippingDetails())
                 .paymentStatus(order.getPaymentStatus())

@@ -1,27 +1,17 @@
-// --- UPDATE START: Added useMemo and Image ---
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button, Modal, Form, Spinner, Image } from 'react-bootstrap';
-// --- UPDATE END ---
+import { useAuth } from '../../../../context/AuthContext';
+import { approveSlip, shipOrder, approveRefund, rejectRefund, fetchValidNextStatuses, updateOrderStatus, updateShippingDetails, rejectSlip, revertSlipApproval } from '../../../../services/OrderService';
+import { fetchAllShippingProviders } from '../../../../services/LookupService';
+import { handlePromise } from '../../../../services/NotificationService';
+import ConfirmationModal from '../../../../components/ConfirmationModal/ConfirmationModal';
+import ReasonModal from '../../../../components/ReasonModal/ReasonModal';
+import { BsTruck, BsPencilSquare, BsCheckCircle, BsXCircle, BsArrowRepeat, BsShieldX, BsBackspaceReverseFill } from 'react-icons/bs';
+import './OrderActions.css';
 
-import { useAuth } from '../../context/AuthContext';
-import {
-    approveSlip, shipOrder, approveRefund, rejectRefund, fetchValidNextStatuses,
-    updateOrderStatus, updateShippingDetails, rejectSlip, revertSlipApproval
-} from '../../services/OrderService';
-
-// --- UPDATE START: Import the new lookup service function ---
-import { fetchAllShippingProviders } from '../../services/LookupService';
-// --- UPDATE END ---
-
-import { handlePromise } from '../../services/NotificationService';
-import ConfirmationModal from '../../components/ConfirmationModal/ConfirmationModal';
-import ReasonModal from '../../components/ReasonModal/ReasonModal';
-import {
-    BsTruck, BsPencilSquare, BsCheckCircle, BsXCircle, BsArrowRepeat,
-    BsShieldX, BsBackspaceReverseFill
-} from 'react-icons/bs';
-
+// The component's JSX and logic remains the same, but it now imports its own CSS.
 function OrderActions({ order, onActionSuccess }) {
+    // ... all logic from the original file ...
     const { token } = useAuth();
     
     // --- State for Modals ---
@@ -37,13 +27,9 @@ function OrderActions({ order, onActionSuccess }) {
     const [nextStatuses, setNextStatuses] = useState([]);
     const [isFetchingStatuses, setIsFetchingStatuses] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('');
-
-    // --- UPDATE START: New state to hold shipping providers data ---
     const [shippingProviders, setShippingProviders] = useState([]);
     const [isLoadingProviders, setIsLoadingProviders] = useState(false);
-    // --- UPDATE END ---
 
-    // This useEffect is unchanged
     useEffect(() => {
         if (order?.id) {
             setIsFetchingStatuses(true);
@@ -55,7 +41,6 @@ function OrderActions({ order, onActionSuccess }) {
         }
     }, [order?.id, order?.orderStatus, token]);
 
-    // --- UPDATE START: New useEffect to fetch shipping providers ---
     useEffect(() => {
         setIsLoadingProviders(true);
         fetchAllShippingProviders(token)
@@ -63,9 +48,7 @@ function OrderActions({ order, onActionSuccess }) {
             .catch(console.error)
             .finally(() => setIsLoadingProviders(false));
     }, [token]);
-    // --- UPDATE END ---
 
-    // --- UPDATE START: Memoized value to get the currently selected provider's image ---
     const selectedProviderImage = useMemo(() => {
         if (!shippingInfo.shippingProvider || shippingProviders.length === 0) {
             return null;
@@ -73,7 +56,6 @@ function OrderActions({ order, onActionSuccess }) {
         const provider = shippingProviders.find(p => p.name === shippingInfo.shippingProvider);
         return provider?.imageUrl || null;
     }, [shippingInfo.shippingProvider, shippingProviders]);
-    // --- UPDATE END ---
 
     const handleAction = async (actionPromise, successMessage) => {
         setConfirmState(p => ({ ...p, show: false }));
@@ -176,7 +158,6 @@ function OrderActions({ order, onActionSuccess }) {
                 placeholder={reasonModalState.placeholder}
             />
 
-            {/* --- UPDATE START: The Shipping Modal has been completely redesigned --- */}
             <Modal show={showShippingModal} onHide={() => setShowShippingModal(false)} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>{shippingModalMode === 'create' ? 'Enter Shipping Details' : 'Update Shipping Details'}</Modal.Title>
@@ -222,7 +203,6 @@ function OrderActions({ order, onActionSuccess }) {
                     </Modal.Footer>
                 </Form>
             </Modal>
-            {/* --- UPDATE END --- */}
             
             <Modal show={showStatusModal} onHide={() => setShowStatusModal(false)} centered>
                 <Modal.Header closeButton><Modal.Title>Manually Change Order Status</Modal.Title></Modal.Header>
@@ -248,3 +228,4 @@ function OrderActions({ order, onActionSuccess }) {
 }
 
 export default OrderActions;
+

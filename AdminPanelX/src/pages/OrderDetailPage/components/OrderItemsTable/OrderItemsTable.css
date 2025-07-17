@@ -1,0 +1,85 @@
+/* src/pages/OrderDetailPage/components/OrderItemsTable/OrderItemsTable.css */
+
+/* --- Shared Card Style --- */
+.detail-card {
+    background-color: var(--secondary-bg);
+    border: 1px solid #4a5a76;
+    border-radius: 12px;
+}
+.detail-card .card-header {
+    background-color: #344258;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid #4a5a76;
+}
+
+/* --- Table Specific Styles --- */
+.order-items-table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: #344258;
+    --bs-table-hover-bg: #3a4a63;
+    margin-bottom: 0;
+    color: var(--text-primary);
+}
+.order-items-table th {
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+}
+.item-meta-info {
+    display: block;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    width: 100%; /* For part MPN layout */
+}
+.build-contents-row td {
+    background-color: #2c384c !important;
+}
+.build-contents-wrapper {
+    padding: 1rem 1.5rem;
+}
+.build-contents-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+}
+.build-contents-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.build-part-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.part-info {
+    display: flex;
+    align-items: center;
+}
+.part-price {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.part-quantity {
+    font-weight: 600;
+    color: rgb(147, 147, 236);
+    flex-shrink: 0;
+}
+.part-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.part-mpn {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: right;
+    flex-shrink: 0;
+}

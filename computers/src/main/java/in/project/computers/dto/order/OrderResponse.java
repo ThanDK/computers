@@ -21,6 +21,7 @@ public class OrderResponse {
     private List<OrderLineItem> lineItems;
     private BigDecimal totalAmount;
     private String currency;
+    private BigDecimal taxAmount;
     private OrderStatus orderStatus;
     private PaymentStatus paymentStatus;
     private PaymentDetails paymentDetails;

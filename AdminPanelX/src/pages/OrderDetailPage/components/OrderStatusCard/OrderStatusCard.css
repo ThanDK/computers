@@ -1,0 +1,31 @@
+/* src/pages/OrderDetailPage/components/OrderStatusCard/OrderStatusCard.css */
+
+/* --- Shared Card Style --- */
+.detail-card {
+    background-color: var(--secondary-bg);
+    border: 1px solid #4a5a76;
+    border-radius: 12px;
+}
+.detail-card .card-header {
+    background-color: #344258;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid #4a5a76;
+}
+.detail-card .list-group-item {
+    background-color: transparent;
+    border-bottom: 1px solid #4a5a76;
+    padding: 0.85rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.detail-card .list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* --- Specific Styles from OrderTotals.css that are also used here --- */
+.totals-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, ListGroup } from 'react-bootstrap';
-import StatusBadge from '../../components/StatusBadge/StatusBadge';
+import StatusBadge from '../../../../components/StatusBadge/StatusBadge';
+import './OrderStatusCard.css';
 
 function OrderStatusCard({ order }) {
     return (

@@ -1,38 +1,33 @@
 import React, { useMemo } from 'react';
 import { Card, ListGroup } from 'react-bootstrap';
+import './OrderTotals.css';
 
 const formatCurrency = (amount, currency) => {
+    const numericAmount = typeof amount === 'number' ? amount : 0;
     const numberPart = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-    }).format(amount);
+    }).format(numericAmount);
     return `${currency} ${numberPart}`;
 };
 
 function OrderTotals({ order }) {
-    // --- CRASH FIX ---
-    // Provide default values in case `order` is not yet loaded.
-    // This prevents "Cannot destructure property of null/undefined" errors.
-    const { lineItems = [], totalAmount = 0, currency = '' } = order || {};
-
+    const { lineItems = [], totalAmount = 0, taxAmount = 0, currency = '' } = order || {};
     const subtotal = useMemo(() => {
         return lineItems.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
     }, [lineItems]);
 
-    // Ensure shipping is never negative
-    const shippingCost = Math.max(0, totalAmount - subtotal);
-
     return (
         <Card className="detail-card totals-card">
             <Card.Header>Order Summary</Card.Header>
-            <ListGroup variant="flush" className="total-summary-list">
+            <ListGroup variant="flush">
                 <ListGroup.Item>
                     <span className="totals-label">Subtotal</span>
                     <span className="totals-value">{formatCurrency(subtotal, currency)}</span>
                 </ListGroup.Item>
                 <ListGroup.Item>
-                    <span className="totals-label">Shipping</span>
-                    <span className="totals-value">{formatCurrency(shippingCost, currency)}</span>
+                    <span className="totals-label">VAT (7%)</span>
+                    <span className="totals-value">{formatCurrency(taxAmount, currency)}</span>
                 </ListGroup.Item>
                 <ListGroup.Item className="grand-total">
                     <span className="totals-label">Grand Total</span>
