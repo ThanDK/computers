@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Card, ListGroup } from 'react-bootstrap';
 
-// The single, correct function to guarantee "THB" format.
 const formatCurrency = (amount, currency) => {
     const numberPart = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
@@ -12,13 +11,15 @@ const formatCurrency = (amount, currency) => {
 
 function OrderTotals({ order }) {
     // --- CRASH FIX ---
-    const { lineItems = [], totalAmount, currency } = order;
+    // Provide default values in case `order` is not yet loaded.
+    // This prevents "Cannot destructure property of null/undefined" errors.
+    const { lineItems = [], totalAmount = 0, currency = '' } = order || {};
 
     const subtotal = useMemo(() => {
         return lineItems.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
     }, [lineItems]);
 
-    // Ensure shipping is never less than zero.
+    // Ensure shipping is never negative
     const shippingCost = Math.max(0, totalAmount - subtotal);
 
     return (

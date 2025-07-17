@@ -23,10 +23,7 @@ public class LookupController {
 
     private final LookupService lookupService;
 
-    /**
-     * Endpoint to fetch all lookup data in a structured map.
-     * Useful for populating entire forms on the frontend at once.
-     */
+
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllLookupsForFormComponent() {
         return ResponseEntity.ok(lookupService.getAllLookups());

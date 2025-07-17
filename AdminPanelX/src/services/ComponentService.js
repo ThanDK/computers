@@ -1,9 +1,9 @@
+// src/services/ComponentService.js
 import { showConfirmation, handlePromise } from './NotificationService';
 
 const API_BASE_URL = 'http://localhost:8080/api/components';
 
-
-export const fetchAllComponents = async (token) => {
+export async function fetchAllComponents(token) {
     const response = await fetch(API_BASE_URL, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -11,8 +11,7 @@ export const fetchAllComponents = async (token) => {
     return response.json();
 };
 
-
-export const deleteComponent = async (component, token) => {
+export async function deleteComponent(component, token) {
     const isConfirmed = await showConfirmation(
         'Are you sure?',
         `You are about to delete "${component.name}". This cannot be undone.`
@@ -37,7 +36,7 @@ export const deleteComponent = async (component, token) => {
     return promise;
 };
 
-export const updateComponentStock = async (componentId, quantityChange, token) => {
+export async function updateComponentStock(componentId, quantityChange, token) {
     const promise = fetch(`${API_BASE_URL}/stock/${componentId}`, {
         method: 'PATCH',
         headers: {
@@ -62,8 +61,7 @@ export const updateComponentStock = async (componentId, quantityChange, token) =
     return promise;
 };
 
-
-export const createComponent = async (componentData, imageFile, token) => {
+export async function createComponent(componentData, imageFile, token) {
     const formData = new FormData();
     const componentBlob = new Blob([JSON.stringify(componentData)], {
         type: 'application/json'
@@ -74,7 +72,6 @@ export const createComponent = async (componentData, imageFile, token) => {
         formData.append('image', imageFile);
     }
     
-    
     const response = await fetch(`${API_BASE_URL}/`, {
         method: 'POST',
         headers: {
@@ -84,7 +81,6 @@ export const createComponent = async (componentData, imageFile, token) => {
     });
     
     if (!response.ok) {
-       
         const errorData = await response.json().catch(() => ({ message: 'Failed to create component. An unknown error occurred.' }));
         throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
     }
@@ -92,8 +88,7 @@ export const createComponent = async (componentData, imageFile, token) => {
     return response.json();
 };
 
-
-export const getComponentById = async (id, token) => {
+export async function getComponentById(id, token) {
     const response = await fetch(`${API_BASE_URL}/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -104,8 +99,7 @@ export const getComponentById = async (id, token) => {
     return response.json();
 };
 
-
-export const updateComponent = async (id, componentData, imageFile, removeImage, token) => {
+export async function updateComponent(id, componentData, imageFile, removeImage, token) {
     const formData = new FormData();
     
     formData.append('request', new Blob([JSON.stringify(componentData)], {
@@ -122,7 +116,6 @@ export const updateComponent = async (id, componentData, imageFile, removeImage,
         method: 'PUT',
         headers: {
             'Authorization': `Bearer ${token}`,
-            
         },
         body: formData,
     });

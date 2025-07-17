@@ -1,3 +1,49 @@
-.page-header { margin-bottom: 2rem; }
-.page-header h2 { font-weight: 600; }
-.page-header h5 { color: var(--accent-color); }
+.page-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    /* --- THE FIX IS HERE --- */
+    /* Removed top padding, kept bottom padding */
+    padding-bottom: 1rem; 
+    
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #4a5a76;
+}
+
+.page-header-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.back-button {
+    font-size: 1.75rem;
+    color: var(--text-secondary);
+    padding: 0.25rem 0.5rem;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.back-button:hover {
+    color: var(--text-primary);
+    background-color: #344258;
+}
+
+.page-header-titles h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.page-header-titles p {
+    font-size: 1rem;
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.page-header-actions {
+    display: flex;
+    gap: 0.5rem;
+}

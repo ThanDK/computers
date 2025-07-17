@@ -11,5 +11,6 @@ public enum OrderStatus {
     REFUND_REQUESTED,
     REFUND_APPROVED,
     REFUND_REJECTED,
-    REFUNDED
+    REFUNDED,
+    REJECTED_SLIP
 }

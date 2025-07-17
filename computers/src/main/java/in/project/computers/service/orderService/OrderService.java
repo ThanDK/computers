@@ -223,4 +223,24 @@ public interface OrderService {
      * @return List ของ OrderStatus ที่สามารถเปลี่ยนไปได้
      */
     List<OrderStatus> getValidNextStatuses(String orderId);
+    /**
+     * [สำหรับ Admin] ปฏิเสธสลิปโอนเงินที่ผู้ใช้ส่งมา
+     *
+     * @param orderId ID ของ Order ที่จะปฏิเสธสลิป
+     * @param reason  เหตุผลที่ปฏิเสธ (สำหรับบันทึก)
+     * @return {@link OrderResponse} ที่มีสถานะอัปเดตเป็น PENDING_PAYMENT และ REJECTED
+     */
+    OrderResponse rejectPaymentSlip(String orderId, String reason);
+
+    /**
+     * [สำหรับ Admin] ย้อนกลับการอนุมัติสลิปที่เคยอนุมัติไปแล้ว (สำหรับ Bank Transfer เท่านั้น)
+     * <p>
+     * ใช้ในกรณีที่ Admin กดอนุมัติผิดพลาด ระบบจะทำการคืนสต็อกสินค้า และเปลี่ยนสถานะกลับไปรอการชำระเงินใหม่
+     * </p>
+     *
+     * @param orderId ID ของ Order ที่จะย้อนกลับ
+     * @param reason  เหตุผลที่ย้อนกลับ (สำหรับบันทึก)
+     * @return {@link OrderResponse} ที่มีสถานะอัปเดตกลับไปเป็น PENDING_PAYMENT
+     */
+    OrderResponse revertSlipApproval(String orderId, String reason);
 }

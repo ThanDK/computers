@@ -29,31 +29,6 @@ public class UserController {
     /**
      * <h4>[POST] /api/register</h4>
      * <p>Endpoint สำหรับการลงทะเบียนผู้ใช้ใหม่</p>
-     * <p><b>การทำงาน:</b></p>
-     * <ul>
-     *     <li>1. รับข้อมูลผู้ใช้ (name, email, password) จาก Request Body</li>
-     *     <li>2. ส่งข้อมูลต่อไปยัง `UserService` ซึ่งจะรับผิดชอบการตรวจสอบว่าอีเมลซ้ำหรือไม่,
-     *        ทำการเข้ารหัสรหัสผ่าน (Password Hashing), และบันทึกข้อมูลผู้ใช้ใหม่ลงในฐานข้อมูล</li>
-     *     <li>3. คืนค่าเป็น `UserResponse` ซึ่งเป็นข้อมูลผู้ใช้ที่ไม่มีรหัสผ่าน เพื่อความปลอดภัย</li>
-     * </ul>
-     * <p><b>ตัวอย่าง Request Body (JSON):</b></p>
-     * <pre>{@code
-     * {
-     *   "name": "สมชาย ใจดี",
-     *   "email": "somchai.j@example.com",
-     *   "password": "MyStrongPassword123!"
-     * }
-     * }</pre>
-     * <p><b>ตัวอย่าง Response Body (JSON) เมื่อสำเร็จ:</b></p>
-     * <pre>{@code
-     * {
-     *   "id": "user_a1b2c3d4",
-     *   "name": "สมชาย ใจดี",
-     *   "email": "somchai.j@example.com",
-     *   "role": "USER"
-     * }
-     * }</pre>
-     *
      * @param request DTO ที่มีข้อมูลสำหรับลงทะเบียน
      * @return ResponseEntity ที่มี UserResponse ของผู้ใช้ที่เพิ่งสร้าง พร้อมสถานะ 201 CREATED
      * @throws org.springframework.web.server.ResponseStatusException หากอีเมลที่ใช้ลงทะเบียนมีอยู่แล้วในระบบ (จะคืนสถานะ 409 CONFLICT)

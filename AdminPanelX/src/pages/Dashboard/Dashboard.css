@@ -123,27 +123,8 @@
   font-weight: 600;
 }
 
-.status-badge {
-  display: inline-block;
-  padding: 0.4em 0.9em;
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.2;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: middle;
-  border-radius: 0.5rem;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.status--processing { background-color: #2563eb; }
-.status--pending { background-color: #d97706; }
-.status--completed { background-color: #16a34a; }
-.status--shipped { background-color: #7c3aed; }
-.status--cancelled { background-color: #dc2626; }
-.status--default { background-color: #6b7280; }
+/* --- FIX: Removed hardcoded .status-badge and .status--* rules --- */
+/* The reusable StatusBadge component now handles its own styling. */
 
 /* --- Modal Styles --- */
 .modal-content {

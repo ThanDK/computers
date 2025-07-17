@@ -204,7 +204,7 @@ function ComponentsPage() {
         },
         { 
             id: 'actions', header: 'Actions', 
-            meta: { cellClassName: 'text-center-cell', width: 'auto' }, // <-- Control width here
+            meta: { cellClassName: 'text-center-cell', width: 'auto' }, 
             cell: ({ row }) => (
                 <div className="d-flex gap-2 justify-content-center">
                     <Button variant="outline-primary" size="sm" className="action-btn action-btn-edit" onClick={() => navigate(`/edit-component/${row.original.id}`)}>Edit</Button>
@@ -212,7 +212,7 @@ function ComponentsPage() {
                 </div>
             )
         }
-    ], [editingRowId, token, navigate]); // Dependencies are unchanged
+    ], [editingRowId, token, navigate]); 
 
 
     const typeFilterValue = columnFilters.find(f => f.id === 'type')?.value || '';

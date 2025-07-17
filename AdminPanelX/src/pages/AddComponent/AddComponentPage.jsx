@@ -1,5 +1,3 @@
-// src/pages/AddComponentPage/AddComponentPage.jsx
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Row, Col, Spinner, Card, Alert } from 'react-bootstrap';
@@ -14,7 +12,7 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import ImageCropper from '../../components/ImageCropper/ImageCropper';
 import './AddComponentPage.css';
 
-// --- FIX: Add the .jsx extension to the import path. ---
+// --- FIX: The .jsx extension is correctly in the import path. ---
 import {
     COMPONENT_CONFIG,
     componentTypes,
@@ -155,7 +153,13 @@ function AddComponentPage() {
     return (
         <>
             <MainHeader />
-            <PageHeader title="Add New Component" subtitle="Fill out the form to add a new product component" />
+            {/* --- FIX: Back button functionality added --- */}
+            <PageHeader
+                title="Add New Component"
+                subtitle="Fill out the form to add a new product component"
+                showBackButton={true}
+                onBack={() => navigate('/components')}
+            />
 
             <Card className="form-card">
                 <Card.Body>
@@ -210,15 +214,13 @@ function AddComponentPage() {
                                 <hr className="form-divider my-4" />
 
                                 <h5 className="section-header">3. Specific Details for {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}</h5>
-                                {
-                                    COMPONENT_CONFIG[selectedType]?.render({
-                                        formData,
-                                        lookups,
-                                        handleChange,
-                                        handleTagAdd,
-                                        handleTagRemove
-                                    })
-                                }
+                                {lookups && COMPONENT_CONFIG[selectedType]?.render({
+                                    formData,
+                                    lookups,
+                                    handleChange,
+                                    handleTagAdd,
+                                    handleTagRemove
+                                })}
 
                                 <Button type="submit" variant="primary" size="lg" disabled={isSubmitting} className="mt-4 w-100">
                                     {isSubmitting ? <><Spinner as="span" animation="border" size="sm" /> Creating...</> : 'Create Component'}

@@ -2,16 +2,18 @@
 
 const API_BASE_URL = 'http://localhost:8080/api/admin/orders';
 
-const apiRequest = async (url, method = 'GET', body = null, token) => {
+/**
+ * Generic API request helper function.
+ * This is defined as a standard function to ensure it is "hoisted" and available
+ * to all other functions in this file, preventing "is not a function" errors.
+ */
+async function apiRequest(url, method = 'GET', body = null, token) {
     const options = {
         method,
         headers: {
             'Authorization': `Bearer ${token}`,
         },
-        // --- THE FIX IS HERE ---
-        // 'no-cache' tells the browser to always revalidate with the server,
-        // ensuring you always get the freshest data for GET requests.
-        cache: 'no-cache', 
+        cache: 'no-cache',
     };
     if (body) {
         options.headers['Content-Type'] = 'application/json';
@@ -22,11 +24,12 @@ const apiRequest = async (url, method = 'GET', body = null, token) => {
         const errorData = await response.json().catch(() => ({ message: `Request failed with status ${response.status}` }));
         throw new Error(errorData.message || 'An unknown error occurred.');
     }
+    // Handle successful responses with no content (e.g., DELETE)
     if (response.status === 204) {
         return true;
     }
     return response.json();
-};
+}
 
 export const fetchAllOrders = (token) => {
     return apiRequest(`${API_BASE_URL}`, 'GET', null, token);
@@ -66,4 +69,12 @@ export const fetchValidNextStatuses = (orderId, token) => {
 
 export const updateShippingDetails = (orderId, shippingData, token) => {
     return apiRequest(`${API_BASE_URL}/update-shipping/${orderId}`, 'PUT', shippingData, token);
+};
+
+export const rejectSlip = (orderId, reason, token) => {
+    return apiRequest(`${API_BASE_URL}/reject-slip/${orderId}`, 'POST', { reason }, token);
+};
+
+export const revertSlipApproval = (orderId, reason, token) => {
+    return apiRequest(`${API_BASE_URL}/revert-approval/${orderId}`, 'POST', { reason }, token);
 };

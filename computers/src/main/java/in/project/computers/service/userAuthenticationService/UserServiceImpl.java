@@ -1,5 +1,7 @@
 package in.project.computers.service.userAuthenticationService;
 
+import in.project.computers.dto.user.AdminUserRequest;
+import in.project.computers.dto.user.UserProfileUpdateRequest;
 import in.project.computers.dto.user.UserRequest;
 import in.project.computers.dto.user.UserResponse;
 import in.project.computers.entity.user.UserEntity;
@@ -8,9 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Service สำหรับจัดการตรรกะที่เกี่ยวข้องกับผู้ใช้ เช่น การลงทะเบียน
+ * Service สำหรับจัดการตรรกะที่เกี่ยวข้องกับผู้ใช้ เช่น การลงทะเบียน, การอัปเดต
  */
 @Service
 @RequiredArgsConstructor
@@ -20,48 +26,131 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationFacade authenticationFacade;
 
-    /**
-     * ลงทะเบียนผู้ใช้ใหม่ในระบบ
-     * @param request ข้อมูลผู้ใช้ใหม่
-     * @return UserResponse DTO ของผู้ใช้ที่ลงทะเบียนแล้ว
-     */
     @Override
     public UserResponse registerUser(UserRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalStateException("อีเมล " + request.getEmail() + " นี้มีผู้ใช้งานแล้ว");
+            throw new IllegalStateException("Email " + request.getEmail() + " Already Exists");
         }
         UserEntity newUser = convertToEntity(request);
         newUser = userRepository.save(newUser);
         return convertToResponse(newUser);
     }
 
-    /**
-     * ค้นหา ID ของผู้ใช้ที่กำลังล็อกอินอยู่
-     * @return ID ของผู้ใช้ (String)
-     */
+    @Override
+    public UserResponse AdminCreateUser(AdminUserRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new IllegalStateException("Email " + request.getEmail() + " Already Exists");
+        }
+        UserEntity newUser = convertAdminUserToEntity(request);
+        newUser = userRepository.save(newUser);
+        return convertToResponse(newUser);
+    }
+
     @Override
     public String findByUserId() {
         String loggedInUserEmail = authenticationFacade.getAuthentication().getName();
         UserEntity loggedInUser = userRepository.findByEmail(loggedInUserEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("ไม่พบผู้ใช้"));
+                .orElseThrow(() -> new UsernameNotFoundException("Not Found User " + loggedInUserEmail));
         return loggedInUser.getId();
     }
 
-    /**
-     * [Helper] แปลง UserRequest DTO เป็น UserEntity
-     */
+    @Override
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserResponse updateUserByAdmin(String userId, AdminUserRequest request) {
+        UserEntity existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + userId));
+
+        if (StringUtils.hasText(request.getEmail()) && !existingUser.getEmail().equals(request.getEmail())) {
+            userRepository.findByEmail(request.getEmail()).ifPresent(userWithNewEmail -> {
+                if (!userWithNewEmail.getId().equals(existingUser.getId())) {
+                    throw new IllegalStateException("Email " + request.getEmail() + " is already in use by another account.");
+                }
+            });
+            existingUser.setEmail(request.getEmail());
+        }
+
+        if (StringUtils.hasText(request.getName())) {
+            existingUser.setName(request.getName());
+        }
+
+        if (StringUtils.hasText(request.getPassword())) {
+            existingUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        if (StringUtils.hasText(request.getRole())) {
+            existingUser.setRole(request.getRole());
+        }
+
+        UserEntity updatedUser = userRepository.save(existingUser);
+        return convertToResponse(updatedUser);
+    }
+
+
+    @Override
+    public UserResponse updateUserProfile(UserProfileUpdateRequest request) {
+        String currentEmail = authenticationFacade.getAuthentication().getName();
+        UserEntity loggedInUser = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found. Please log in again."));
+
+        if (StringUtils.hasText(request.getName())) {
+            loggedInUser.setName(request.getName());
+        }
+        if (StringUtils.hasText(request.getPassword())) {
+            loggedInUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+
+        if (StringUtils.hasText(request.getEmail()) && !loggedInUser.getEmail().equals(request.getEmail())) {
+            if(userRepository.findByEmail(request.getEmail()).isPresent()){
+                throw new IllegalStateException("Email " + request.getEmail() + " is already in use by another account.");
+            }
+            loggedInUser.setEmail(request.getEmail());
+        }
+
+        UserEntity updatedUser = userRepository.save(loggedInUser);
+        return convertToResponse(updatedUser);
+    }
+    @Override
+    public UserResponse getUserById(String userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + userId));
+        return convertToResponse(user);
+    }
+
+    @Override
+    public void deleteUser(String userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new UsernameNotFoundException("User not found with ID: " + userId);
+        }
+        userRepository.deleteById(userId);
+    }
+
+    // --- (Helper methods remain the same) ---
     private UserEntity convertToEntity(UserRequest request) {
         return UserEntity.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .role("ROLE_USER") // กำหนด role เริ่มต้นเป็น USER
+                .role("ROLE_USER")
                 .build();
     }
 
-    /**
-     * [Helper] แปลง UserEntity เป็น UserResponse DTO
-     */
+    private UserEntity convertAdminUserToEntity(AdminUserRequest request) {
+        return UserEntity.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .name(request.getName())
+                .role(request.getRole())
+                .build();
+    }
+
     private UserResponse convertToResponse(UserEntity registeredUser) {
         return UserResponse.builder()
                 .id(registeredUser.getId())

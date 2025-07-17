@@ -1,5 +1,3 @@
-// src/pages/EditComponentPage/EditComponentPage.jsx
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Form, Button, Row, Col, Spinner, Card, Alert } from 'react-bootstrap';
@@ -14,7 +12,7 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import ImageCropper from '../../components/ImageCropper/ImageCropper';
 import './EditComponentPage.css';
 
-// --- FIX: Add the .jsx extension to the import path. ---
+// --- FIX: The .jsx extension is correctly in the import path. ---
 import {
     COMPONENT_CONFIG,
     componentTypes,
@@ -154,7 +152,13 @@ function EditComponentPage() {
     return (
         <>
             <MainHeader />
-            <PageHeader title={`Edit ${typeLabel}`} subtitle={`Editing component with MPN: ${formData.mpn || 'N/A'}`} />
+            {/* --- FIX: Back button functionality added --- */}
+            <PageHeader
+                title={`Edit ${typeLabel}`}
+                subtitle={`Editing component with MPN: ${formData.mpn || 'N/A'}`}
+                showBackButton={true}
+                onBack={() => navigate('/components')}
+            />
 
             <Card className="form-card">
                 <Card.Body>
@@ -201,7 +205,7 @@ function EditComponentPage() {
                         <hr className="form-divider my-4" />
 
                         <h5 className="section-header">Specific Details for {typeLabel}</h5>
-                        {COMPONENT_CONFIG[componentType]?.render({
+                        {lookups && COMPONENT_CONFIG[componentType]?.render({
                             formData,
                             lookups,
                             handleChange,

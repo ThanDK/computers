@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -116,6 +117,41 @@ public class AdminOrderController {
     public ResponseEntity<OrderResponse> rejectRefund(@PathVariable String orderId) {
         log.info("Admin action: Rejecting refund for order ID: {}", orderId);
         OrderResponse response = orderService.rejectRefund(orderId);
+        return ResponseEntity.ok(response);
+    }
+    /**
+     * [POST] /api/admin/orders/reject-slip/{orderId}
+     * Endpoint for Admin to reject a payment slip, requiring a reason.
+     * @param orderId ID of the order.
+     * @param payload A JSON object containing a "reason" key. e.g., {"reason": "Image is blurry"}
+     * @return The updated order response.
+     */
+    @PostMapping("/reject-slip/{orderId}")
+    public ResponseEntity<OrderResponse> rejectPaymentSlip(@PathVariable String orderId, @RequestBody Map<String, String> payload) {
+        String reason = payload.get("reason");
+        if (reason == null || reason.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A reason for rejection is required.");
+        }
+        log.info("Admin action: Rejecting payment slip for order ID: {}", orderId);
+        OrderResponse response = orderService.rejectPaymentSlip(orderId, reason);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * [POST] /api/admin/orders/revert-approval/{orderId}
+     * Endpoint for Admin to revert a previously approved bank transfer.
+     * @param orderId ID of the order.
+     * @param payload A JSON object containing a "reason" key. e.g., {"reason": "Approved by mistake"}
+     * @return The updated order response.
+     */
+    @PostMapping("/revert-approval/{orderId}")
+    public ResponseEntity<OrderResponse> revertSlipApproval(@PathVariable String orderId, @RequestBody Map<String, String> payload) {
+        String reason = payload.get("reason");
+        if (reason == null || reason.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A reason for reversion is required.");
+        }
+        log.info("Admin action: Reverting slip approval for order ID: {}", orderId);
+        OrderResponse response = orderService.revertSlipApproval(orderId, reason);
         return ResponseEntity.ok(response);
     }
 

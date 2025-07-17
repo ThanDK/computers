@@ -8,10 +8,12 @@ const orderStatusConfig = {
     // Blue (In Progress)
     PROCESSING: { background: '#2563eb', color: '#eff6ff' },
     // Yellow/Orange (Attention)
+    PENDING: { background: '#f59e0b', color: '#fffbeb' }, // Added for consistency
     PENDING_PAYMENT: { background: '#f59e0b', color: '#fffbeb' },
     REFUND_REQUESTED: { background: '#f97316', color: '#fff7ed' },
     // Red (Issues)
     DELIVERY_FAILED: { background: '#dc2626', color: '#fef2f2' },
+    REJECTED_SLIP: { background: '#dc2626', color: '#fef2f2' }, // Added missing status
     // Purple/Fuchsia (Special Cases)
     RETURNED_TO_SENDER: { background: '#c026d3', color: '#fdf4ff' },
     // Gray/Neutral (Final-Negative)

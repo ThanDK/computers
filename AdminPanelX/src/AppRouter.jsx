@@ -1,6 +1,11 @@
+// src/AppRouter.jsx  OR  src/router/AppRouter.js
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+// --- THIS IS THE FIX ---
+// The path is changed from "../context/AuthContext" to "./context/AuthContext"
 import { useAuth } from './context/AuthContext';
+// ----------------------
 
 import AdminLayout from './layouts/AdminLayout/AdminLayout';
 import LoginPage from './pages/Login/LoginPage';
@@ -11,8 +16,8 @@ import EditComponentPage from './pages/EditComponent/EditComponentPage';
 import LookupsPage from './pages/Lookups/LookupsPage';
 import OrdersPage from './pages/OrdersPage/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage/OrderDetailPage';
+import ShippingProvidersPage from './pages/ShippingProvidersPage/ShippingProvidersPage';
 
-// ... PrivateRoute component is unchanged ...
 const PrivateRoute = () => {
     const { user, isAdmin } = useAuth();
     if (!user) { return <Navigate to="/login" replace />; }
@@ -40,7 +45,8 @@ const AppRouter = () => {
         <Route path="edit-component/:id" element={<EditComponentPage />} />
         <Route path="lookups" element={<LookupsPage />} /> 
         <Route path="orders" element={<OrdersPage />} />
-        <Route path="order-details/:orderId" element={<OrderDetailPage />} /> {/* <-- ADD NEW ROUTE */}
+        <Route path="order-details/:orderId" element={<OrderDetailPage />} /> 
+        <Route path="shipping-providers" element={<ShippingProvidersPage />} /> 
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

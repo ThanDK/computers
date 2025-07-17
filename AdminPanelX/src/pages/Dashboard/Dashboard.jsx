@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Spinner, Table, Button, Modal, ButtonGroup } from 'react-bootstrap';
 import { BsArrowUpRight, BsArrowDownRight, BsBoxSeam, BsGraphUp, BsHourglassSplit, BsFillBellFill, BsDownload, BsArchiveFill } from 'react-icons/bs';
-import { subDays, subMonths, subYears, format, formatDistanceToNow } from 'date-fns';
+import { subDays, subMonths, subYears, format } from 'date-fns';
 
 import MainHeader from '../../components/MainHeader/MainHeader';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import RevenueChart from '../../components/Charts/RevenueChart';
 import TopSellingChart from '../../components/Charts/TopSellingChart';
+import StatusBadge from '../../components/StatusBadge/StatusBadge'; // --- FIX: Import reusable component ---
 import { fetchDashboardData, fetchOrdersForExport } from '../../services/DashboardService';
 import { useAuth } from '../../context/AuthContext';
 import './Dashboard.css';
 
-
 const exportToCsv = (filename, rows) => {
+    // (exportToCsv function remains unchanged)
     if (!rows || !rows.length) {
         return;
     }
@@ -24,7 +25,7 @@ const exportToCsv = (filename, rows) => {
         rows.map(row => {
             return keys.map(k => {
                 let cell = row[k] === null || row[k] === undefined ? '' : row[k];
-                cell = cell instanceof Date 
+                cell = cell instanceof Date
                     ? cell.toLocaleString()
                     : cell.toString().replace(/"/g, '""');
                 if (cell.search(/("|,|\n)/g) >= 0) {
@@ -47,16 +48,12 @@ const exportToCsv = (filename, rows) => {
     }
 };
 
-
-// --- Helper Components ---
+// --- FIX: Removed local helper components (LoadingOverlay, NoDataMessage, and hardcoded StatusBadge) ---
 const LoadingOverlay = () => <div className="d-flex justify-content-center align-items-center h-100"><Spinner animation="border" /></div>;
 const NoDataMessage = ({ message }) => <div className="d-flex justify-content-center align-items-center h-100"><p className="text-secondary">{message}</p></div>;
-const StatusBadge = ({ status }) => {
-    const statusClass = status ? status.toLowerCase().replace(' ', '-') : 'default';
-    return <span className={`status-badge status--${statusClass}`}>{status}</span>;
-};
 
 const StatCard = ({ title, value, trend, icon, periodLabel, isCurrency = false, onClick, clickable = false }) => {
+    // (StatCard component remains unchanged)
     const isPositive = trend >= 0;
     const showTrend = typeof trend === 'number' && !isNaN(trend);
     
@@ -85,6 +82,7 @@ const rangeOptions = [
 ];
 
 const DateRangeControls = ({ selectedRange, onRangeChange }) => {
+    // (DateRangeControls component remains unchanged)
     return (
         <ButtonGroup className="date-range-buttons">
             {rangeOptions.map(option => (
@@ -248,7 +246,8 @@ function Dashboard() {
                                                 <tr key={order.id}>
                                                     <td>{order.id}</td>
                                                     <td>{order.customerName}</td>
-                                                    <td><StatusBadge status={order.orderStatus} /></td>
+                                                    {/* --- FIX: Use the reusable StatusBadge component --- */}
+                                                    <td><StatusBadge status={order.orderStatus} type="order" /></td>
                                                     <td>{formatCurrency(order.totalAmount)}</td>
                                                 </tr>
                                             )) : (

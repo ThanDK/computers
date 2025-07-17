@@ -1,3 +1,4 @@
+// src/services/DashboardService.js
 import { handlePromise } from './NotificationService';
 import { format } from 'date-fns';
 
@@ -6,7 +7,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
 /**
  * Fetches all data for the main dashboard display.
  */
-export const fetchDashboardData = async (token, startDate, endDate) => {
+export async function fetchDashboardData(token, startDate, endDate) {
     
     const startQuery = format(startDate, 'yyyy-MM-dd');
     const endQuery = format(endDate, 'yyyy-MM-dd');
@@ -47,11 +48,10 @@ export const fetchDashboardData = async (token, startDate, endDate) => {
     return promise;
 };
 
-
 /**
  * Fetches ONLY the order data for a given date range by calling the new dedicated export endpoint.
  */
-export const fetchOrdersForExport = async (token, startDate, endDate) => {
+export async function fetchOrdersForExport(token, startDate, endDate) {
     const startQuery = format(startDate, 'yyyy-MM-dd');
     const endQuery = format(endDate, 'yyyy-MM-dd');
     

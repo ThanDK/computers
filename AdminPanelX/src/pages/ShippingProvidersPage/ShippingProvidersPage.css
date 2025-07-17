@@ -1,0 +1,95 @@
+/* src/pages/ShippingProvidersPage/ShippingProvidersPage.css */
+/* THIS IS A DIRECT COPY OF LookupsPage.css FOR A PERFECT LAYOUT MATCH */
+
+.table-controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1;
+}
+
+.search-bar {
+    max-width: 400px;
+    flex-grow: 1;
+}
+
+/* Action Button Styles from ComponentsPage/LookupsPage */
+.action-btn {
+    font-weight: 500;
+    min-width: 65px;
+}
+.action-btn-edit {
+    --bs-btn-color: #60a5fa;
+    --bs-btn-border-color: #60a5fa;
+    --bs-btn-hover-bg: #3b82f6;
+    --bs-btn-hover-border-color: #3b82f6;
+    --bs-btn-hover-color: #fff;
+}
+.action-btn-delete {
+    --bs-btn-color: #f87171;
+    --bs-btn-border-color: #f87171;
+    --bs-btn-hover-bg: #ef4444;
+    --bs-btn-hover-border-color: #ef4444;
+    --bs-btn-hover-color: #fff;
+}
+
+/* Dark Theme Modal Styles */
+.provider-form-modal .modal-content {
+    background-color: var(--secondary-bg);
+    color: var(--text-primary);
+    border: 1px solid #4a5a76;
+    border-radius: 12px;
+}
+.provider-form-modal .modal-header {
+    border-bottom: 1px solid #4a5a76;
+}
+.provider-form-modal .modal-footer {
+    border-top: 1px solid #4a5a76;
+}
+.provider-form-modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+.provider-form-modal .form-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.provider-form-modal .form-control,
+.provider-form-modal .form-select {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    border: 1px solid #4a5a76;
+}
+.provider-form-modal .form-control:focus,
+.provider-form-modal .form-select:focus {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.2rem rgba(136, 132, 216, 0.25);
+}
+/* Style for the logo preview inside the modal */
+.logo-preview {
+    max-height: 80px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 5px;
+    background-color: var(--table-header-bg);
+}
+
+/* Style for the smaller logo inside the table */
+.table-logo {
+    height: 30px;
+    width: auto;
+    max-width: 80px;
+    object-fit: contain;
+}

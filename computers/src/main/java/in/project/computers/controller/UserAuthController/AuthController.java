@@ -36,30 +36,6 @@ public class AuthController {
     /**
      * <h4>[POST] /api/login</h4>
      * <p>Endpoint สำหรับการล็อกอินเข้าสู่ระบบ</p>
-     * <p><b>การทำงาน:</b></p>
-     * <ul>
-     *     <li>1. รับ `email` และ `password` จาก Request Body</li>
-     *     <li>2. ใช้ `AuthenticationManager` ของ Spring Security เพื่อตรวจสอบว่าข้อมูลที่ส่งมาถูกต้องหรือไม่
-     *        (ถ้าไม่ถูกต้อง Spring Security จะโยน `BadCredentialsException` และคืนสถานะ 401 UNAUTHORIZED โดยอัตโนมัติ)</li>
-     *     <li>3. หากตรวจสอบผ่าน, จะดึงข้อมูล `UserDetails` (รวมถึง Roles) ของผู้ใช้ออกมา</li>
-     *     <li>4. ใช้ `JwtUtil` เพื่อสร้าง JWT Token ซึ่งจะฝังข้อมูลผู้ใช้และ Roles ไว้ข้างใน</li>
-     *     <li>5. คืนค่า Token กลับไปให้ Client ในรูปแบบของ `AuthenticationResponse`</li>
-     * </ul>
-     * <p><b>ตัวอย่าง Request Body (JSON):</b></p>
-     * <pre>{@code
-     * {
-     *   "email": "user@example.com",
-     *   "password": "password123"
-     * }
-     * }</pre>
-     * <p><b>ตัวอย่าง Response Body (JSON):</b></p>
-     * <pre>{@code
-     * {
-     *   "email": "user@example.com",
-     *   "jwt": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwicm9sZXMi..."
-     * }
-     * }</pre>
-     *
      * @param request DTO ที่มี email และ password ของผู้ใช้
      * @return AuthenticationResponse ที่มี JWT token สำหรับการใช้งานต่อไป
      * @throws BadCredentialsException หาก email หรือ password ไม่ถูกต้อง
@@ -74,8 +50,7 @@ public class AuthController {
             );
         } catch (BadCredentialsException e) {
             log.warn("Failed authentication attempt for user: {}", request.getEmail());
-            // สามารถโยน Exception ให้ GlobalExceptionHandler จัดการ หรือจะ return ResponseEntity โดยตรงก็ได้
-            throw e; // โยน Exception เพื่อให้ Spring จัดการและคืนสถานะ 401
+            throw e;
         }
 
         // ถ้า authenticate ผ่าน, ดำเนินการสร้าง Token
