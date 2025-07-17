@@ -25,7 +25,7 @@ public class PaypalServiceImpl implements PaypalService {
 
     @Override
     public Payment createPayment(Order order, String intent, String description, String cancelUrl, String successUrl) throws PayPalRESTException {
-        // This method calls our new, more intelligent getTransactions method
+
         List<Transaction> transactions = getTransactions(order, description);
 
         Payer payer = new Payer();
@@ -71,14 +71,14 @@ public class PaypalServiceImpl implements PaypalService {
                 }
             }
 
-            // 2. Calculate the subtotal from our newly flattened list
+
             BigDecimal calculatedSubtotal = paypalItems.stream()
                     .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal tax = order.getTaxAmount() != null ? order.getTaxAmount() : BigDecimal.ZERO;
 
-            // 3. Sanity Check for No Shipping: The itemized subtotal plus tax should exactly equal the order's grand total.
+
             BigDecimal expectedTotal = calculatedSubtotal.add(tax).setScale(2, RoundingMode.HALF_UP);
             BigDecimal actualTotal = order.getTotalAmount().setScale(2, RoundingMode.HALF_UP);
 
