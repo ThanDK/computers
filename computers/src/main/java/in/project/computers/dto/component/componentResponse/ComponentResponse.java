@@ -39,7 +39,8 @@ public abstract class ComponentResponse {
     private String name;
     private String description;
     private String imageUrl;
-    //For Inventory only
+
     private Integer quantity;
     private BigDecimal price;
+    private String brandName;
 }

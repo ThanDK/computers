@@ -11,18 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
-/**
- * <h3>OrderService Interface (ฉบับสมบูรณ์)</h3>
- * <p>
- * Interface นี้ทำหน้าที่เป็น "สัญญา" หรือข้อกำหนดสำหรับคลาสที่จะเข้ามาจัดการ Business Logic ทั้งหมดที่เกี่ยวข้องกับระบบการสั่งซื้อ (Order)
- * โดยกำหนดเมธอดสาธารณะที่ Service อื่นๆ หรือ Controller สามารถเรียกใช้งานได้
- * </p>
- * <p>
- * การใช้ Interface ช่วยให้เกิด Decoupling (การลดการพึ่งพากัน) ซึ่งหมายความว่าเราสามารถสลับสับเปลี่ยน
- * การทำงานเบื้องหลัง (Implementation) ได้ในอนาคตโดยไม่กระทบกับส่วนที่เรียกใช้งาน ตราบใดที่ยังคงทำตาม "สัญญา" นี้
- * นอกจากนี้ยังช่วยให้โครงสร้างของโปรเจกต์มีความชัดเจนและเป็นระเบียบมากขึ้น
- * </p>
- */
+
 public interface OrderService {
 
     /**
@@ -169,8 +158,21 @@ public interface OrderService {
      */
     OrderResponse rejectRefund(String orderId);
 
+    /**
+     * [สำหรับ Admin] บังคับคืนเงิน Order โดยไม่ต้องรอคำขอจากผู้ใช้
+     * <p>
+     * ใช้ในสถานการณ์ที่ Admin ต้องการเริ่มกระบวนการคืนเงินเอง เช่น พบข้อบกพร่องของสินค้า,
+     * ราคาผิดพลาด, หรือลูกค้าติดต่อขอคืนเงินผ่านช่องทางอื่น
+     * จะทำงานกับ Order ที่ชำระเงินแล้ว (เช่น PROCESSING, SHIPPED)
+     * </p>
+     *
+     * @param orderId ID ของ Order ที่ต้องการบังคับคืนเงิน
+     * @return {@link OrderResponse} ที่มีสถานะ Order อัปเดตเป็น REFUNDED
+     * @throws PayPalRESTException หากเกิดข้อผิดพลาดในการติดต่อ PayPal API เพื่อทำการ Refund
+     * @throws ResponseStatusException หาก Order ไม่อยู่ในสถานะที่สามารถบังคับคืนเงินได้
+     */
+    OrderResponse forceRefundByAdmin(String orderId) throws PayPalRESTException;
 
-    // === [METHOD MODIFIED TO REMOVE PAGINATION] ===
     /**
      * [สำหรับ Admin] ดึงรายการ Order ทั้งหมดในระบบ
      * @return List<OrderResponse> ที่มีข้อมูล Order ทั้งหมด

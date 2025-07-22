@@ -165,4 +165,35 @@ public class LookupController {
         lookupService.deleteShippingProvider(id);
         return ResponseEntity.noContent().build();
     }
+
+    // --- Brands Management ---
+    // =================================================================
+
+    @GetMapping("/brands")
+    public ResponseEntity<List<Brand>> getAllBrands() {
+        return ResponseEntity.ok(lookupService.getAllBrands());
+    }
+
+    @PostMapping(value = "/brands", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Brand> createBrand(
+            @RequestPart("brand") @Valid BrandRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        Brand createdBrand = lookupService.createBrand(request, image);
+        return new ResponseEntity<>(createdBrand, HttpStatus.CREATED);
+    }
+
+    @PutMapping(value = "/brands/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Brand> updateBrand(
+            @PathVariable String id,
+            @RequestPart("brand") @Valid BrandRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        Brand updatedBrand = lookupService.updateBrand(id, request, image);
+        return ResponseEntity.ok(updatedBrand);
+    }
+
+    @DeleteMapping("/brands/{id}")
+    public ResponseEntity<Void> deleteBrand(@PathVariable String id) {
+        lookupService.deleteBrand(id);
+        return ResponseEntity.noContent().build();
+    }
 }

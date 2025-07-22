@@ -42,7 +42,6 @@ import java.util.stream.Stream;
 @Slf4j
 public class OrderHelperServiceImpl implements OrderHelperService {
 
-    // --- Dependencies ---
     private final ComponentRepository componentRepository;
     private final InventoryRepository inventoryRepository;
     private final ComputerBuildRepository buildRepository;
@@ -50,7 +49,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
     private final PaypalService paypalService;
     private final APIContext apiContext;
 
-    // --- Config Properties ---
+
 
     @Value("${app.currency:THB}")
     private String currency;
@@ -375,7 +374,6 @@ public class OrderHelperServiceImpl implements OrderHelperService {
 
     @Override
     public OrderResponse entityToResponse(Order order) {
-        // === [HELPER-MAP-1] แปลง Entity -> DTO โดยใช้ Builder Pattern ===
         return OrderResponse.builder()
                 .id(order.getId())
                 .userId(order.getUserId())

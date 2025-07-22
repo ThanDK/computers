@@ -9,22 +9,7 @@ import in.project.computers.entity.order.PaymentDetails;
 import in.project.computers.entity.order.PaymentMethod;
 import in.project.computers.entity.user.UserEntity;
 
-/**
- * <h3>Order Helper Service Interface (ฉบับสมบูรณ์)</h3>
- * <p>
- * Interface นี้กำหนด "สัญญา" สำหรับคลาสผู้ช่วย (Helper) ที่จะเข้ามาจัดการ
- * Logic ที่ซับซ้อนในการประมวลผล Order เพื่อให้ OrderService หลักมีความกระชับและอ่านง่ายขึ้น
- * </p>
- * <p>
- * หน้าที่หลักของ Helper คือการจัดการงานที่เป็นรายละเอียดปลีกย่อย เช่น:
- * <ul>
- *   <li>การสร้าง Order พื้นฐาน, ตรวจสอบสต็อก, และคำนวณราคารวม</li>
- *   <li>การปรับปรุงสต็อกสินค้า (เพิ่ม/ลด)</li>
- *   <li>การประมวลผลการคืนเงินผ่าน PayPal</li>
- *   <li>การแปลง Entity เป็น DTO</li>
- * </ul>
- * </p>
- */
+
 public interface OrderHelperService {
 
     /**

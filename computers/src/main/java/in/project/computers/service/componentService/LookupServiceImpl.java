@@ -28,8 +28,10 @@ public class LookupServiceImpl implements LookupService {
     private final StorageInterfaceRepository storageInterfaceRepository;
     private final ComponentRepository componentRepository;
     private final ShippingProviderRepository shippingProviderRepository;
+    private final BrandRepository brandRepository;
     private final S3Service s3Service;
 
+    // ... (getAllLookups, and all Socket, RamType, FormFactor, StorageInterface methods are unchanged) ...
     @Override
     public Map<String, Object> getAllLookups() {
         Map<String, Object> lookups = new HashMap<>();
@@ -41,6 +43,7 @@ public class LookupServiceImpl implements LookupService {
         lookups.put("formFactors", groupedFormFactors);
         lookups.put("shippingProviders", shippingProviderRepository.findAll());
         lookups.put("radiatorSizes", List.of(120, 140, 240, 280, 360, 420));
+        lookups.put("brands", brandRepository.findAll());
         return lookups;
     }
 
@@ -54,6 +57,8 @@ public class LookupServiceImpl implements LookupService {
     public List<StorageInterface> getAllStorageInterfaces() { return storageInterfaceRepository.findAll(); }
     @Override
     public List<ShippingProvider> getAllShippingProviders() { return shippingProviderRepository.findAll(); }
+    @Override
+    public List<Brand> getAllBrands() { return brandRepository.findAll(); }
 
     @Override
     public Socket createSocket(SocketRequest request) {
@@ -245,13 +250,81 @@ public class LookupServiceImpl implements LookupService {
         shippingProviderRepository.deleteById(id);
     }
 
+    // --- BRAND METHODS ---
+
+    @Override
+    public Brand createBrand(BrandRequest request, MultipartFile image) {
+        if (brandRepository.findByName(request.getName()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Brand with name '" + request.getName() + "' already exists.");
+        }
+
+        String logoUrl = null;
+        if (image != null && !image.isEmpty()) {
+            logoUrl = s3Service.uploadFile(image);
+        }
+        // FIX: Removed the incorrect call to request.getLogoUrl()
+
+        Brand brand = Brand.builder()
+                .name(request.getName())
+                .logoUrl(logoUrl)
+                .build();
+        return brandRepository.save(brand);
+    }
+
+    @Override
+    public Brand updateBrand(String id, BrandRequest request, MultipartFile image) {
+        Brand brand = brandRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Brand not found with id: " + id));
+
+        Optional<Brand> existingByName = brandRepository.findByName(request.getName());
+        if (existingByName.isPresent() && !existingByName.get().getId().equals(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Another brand with name '" + request.getName() + "' already exists.");
+        }
+
+        String logoUrl = brand.getLogoUrl();
+
+        if (image != null && !image.isEmpty()) {
+            if (StringUtils.hasText(brand.getLogoUrl()) && brand.getLogoUrl().contains("s3.amazonaws.com")) {
+                String oldKey = extractKeyFromUrl(brand.getLogoUrl());
+                if(oldKey != null) s3Service.deleteFile(oldKey);
+            }
+            logoUrl = s3Service.uploadFile(image);
+        }
+        // FIX: Removed the incorrect call to request.getLogoUrl()
+
+        brand.setName(request.getName());
+        brand.setLogoUrl(logoUrl);
+
+        return brandRepository.save(brand);
+    }
+
+    @Override
+    public void deleteBrand(String id) {
+        Brand brand = brandRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Brand not found with id: " + id));
+
+        if (componentRepository.existsByBrandId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete Brand. It is currently in use by one or more components.");
+        }
+
+        if (StringUtils.hasText(brand.getLogoUrl()) && brand.getLogoUrl().contains("s3.amazonaws.com")) {
+            String keyToDelete = extractKeyFromUrl(brand.getLogoUrl());
+            if(keyToDelete != null) s3Service.deleteFile(keyToDelete);
+        }
+
+        brandRepository.deleteById(id);
+    }
+
+    // --- FIX: ADDED THE MISSING HELPER METHOD ---
     private String extractKeyFromUrl(String fileUrl) {
         if (!StringUtils.hasText(fileUrl)) {
             return null;
         }
         try {
+            // Assumes a URL structure like https://<bucket-name>.s3.<region>.amazonaws.com/<key>
             return fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
         } catch (Exception e) {
+            // Log the exception if you have a logger configured
             return null;
         }
     }

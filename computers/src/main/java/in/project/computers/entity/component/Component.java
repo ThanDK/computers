@@ -2,11 +2,13 @@ package in.project.computers.entity.component;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import in.project.computers.entity.lookup.Brand;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 
@@ -47,4 +49,7 @@ public abstract class Component {
     private String description;
 
     private String imageUrl;
+
+    @DBRef
+    private Brand brand;
 }

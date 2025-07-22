@@ -6,10 +6,7 @@ import in.project.computers.entity.lookup.*;
 import in.project.computers.dto.component.componentRequest.*;
 import in.project.computers.dto.component.componentResponse.*;
 import in.project.computers.repository.ComponentRepo.InventoryRepository;
-import in.project.computers.repository.lookup.FormFactorRepository;
-import in.project.computers.repository.lookup.RamTypeRepository;
-import in.project.computers.repository.lookup.SocketRepository;
-import in.project.computers.repository.lookup.StorageInterfaceRepository;
+import in.project.computers.repository.lookup.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +28,7 @@ public class ComponentConverterImpl implements ComponentConverter {
     private final FormFactorRepository formFactorRepository;
     private final StorageInterfaceRepository storageInterfaceRepository;
     private final InventoryRepository inventoryRepository;
+    private final BrandRepository brandRepository;
 
     private final Map<Class<? extends ComponentRequest>, Function<ComponentRequest, Component>> entityConverters = new HashMap<>();
     private final Map<Class<? extends Component>, Function<Component, ComponentResponse>> responseConverters = new HashMap<>();
@@ -58,7 +56,7 @@ public class ComponentConverterImpl implements ComponentConverter {
         log.info("Component converters initialized successfully.");
     }
 
-    // ... other @Override methods are unchanged ...
+
     @Override
     public Component convertRequestToEntity(ComponentRequest request) {
         Function<ComponentRequest, Component> converter = entityConverters.get(request.getClass());
@@ -92,14 +90,39 @@ public class ComponentConverterImpl implements ComponentConverter {
         return responseClass.cast(baseResponse);
     }
 
+    // --- MODIFIED METHOD ---
     private <B extends Component.ComponentBuilder<?, ?>> B setCommonEntityProperties(B builder, ComponentRequest request) {
+        Brand brand = brandRepository.findById(request.getBrandId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Brand ID: " + request.getBrandId()));
+
         builder.mpn(request.getMpn())
                 .type(request.getType())
                 .name(request.getName())
-                .description(request.getDescription());
+                .description(request.getDescription())
+                .brand(brand);
         return builder;
     }
 
+    // --- MODIFIED METHOD ---
+    private <B extends ComponentResponse.ComponentResponseBuilder<?, ?>> B setCommonResponseProperties(B builder, Component entity) {
+        Optional<Inventory> inventoryOpt = inventoryRepository.findByComponentId(entity.getId());
+        int quantity = inventoryOpt.map(Inventory::getQuantity).orElse(0);
+        BigDecimal price = inventoryOpt.map(Inventory::getPrice).orElse(BigDecimal.ZERO);
+
+        String brandName = Optional.ofNullable(entity.getBrand()).map(Brand::getName).orElse("N/A");
+
+        builder.id(entity.getId())
+                .mpn(entity.getMpn())
+                .isActive(entity.isActive())
+                .type(entity.getType())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .imageUrl(entity.getImageUrl())
+                .quantity(quantity)
+                .price(price)
+                .brandName(brandName); // Only set the name, as requested.
+        return builder;
+    }
 
     private Case buildCaseEntity(CaseRequest request) {
         List<FormFactor> motherboardFormFactors = request.getMotherboard_form_factor_support()
@@ -119,11 +142,10 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .max_cooler_height_mm(request.getMax_cooler_height_mm())
                 .bays_2_5_inch(request.getBays_2_5_inch())
                 .bays_3_5_inch(request.getBays_3_5_inch())
-                .supportedRadiatorSizesMm(request.getSupportedRadiatorSizesMm()), request) // ADDED
+                .supportedRadiatorSizesMm(request.getSupportedRadiatorSizesMm()), request)
                 .build();
     }
 
-    // ... Motherboard, Psu, StorageDrive entities are unchanged ...
     private Motherboard buildMotherboardEntity(MotherboardRequest request) {
         Socket socket = socketRepository.findByName(request.getSocket()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid socket: " + request.getSocket()));
         RamType ramType = ramTypeRepository.findByName(request.getRam_type()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid RAM type: " + request.getRam_type()));
@@ -177,11 +199,10 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .supportedSockets(sockets)
                 .height_mm(request.getHeight_mm())
                 .wattage(request.getWattage())
-                .radiatorSize_mm(request.getRadiatorSize_mm()), request) // ADDED
+                .radiatorSize_mm(request.getRadiatorSize_mm()), request)
                 .build();
     }
 
-    // ... RamKit, Cpu, Gpu builders are unchanged ...
     private RamKit buildRamKitEntity(RamKitRequest request) {
         RamType ramType = ramTypeRepository.findByName(request.getRam_type()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid RAM type: " + request.getRam_type()));
         return setCommonEntityProperties(RamKit.builder()
@@ -208,23 +229,6 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .build();
     }
 
-    private <B extends ComponentResponse.ComponentResponseBuilder<?, ?>> B setCommonResponseProperties(B builder, Component entity) {
-        Optional<Inventory> inventoryOpt = inventoryRepository.findByComponentId(entity.getId());
-        int quantity = inventoryOpt.map(Inventory::getQuantity).orElse(0);
-        BigDecimal price = inventoryOpt.map(Inventory::getPrice).orElse(BigDecimal.ZERO);
-
-        builder.id(entity.getId())
-                .mpn(entity.getMpn())
-                .isActive(entity.isActive())
-                .type(entity.getType())
-                .name(entity.getName())
-                .description(entity.getDescription())
-                .imageUrl(entity.getImageUrl())
-                .quantity(quantity)
-                .price(price);
-        return builder;
-    }
-
     private CaseResponse buildCaseResponse(Case entity) {
         List<String> motherboardFFNames = (entity.getSupportedFormFactors() == null) ? Collections.emptyList() :
                 entity.getSupportedFormFactors().stream().map(FormFactor::getName).collect(Collectors.toList());
@@ -238,13 +242,12 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .max_cooler_height_mm(entity.getMax_cooler_height_mm())
                 .bays_2_5_inch(entity.getBays_2_5_inch())
                 .bays_3_5_inch(entity.getBays_3_5_inch())
-                .supportedRadiatorSizesMm( // ADDED
+                .supportedRadiatorSizesMm(
                         (entity.getSupportedRadiatorSizesMm() == null) ? Collections.emptyList() : entity.getSupportedRadiatorSizesMm()
                 ), entity)
                 .build();
     }
 
-    // ... Psu, StorageDrive, Cpu, Motherboard, RamKit response builders are unchanged ...
     private PsuResponse buildPsuResponse(Psu entity) {
         String formFactorName = Optional.ofNullable(entity.getFormFactor()).map(FormFactor::getName).orElse("N/A");
         return setCommonResponseProperties(PsuResponse.builder()
@@ -305,11 +308,10 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .socket_support(socketNames)
                 .height_mm(entity.getHeight_mm())
                 .wattage(entity.getWattage())
-                .radiatorSize_mm(entity.getRadiatorSize_mm()), entity) // ADDED
+                .radiatorSize_mm(entity.getRadiatorSize_mm()), entity)
                 .build();
     }
 
-    // Gpu response builder is unchanged
     private GpuResponse buildGpuResponse(Gpu entity) {
         return setCommonResponseProperties(GpuResponse.builder()
                 .wattage(entity.getWattage())
@@ -321,10 +323,8 @@ public class ComponentConverterImpl implements ComponentConverter {
     @Override
     public void updateEntityFromRequest(Component entityToUpdate, ComponentRequest request) {
         log.debug("Updating entity of type {} from request of type {}", entityToUpdate.getClass().getSimpleName(), request.getClass().getSimpleName());
-        // First, update the common properties
         updateCommonProperties(entityToUpdate, request);
 
-        // Then, update the specific properties based on the entity type
         switch (entityToUpdate) {
             case Cpu cpu -> updateCpuEntity(cpu, (CpuRequest) request);
             case Motherboard motherboard -> updateMotherboardEntity(motherboard, (MotherboardRequest) request);
@@ -341,14 +341,17 @@ public class ComponentConverterImpl implements ComponentConverter {
         }
     }
 
-    // =========================================================================
-    // SECTION:(NEW SECTION)
-    // =========================================================================
-
+    // --- MODIFIED METHOD ---
     private void updateCommonProperties(Component entity, ComponentRequest request) {
         entity.setName(request.getName());
         entity.setMpn(request.getMpn());
         entity.setDescription(request.getDescription());
+
+        if (entity.getBrand() == null || !entity.getBrand().getId().equals(request.getBrandId())) {
+            Brand newBrand = brandRepository.findById(request.getBrandId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Brand ID: " + request.getBrandId()));
+            entity.setBrand(newBrand);
+        }
     }
 
     private void updateCpuEntity(Cpu entity, CpuRequest request) {

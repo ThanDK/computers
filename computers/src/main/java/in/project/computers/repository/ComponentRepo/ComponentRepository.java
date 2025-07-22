@@ -28,4 +28,9 @@ public interface ComponentRepository extends MongoRepository<Component, String> 
             "{ 'supportedPsuFormFactors._id': ?0 } " +
             "] }", exists = true)
     boolean existsByFormFactorId(String formFactorId);
+
+    // --- RECOMMENDED CHANGE ---
+    // Make the query explicit to ensure it checks the nested 'id' field of the 'brand' object.
+    @Query(value = "{ 'brand._id': ?0 }", exists = true)
+    boolean existsByBrandId(String brandId);
 }

@@ -2,6 +2,7 @@ package in.project.computers.dto.component.componentRequest;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -40,4 +41,7 @@ public abstract class ComponentRequest {
 
     private int quantity;
     private BigDecimal price;
+
+    @NotBlank(message = "Brand ID cannot be blank")
+    private String brandId;
 }

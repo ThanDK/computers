@@ -106,7 +106,18 @@ public class AdminOrderController {
                     "Error processing PayPal refund: " + e.getMessage(), e);
         }
     }
-
+    @PostMapping("/force-refund/{orderId}")
+    public ResponseEntity<OrderResponse> forceRefundByAdmin(@PathVariable String orderId) {
+        try {
+            log.info("Admin action: Forcing a refund for order ID: {}", orderId);
+            OrderResponse response = orderService.forceRefundByAdmin(orderId);
+            return ResponseEntity.ok(response);
+        } catch (PayPalRESTException e) {
+            log.error("Admin action: Error processing forced PayPal refund for order ID: {}. Error: {}", orderId, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error processing forced PayPal refund: " + e.getMessage(), e);
+        }
+    }
     /**
      * <h4>[POST] /api/admin/orders/reject-refund/{orderId}</h4>
      * <p>Endpoint สำหรับ Admin เพื่อปฏิเสธคำขอคืนเงิน</p>

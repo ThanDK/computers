@@ -39,10 +39,9 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // ***************************************************************
-                        // *** THIS IS THE FIX: Allow Docker health checks to pass ***
+
                         .requestMatchers("/actuator/**").permitAll()
-                        // ***************************************************************
+
 
                         // --- 1. Public Endpoints (Anyone can access) ---
                         .requestMatchers("/api/register", "/api/login").permitAll()

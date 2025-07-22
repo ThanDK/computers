@@ -16,6 +16,7 @@ public interface LookupService {
     List<FormFactor> getAllFormFactors();
     List<StorageInterface> getAllStorageInterfaces();
     List<ShippingProvider> getAllShippingProviders();
+    List<Brand> getAllBrands();
 
     Socket createSocket(SocketRequest request);
     Socket updateSocket(String id, SocketRequest request);
@@ -36,4 +37,9 @@ public interface LookupService {
     ShippingProvider createShippingProvider(ShippingProviderRequest request, MultipartFile image);
     ShippingProvider updateShippingProvider(String id, ShippingProviderRequest request, MultipartFile image);
     void deleteShippingProvider(String id);
+
+    // FIX: Add the MultipartFile parameter to match the implementation
+    Brand createBrand(BrandRequest request, MultipartFile image);
+    Brand updateBrand(String id, BrandRequest request, MultipartFile image);
+    void deleteBrand(String id);
 }
