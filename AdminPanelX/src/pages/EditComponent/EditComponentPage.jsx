@@ -12,7 +12,7 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import ImageCropper from '../../components/ImageCropper/ImageCropper';
 import './EditComponentPage.css';
 
-// --- FIX: The .jsx extension is correctly in the import path. ---
+// --- The .jsx extension is correctly in the import path. ---
 import {
     COMPONENT_CONFIG,
     componentTypes,
@@ -152,7 +152,6 @@ function EditComponentPage() {
     return (
         <>
             <MainHeader />
-            {/* --- FIX: Back button functionality added --- */}
             <PageHeader
                 title={`Edit ${typeLabel}`}
                 subtitle={`Editing component with MPN: ${formData.mpn || 'N/A'}`}
@@ -176,6 +175,27 @@ function EditComponentPage() {
                             {renderField("name", "Component Name", { value: formData.name, onChange: handleChange })}
                             {renderField("mpn", "MPN (Manufacturer Part Number)", { value: formData.mpn, onChange: handleChange })}
                         </Row>
+
+                        <Row className="mt-3">
+                            <Form.Group as={Col} md={6}>
+                                <Form.Label>Brand</Form.Label>
+                                <Form.Select
+                                    name="brandId"
+                                    value={formData.brandId || ''}
+                                    onChange={handleChange}
+                                    disabled={!lookups?.brands}
+                                    required
+                                >
+                                    <option value="">-- Select a Brand --</option>
+                                    {lookups?.brands?.map(brand => (
+                                        <option key={brand.id} value={brand.id}>
+                                            {brand.name}
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                            </Form.Group>
+                        </Row>
+
                         <Row className="mt-3">
                             <Form.Group as={Col}>
                                 <Form.Label>Description</Form.Label>

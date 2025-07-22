@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button, Modal, Form, Spinner, Image } from 'react-bootstrap';
 import { useAuth } from '../../../../context/AuthContext';
-import { approveSlip, shipOrder, approveRefund, rejectRefund, fetchValidNextStatuses, updateOrderStatus, updateShippingDetails, rejectSlip, revertSlipApproval } from '../../../../services/OrderService';
+// --- 1. IMPORT THE NEW SERVICE FUNCTION ---
+import { approveSlip, shipOrder, approveRefund, rejectRefund, fetchValidNextStatuses, updateOrderStatus, updateShippingDetails, rejectSlip, revertSlipApproval, forceRefundByAdmin } from '../../../../services/OrderService';
 import { fetchAllShippingProviders } from '../../../../services/LookupService';
 import { handlePromise } from '../../../../services/NotificationService';
 import ConfirmationModal from '../../../../components/ConfirmationModal/ConfirmationModal';
 import ReasonModal from '../../../../components/ReasonModal/ReasonModal';
-import { BsTruck, BsPencilSquare, BsCheckCircle, BsXCircle, BsArrowRepeat, BsShieldX, BsBackspaceReverseFill } from 'react-icons/bs';
+// --- 2. IMPORT THE NEW ICON ---
+import { BsTruck, BsPencilSquare, BsCheckCircle, BsXCircle, BsArrowRepeat, BsShieldX, BsBackspaceReverseFill, BsInfoCircleFill, BsCurrencyExchange } from 'react-icons/bs';
 import './OrderActions.css';
 
-// The component's JSX and logic remains the same, but it now imports its own CSS.
 function OrderActions({ order, onActionSuccess }) {
-    // ... all logic from the original file ...
     const { token } = useAuth();
     
-    // --- State for Modals ---
     const [showShippingModal, setShowShippingModal] = useState(false);
     const [shippingModalMode, setShippingModalMode] = useState('create');
     const [shippingInfo, setShippingInfo] = useState({ shippingProvider: '', trackingNumber: '' });
@@ -23,7 +22,6 @@ function OrderActions({ order, onActionSuccess }) {
     const [confirmState, setConfirmState] = useState({ show: false, title: '', body: '', onConfirm: null, confirmVariant: 'primary', confirmText: 'Confirm' });
     const [reasonModalState, setReasonModalState] = useState({ show: false, title: '', onSubmit: null });
 
-    // --- State for Data ---
     const [nextStatuses, setNextStatuses] = useState([]);
     const [isFetchingStatuses, setIsFetchingStatuses] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('');
@@ -69,11 +67,20 @@ function OrderActions({ order, onActionSuccess }) {
     };
 
     const confirmApproveSlip = () => setConfirmState({ show: true, title: 'Approve Payment Slip?', body: 'This will approve the payment, mark the order as PROCESSING, and deduct stock. Are you sure?', onConfirm: () => handleAction(approveSlip(order.id, token), 'Payment slip approved!'), confirmVariant: 'success', confirmText: 'Yes, Approve' });
-    const confirmApproveRefund = () => setConfirmState({ show: true, title: 'Approve Refund?', body: 'This will refund the customer (if via PayPal) and increment stock. This action cannot be undone. Are you sure?', onConfirm: () => handleAction(approveRefund(order.id, token), 'Refund has been approved!'), confirmVariant: 'success', confirmText: 'Yes, Approve Refund' });
-    const confirmRejectRefund = () => setConfirmState({ show: true, title: 'Reject Refund?', body: 'This will mark the refund request as rejected. The user will be notified. Are you sure?', onConfirm: () => handleAction(rejectRefund(order.id, token), 'Refund has been rejected.'), confirmVariant: 'danger', confirmText: 'Yes, Reject' });
+    const confirmApproveRefund = () => setConfirmState({ show: true, title: 'Approve Refund Request?', body: 'This will refund the customer and increment stock. This action cannot be undone. Are you sure?', onConfirm: () => handleAction(approveRefund(order.id, token), 'Refund request has been approved!'), confirmVariant: 'success', confirmText: 'Yes, Approve Refund' });
+    const confirmRejectRefund = () => setConfirmState({ show: true, title: 'Reject Refund Request?', body: 'This will mark the refund request as rejected. The user will be notified. Are you sure?', onConfirm: () => handleAction(rejectRefund(order.id, token), 'Refund request has been rejected.'), confirmVariant: 'danger', confirmText: 'Yes, Reject' });
     const openRejectSlipModal = () => setReasonModalState({ show: true, title: 'Reject Payment Slip', label: 'Reason for Rejection', placeholder: 'e.g., Incorrect amount, Blurry image...', onSubmit: (reason) => handleAction(rejectSlip(order.id, reason, token), 'Payment slip rejected.') });
     const openRevertApprovalModal = () => setReasonModalState({ show: true, title: 'Revert Slip Approval', label: 'Reason for Reversion', placeholder: 'e.g., Approved by mistake, Customer request...', onSubmit: (reason) => handleAction(revertSlipApproval(order.id, reason, token), 'Approval reverted and stock returned.') });
 
+   
+    const confirmForceRefund = () => setConfirmState({ 
+        show: true, 
+        title: 'Force Refund This Order?', 
+        body: 'This will immediately process a refund for the customer and return stock. This is for admin-initiated refunds (e.g., due to product defects). Are you sure?', 
+        onConfirm: () => handleAction(forceRefundByAdmin(order.id, token), 'Order has been forcibly refunded!'), 
+        confirmVariant: 'danger', 
+        confirmText: 'Yes, Force Refund' 
+    });
 
     const handleOpenCreateShipModal = () => {
         const defaultProvider = shippingProviders.length > 0 ? shippingProviders[0].name : '';
@@ -106,6 +113,12 @@ function OrderActions({ order, onActionSuccess }) {
         handleAction(updateOrderStatus(order.id, selectedStatus, token), `Order status updated to ${selectedStatus}!`);
     };
 
+    // --- 4. ADD A VARIABLE TO CHECK IF THE BUTTON SHOULD BE SHOWN ---
+    const canBeForciblyRefunded = [
+        'PROCESSING', 'SHIPPED', 'COMPLETED', 
+        'DELIVERY_FAILED', 'RETURNED_TO_SENDER', 'REFUND_REJECTED'
+    ].includes(order.orderStatus);
+
     return (
         <>
             <Card className="detail-card">
@@ -128,10 +141,29 @@ function OrderActions({ order, onActionSuccess }) {
                     )}
                     {order.orderStatus === 'REFUND_REQUESTED' && (
                         <>
-                            <Button variant="success" onClick={confirmApproveRefund} className="d-flex align-items-center justify-content-center gap-2"><BsCheckCircle /> Approve Refund</Button>
-                            <Button variant="danger" onClick={confirmRejectRefund} className="d-flex align-items-center justify-content-center gap-2"><BsXCircle /> Reject Refund</Button>
+                            <Button variant="success" onClick={confirmApproveRefund} className="d-flex align-items-center justify-content-center gap-2"><BsCheckCircle /> Approve Refund Request</Button>
+                            <Button variant="danger" onClick={confirmRejectRefund} className="d-flex align-items-center justify-content-center gap-2"><BsXCircle /> Reject Refund Request</Button>
                         </>
                     )}
+                    
+                    {canBeForciblyRefunded && (
+                        <Button variant="outline-danger" onClick={confirmForceRefund} className="d-flex align-items-center justify-content-center gap-2">
+                            <BsCurrencyExchange /> Force Refund
+                        </Button>
+                    )}
+                    
+                    {/* The info box for paid orders */}
+                    {['PROCESSING', 'SHIPPED'].includes(order.orderStatus) && order.orderStatus !== 'REFUND_REQUESTED' && (
+                         <div className="action-info-box">
+                            <BsInfoCircleFill className="info-icon" />
+                            <span>
+                                To cancel a paid order, it must be refunded. The customer can request this, or an admin can initiate it using 'Force Refund'.
+                            </span>
+                         </div>
+                    )}
+                    
+                    <hr className="action-divider" />
+
                     <Button variant="outline-secondary" onClick={() => setShowStatusModal(true)} disabled={isFetchingStatuses || nextStatuses.length === 0} className="d-flex align-items-center justify-content-center gap-2">
                         {isFetchingStatuses ? <Spinner as="span" animation="border" size="sm" /> : <><BsArrowRepeat /> Change Status</>}
                     </Button>
@@ -228,4 +260,3 @@ function OrderActions({ order, onActionSuccess }) {
 }
 
 export default OrderActions;
-

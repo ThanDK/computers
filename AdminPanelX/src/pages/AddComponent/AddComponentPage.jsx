@@ -12,7 +12,7 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import ImageCropper from '../../components/ImageCropper/ImageCropper';
 import './AddComponentPage.css';
 
-// --- FIX: The .jsx extension is correctly in the import path. ---
+// --- The .jsx extension is correctly in the import path. ---
 import {
     COMPONENT_CONFIG,
     componentTypes,
@@ -70,7 +70,8 @@ function AddComponentPage() {
     const handleTypeChange = (e) => {
         const type = e.target.value;
         setSelectedType(type);
-        const baseState = { name: "", mpn: "", description: "", price: "", quantity: "" };
+        // MODIFIED: Added brandId to the base state.
+        const baseState = { name: "", mpn: "", description: "", price: "", quantity: "", brandId: "" };
         const specificState = COMPONENT_CONFIG[type]?.initialState || {};
         setFormData({ ...baseState, ...specificState });
         setError('');
@@ -153,7 +154,6 @@ function AddComponentPage() {
     return (
         <>
             <MainHeader />
-            {/* --- FIX: Back button functionality added --- */}
             <PageHeader
                 title="Add New Component"
                 subtitle="Fill out the form to add a new product component"
@@ -184,6 +184,27 @@ function AddComponentPage() {
                                     {renderField("name", "Component Name", { value: formData.name, onChange: handleChange })}
                                     {renderField("mpn", "MPN (Manufacturer Part Number)", { value: formData.mpn, onChange: handleChange })}
                                 </Row>
+
+                                <Row className="mt-3">
+                                     <Form.Group as={Col} md={6}>
+                                        <Form.Label>Brand</Form.Label>
+                                        <Form.Select
+                                            name="brandId"
+                                            value={formData.brandId || ''}
+                                            onChange={handleChange}
+                                            disabled={!lookups?.brands}
+                                            required
+                                        >
+                                            <option value="">-- Select a Brand --</option>
+                                            {lookups?.brands?.map(brand => (
+                                                <option key={brand.id} value={brand.id}>
+                                                    {brand.name}
+                                                </option>
+                                            ))}
+                                        </Form.Select>
+                                    </Form.Group>
+                                </Row>
+
                                 <Row className="mt-3">
                                     <Form.Group as={Col}>
                                         <Form.Label>Description</Form.Label>

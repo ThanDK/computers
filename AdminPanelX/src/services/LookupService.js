@@ -44,6 +44,8 @@ export const fetchAllLookups = async (token) => {
     return response.json();
 };
 
+// --- Generic Lookup Functions ---
+
 export const fetchLookupsByType = (type, token) => {
     return apiRequest(`${API_BASE_URL}/${type}`, 'GET', null, token);
 };
@@ -86,4 +88,26 @@ export const updateShippingProvider = (id, providerData, imageFile, token) => {
 
 export const deleteShippingProvider = (id, token) => {
     return apiRequest(`${API_BASE_URL}/shipping-providers/${id}`, 'DELETE', null, token);
+};
+
+// --- ADDED: Specific functions for Brands ---
+
+export const createBrand = (brandData, imageFile, token) => {
+    const formData = new FormData();
+    // The key 'brand' must match the @RequestPart("brand") in your Spring Boot controller
+    formData.append('brand', new Blob([JSON.stringify(brandData)], { type: 'application/json' }));
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+    return apiRequest(`${API_BASE_URL}/brands`, 'POST', formData, token);
+};
+
+export const updateBrand = (id, brandData, imageFile, token) => {
+    const formData = new FormData();
+    // The key 'brand' must match the @RequestPart("brand") in your Spring Boot controller
+    formData.append('brand', new Blob([JSON.stringify(brandData)], { type: 'application/json' }));
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+    return apiRequest(`${API_BASE_URL}/brands/${id}`, 'PUT', formData, token);
 };

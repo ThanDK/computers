@@ -78,3 +78,14 @@ export const rejectSlip = (orderId, reason, token) => {
 export const revertSlipApproval = (orderId, reason, token) => {
     return apiRequest(`${API_BASE_URL}/revert-approval/${orderId}`, 'POST', { reason }, token);
 };
+
+// --- ADD THIS NEW FUNCTION ---
+/**
+ * Forcibly refunds an order from the admin panel.
+ * @param {string} orderId - The ID of the order to refund.
+ * @param {string} token - The admin's auth token.
+ * @returns {Promise<object>} - The updated order object.
+ */
+export const forceRefundByAdmin = (orderId, token) => {
+    return apiRequest(`${API_BASE_URL}/force-refund/${orderId}`, 'POST', null, token);
+};

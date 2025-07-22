@@ -1,13 +1,18 @@
+// src/pages/LookupsPage/LookupsPage.js
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchLookupsByType, createLookup, updateLookup, deleteLookup } from '../../services/LookupService';
+import {
+    fetchLookupsByType, createLookup, updateLookup, deleteLookup,
+    createBrand, updateBrand
+} from '../../services/LookupService';
 import { notifySuccess, notifyError, showConfirmation } from '../../services/NotificationService';
 
 import PageHeader from '../../components/PageHeader/PageHeader';
 import MainHeader from '../../components/MainHeader/MainHeader';
 import ReusableTable from '../../components/ReusableTable/ReusableTable';
 
-import { Tabs, Tab, Button, Modal, Form, Alert, Row, Col, InputGroup } from 'react-bootstrap';
+// MODIFIED: Imported Spinner
+import { Tabs, Tab, Button, Modal, Form, Alert, Row, Col, InputGroup, Image, Spinner } from 'react-bootstrap';
 import { BsPlusCircleFill, BsSearch, BsArrowCounterclockwise } from 'react-icons/bs';
 import './LookupsPage.css';
 
@@ -15,18 +20,24 @@ const lookupConfig = {
     sockets: { title: 'Sockets', columns: ['name', 'brand'], fields: ['name', 'brand'] },
     'ram-types': { title: 'RAM Types', columns: ['name'], fields: ['name'] },
     'form-factors': { title: 'Form Factors', columns: ['name', 'type'], fields: ['name', 'type'] },
-    'storage-interfaces': { title: 'Storage Interfaces', columns: ['name'], fields: ['name'] }
+    'storage-interfaces': { title: 'Storage Interfaces', columns: ['name'], fields: ['name'] },
+    brands: { title: 'Brands', columns: ['logoUrl', 'name'], fields: ['name'], hasImage: true },
 };
 
 const formFactorTypes = ['MOTHERBOARD', 'PSU', 'STORAGE'];
 
 function LookupsPage() {
     const { token } = useAuth();
-    const [lookups, setLookups] = useState({ sockets: [], 'ram-types': [], 'form-factors': [], 'storage-interfaces': [] });
+    const [lookups, setLookups] = useState({ sockets: [], 'ram-types': [], 'form-factors': [], 'storage-interfaces': [], brands: [] });
     const [activeTab, setActiveTab] = useState('sockets');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [modalState, setModalState] = useState({ show: false, type: 'add', currentItem: null });
+
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+    
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [sorting, setSorting] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
@@ -37,10 +48,9 @@ function LookupsPage() {
         setLoading(true);
         setError('');
         try {
-            // --- MODIFICATION: Matched delay to ComponentsPage ---
             const [data] = await Promise.all([
                 fetchLookupsByType(tabKey, token),
-                new Promise(resolve => setTimeout(resolve, 20)) // Use 20ms delay
+                new Promise(resolve => setTimeout(resolve, 20))
             ]);
             setLookups(prev => ({ ...prev, [tabKey]: data }));
         } catch (err) {
@@ -50,6 +60,12 @@ function LookupsPage() {
             setLoading(false);
         }
     }, [token]);
+    
+    useEffect(() => {
+        if (modalState.show && lookupConfig[activeTab]?.hasImage) {
+            setImagePreviewUrl(modalState.currentItem?.logoUrl || null);
+        }
+    }, [modalState.show, modalState.currentItem, activeTab]);
 
     useEffect(() => {
         loadLookupsForTab(activeTab);
@@ -63,27 +79,60 @@ function LookupsPage() {
     };
 
     const handleShowModal = (type, item = null) => setModalState({ show: true, type, currentItem: item });
-    const handleCloseModal = () => setModalState({ show: false, type: 'add', currentItem: null });
+
+    const handleCloseModal = () => {
+        setModalState({ show: false, type: 'add', currentItem: null });
+        setImageFile(null);
+        setImagePreviewUrl(null);
+    };
+
+    const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setImageFile(file);
+            setImagePreviewUrl(URL.createObjectURL(file));
+        }
+    };
 
     const handleFormSubmit = async (event) => {
         event.preventDefault();
+        
+        // --- FIX: Set submitting to true to disable button ---
+        setIsSubmitting(true);
+
         const form = event.currentTarget;
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
+        
         const { type, currentItem } = modalState;
+        const config = lookupConfig[activeTab];
 
         try {
-            if (type === 'add') {
-                await createLookup(activeTab, data, token);
-                notifySuccess(`${lookupConfig[activeTab].title.slice(0, -1)} created!`);
+            if (config.hasImage) {
+                const brandData = { name: data.name };
+                if (type === 'add') {
+                    await createBrand(brandData, imageFile, token);
+                    notifySuccess(`${config.title.slice(0, -1)} created!`);
+                } else {
+                    await updateBrand(currentItem.id, brandData, imageFile, token);
+                    notifySuccess(`${config.title.slice(0, -1)} updated!`);
+                }
             } else {
-                await updateLookup(activeTab, currentItem.id, data, token);
-                notifySuccess(`${lookupConfig[activeTab].title.slice(0, -1)} updated!`);
+                if (type === 'add') {
+                    await createLookup(activeTab, data, token);
+                    notifySuccess(`${config.title.slice(0, -1)} created!`);
+                } else {
+                    await updateLookup(activeTab, currentItem.id, data, token);
+                    notifySuccess(`${config.title.slice(0, -1)} updated!`);
+                }
             }
             handleCloseModal();
             loadLookupsForTab(activeTab);
         } catch (err) {
             notifyError(err.message);
+        } finally {
+            // --- FIX: Set submitting back to false after operation completes ---
+            setIsSubmitting(false);
         }
     };
 
@@ -107,10 +156,22 @@ function LookupsPage() {
     };
 
     const columns = useMemo(() => {
-        const baseColumns = lookupConfig[activeTab].columns.map(key => ({
-            accessorKey: key,
-            header: key.charAt(0).toUpperCase() + key.slice(1),
-        }));
+        const config = lookupConfig[activeTab];
+        const baseColumns = config.columns.map(key => {
+            if (key === 'logoUrl') {
+                return {
+                    accessorKey: 'logoUrl',
+                    header: 'Logo',
+                    enableSorting: false,
+                    meta: { width: '10%' },
+                    cell: info => info.getValue() ? <Image src={info.getValue()} className="table-logo" /> : 'N/A'
+                };
+            }
+            return {
+                accessorKey: key,
+                header: key.charAt(0).toUpperCase() + key.slice(1),
+            };
+        });
         
         baseColumns.push({
             id: 'actions',
@@ -128,12 +189,34 @@ function LookupsPage() {
     }, [activeTab, token]);
 
     const renderModalFormBody = () => {
-        const fields = lookupConfig[activeTab].fields;
+        const config = lookupConfig[activeTab];
         const { currentItem } = modalState;
-        
+
+        if (config.hasImage) {
+            return (
+                <Row>
+                    <Col>
+                        {imagePreviewUrl && (
+                            <div className="text-center mb-3">
+                                <Image src={imagePreviewUrl} alt="Logo preview" className="logo-preview" />
+                            </div>
+                        )}
+                        <Form.Group className="mb-3">
+                            <Form.Label>Brand Name</Form.Label>
+                            <Form.Control name="name" type="text" required defaultValue={currentItem?.name || ''} autoFocus />
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Brand Logo</Form.Label>
+                            <Form.Control name="image" type="file" accept="image/*" onChange={handleImageChange} />
+                        </Form.Group>
+                    </Col>
+                </Row>
+            );
+        }
+
         return (
             <Row>
-                {fields.map((field, index) => (
+                {config.fields.map((field, index) => (
                     <Col md={12} key={field}>
                         <Form.Group className="mb-3">
                             <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
@@ -226,7 +309,24 @@ function LookupsPage() {
                     <Modal.Body>{renderModalFormBody()}</Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={handleCloseModal}>Cancel</Button>
-                        <Button variant="primary" type="submit">Save Changes</Button>
+                        
+                        {/* --- FIX: Updated Button with Spinner --- */}
+                        <Button variant="primary" type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? (
+                                <>
+                                    <Spinner
+                                        as="span"
+                                        animation="border"
+                                        size="sm"
+                                        role="status"
+                                        aria-hidden="true"
+                                    />
+                                    <span className="ms-2">Saving...</span>
+                                </>
+                            ) : (
+                                'Save Changes'
+                            )}
+                        </Button>
                     </Modal.Footer>
                 </Form>
             </Modal>
