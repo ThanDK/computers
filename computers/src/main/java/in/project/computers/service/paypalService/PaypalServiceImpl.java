@@ -1,4 +1,4 @@
-package in.project.computers.service.PaypalService;
+package in.project.computers.service.paypalService;
 
 import com.paypal.api.payments.*;
 import com.paypal.base.rest.APIContext;

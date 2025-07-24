@@ -12,11 +12,11 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import ImageCropper from '../../components/ImageCropper/ImageCropper';
 import './EditComponentPage.css';
 
-// --- The .jsx extension is correctly in the import path. ---
 import {
     COMPONENT_CONFIG,
     componentTypes,
-    renderField
+    renderField,
+    renderBrandSelect
 } from '../../config/ComponentFormConfig.jsx';
 
 function EditComponentPage() {
@@ -51,6 +51,15 @@ function EditComponentPage() {
                     getComponentById(id, token),
                     fetchAllLookups(token)
                 ]);
+
+                // When data arrives, make sure brandId is set if brandName exists
+                if (componentData.brandName && !componentData.brandId) {
+                    const foundBrand = lookupData.brands.find(b => b.name === componentData.brandName);
+                    if (foundBrand) {
+                        componentData.brandId = foundBrand.id;
+                    }
+                }
+
                 setLookups(lookupData);
                 setFormData(componentData);
                 setComponentType(componentData.type);
@@ -78,8 +87,19 @@ function EditComponentPage() {
     // --- Event Handlers ---
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    }, []);
+        
+        // Special handling for brandName to keep brandId in sync
+        if (name === 'brandName') {
+            const selectedBrand = lookups?.brands.find(b => b.name === value);
+            setFormData(prev => ({
+                ...prev,
+                brandName: value,
+                brandId: selectedBrand ? selectedBrand.id : ''
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
+    }, [lookups]);
 
     const handleTagAdd = useCallback((fieldName, value) => {
         setFormData(prev => ({ ...prev, [fieldName]: [...(prev[fieldName] || []), value] }));
@@ -131,7 +151,9 @@ function EditComponentPage() {
         setError('');
         setIsSubmitting(true);
         try {
-            const { quantity, isActive, ...updateData } = formData; 
+            // Create a copy of the data to send, ensuring brandName is not sent if not needed
+            const { quantity, isActive, brandName, ...updateData } = formData; 
+            
             await updateComponent(id, updateData, imageFile, removeImage, token);
             notifySuccess('Component updated successfully!');
             navigate('/components');
@@ -176,24 +198,9 @@ function EditComponentPage() {
                             {renderField("mpn", "MPN (Manufacturer Part Number)", { value: formData.mpn, onChange: handleChange })}
                         </Row>
 
-                        <Row className="mt-3">
-                            <Form.Group as={Col} md={6}>
-                                <Form.Label>Brand</Form.Label>
-                                <Form.Select
-                                    name="brandId"
-                                    value={formData.brandId || ''}
-                                    onChange={handleChange}
-                                    disabled={!lookups?.brands}
-                                    required
-                                >
-                                    <option value="">-- Select a Brand --</option>
-                                    {lookups?.brands?.map(brand => (
-                                        <option key={brand.id} value={brand.id}>
-                                            {brand.name}
-                                        </option>
-                                    ))}
-                                </Form.Select>
-                            </Form.Group>
+                        <Row>
+                            {/* This now correctly uses the generic handleChange */}
+                            {lookups && renderBrandSelect({ formData, lookups, onChange: handleChange })}
                         </Row>
 
                         <Row className="mt-3">

@@ -2,17 +2,7 @@
 
 const API_BASE_URL = 'http://localhost:8080/api/admin/lookups';
 
-/**
- * A robust, shared API request helper defined as a standard function.
- * This ensures it is "hoisted" and fully available to all other functions in this file,
- * preventing intermittent crashes related to module load order.
- * It automatically handles JSON and FormData, authentication, and error parsing.
- * @param {string} url - The endpoint URL.
- * @param {string} method - The HTTP method (GET, POST, etc.).
- * @param {object|FormData} body - The request body.
- * @param {string} token - The JWT token.
- * @returns {Promise<any>} The response data.
- */
+
 async function apiRequest(url, method = 'GET', body = null, token) {
     const options = {
         method,
@@ -32,7 +22,7 @@ async function apiRequest(url, method = 'GET', body = null, token) {
         const errorData = await response.json().catch(() => ({ message: `Request failed with status ${response.status}` }));
         throw new Error(errorData.message || 'An unknown error occurred.');
     }
-    if (response.status === 204) return true; // For DELETE requests
+    if (response.status === 204) return true; 
     return response.json();
 }
 

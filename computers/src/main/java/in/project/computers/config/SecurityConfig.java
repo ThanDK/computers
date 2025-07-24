@@ -48,7 +48,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/components/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/orders/capture/**").permitAll() // PayPal Success Callback
                         .requestMatchers(HttpMethod.GET, "/api/orders/cancel/**").permitAll()  // PayPal Cancel Callback
-
+                        .requestMatchers("/api/lookups/debug/**").permitAll()
                         // --- 2. Admin-Only Endpoints ---
                         .requestMatchers("/api/admin/orders/**").hasRole("ADMIN") // *** เพิ่มสำหรับ Admin Order Controller ***
                         .requestMatchers(HttpMethod.POST, "/api/components/**").hasRole("ADMIN")

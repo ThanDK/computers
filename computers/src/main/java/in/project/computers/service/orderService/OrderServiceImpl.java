@@ -12,7 +12,8 @@ import in.project.computers.entity.user.UserEntity;
 import in.project.computers.repository.generalRepo.OrderRepository;
 import in.project.computers.repository.generalRepo.UserRepository;
 import in.project.computers.service.AWSS3Bucket.S3Service;
-import in.project.computers.service.PaypalService.PaypalService;
+import in.project.computers.service.cartService.CartService;
+import in.project.computers.service.paypalService.PaypalService;
 import in.project.computers.service.userAuthenticationService.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserService userService;
     private final S3Service s3Service;
     private final PaypalService paypalService;
-
+    private final CartService cartService;
 
     @Value("${paypal.payment.cancelUrl}")
     private String cancelUrl;
@@ -50,39 +51,47 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public CreateOrderResponse createOrder(CreateOrderRequest request) throws PayPalRESTException {
-        // === [CO-1] เริ่มกระบวนการสร้าง Order: ตรวจสอบและดึงข้อมูลผู้ใช้ปัจจุบัน ===
+        // [CO-1] Get current user
         UserEntity currentUser = userRepository.findById(userService.findByUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        // === [CO-2] [ปรับปรุง] มอบหมายงานสร้าง Order ทั้งหมดให้ผู้ช่วย (OrderHelperService) ===
-        // ส่งต่อ Request และข้อมูลผู้ใช้ทั้งหมดไปยัง OrderHelperService เพื่อจัดการตรรกะที่ซับซ้อนทั้งหมด
-        // ตั้งแต่การตรวจสอบสต็อก, คำนวณราคา, ไปจนถึงการสร้างอ็อบเจกต์ Order ที่สมบูรณ์
-        // ทำให้ OrderServiceImpl มีความกระชับและดูแลเฉพาะภาพรวมของ Transaction
-        Order order = orderHelper.createAndValidateBaseOrder(request, currentUser);
+        // [CO-2-NEW] Get the user's persistent cart from the new CartService
+        Cart userCart = cartService.getCartEntityByUserId(currentUser.getId());
+        if (userCart == null || userCart.getItems().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create an order with an empty cart.");
+        }
 
-        // === [CO-3] ตั้งค่ารายละเอียดการชำระเงิน ===
-        // นำ Order ที่ได้จาก Helper มากำหนดวิธีการชำระเงินตามที่ผู้ใช้เลือก
+        // [CO-3-NEW] Delegate order creation to the helper, now using the Cart object
+        Order order = orderHelper.createAndValidateOrderFromCart(userCart, request, currentUser);
+
+        // [CO-4] Set payment details
         order.setPaymentDetails(PaymentDetails.builder()
                 .paymentMethod(request.getPaymentMethod())
                 .build());
 
-        // === [CO-4] แยกกระบวนการตามวิธีการชำระเงิน ===
-        // ตรวจสอบว่าผู้ใช้เลือกจ่ายเงินแบบใด และดำเนินการในขั้นตอนต่อไปให้ถูกต้อง
+        // [CO-5] Handle payment initiation
+        CreateOrderResponse response;
         switch (request.getPaymentMethod()) {
             case PAYPAL:
-                // --- [CO-4.1] กรณีชำระผ่าน PayPal: เริ่มต้นกระบวนการกับ PayPal ---
-                return initiatePaypalPayment(order);
+                response = initiatePaypalPayment(order);
+                break;
             case BANK_TRANSFER:
-                // --- [CO-4.2] กรณีโอนเงิน: บันทึก Order และรอสลิป ---
                 orderRepository.save(order);
                 log.info("Saved new BANK_TRANSFER order with ID: {}", order.getId());
-                return new CreateOrderResponse(order.getId());
+                response = new CreateOrderResponse(order.getId());
+                break;
             default:
-                // --- [CO-4.3] กรณีไม่รองรับ: แจ้งข้อผิดพลาด ---
                 log.error("Unsupported payment method received: {}", request.getPaymentMethod());
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported payment method.");
         }
+
+        // [CO-6-NEW] IMPORTANT: Clear the user's cart after the order is successfully initiated.
+        cartService.clearCart(currentUser.getId());
+        log.info("Successfully created order {} and cleared the cart for user {}", order.getId(), currentUser.getId());
+
+        return response;
     }
+
 
     @Override
     @Transactional

@@ -163,7 +163,7 @@ function LookupsPage() {
                     accessorKey: 'logoUrl',
                     header: 'Logo',
                     enableSorting: false,
-                    meta: { width: '10%' },
+                    meta: { width: '40%' },
                     cell: info => info.getValue() ? <Image src={info.getValue()} className="table-logo" /> : 'N/A'
                 };
             }

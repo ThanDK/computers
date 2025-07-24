@@ -1,34 +1,67 @@
-// src/config/componentFormConfig.js
-
 import React from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import MultiSelectTag from '../components/MultiSelectTag/MultiSelectTag';
 
 // --- Shared Helper Functions ---
 
+/**
+ * Renders a standard text or number input field.
+ */
 export const renderField = (name, label, { type = "text", md = 6, value, onChange }) => (
     <Form.Group as={Col} md={md} className="mb-3">
         <Form.Label>{label}</Form.Label>
-        <Form.Control type={type} name={name} value={value || ''} onChange={onChange} />
+        <Form.Control type={type} name={name} value={value || ''} onChange={onChange} required />
     </Form.Group>
 );
 
-export const renderSelect = (name, label, { options, keyField, valueField, md = 6, value, onChange }) => (
+/**
+ * Renders a standard single-select dropdown for generic lookups (like Socket, RAM Type).
+ * It uses the 'name' property for both the value and display text for consistency.
+ */
+export const renderSelect = (name, label, { options, md = 6, value, onChange }) => (
     <Form.Group as={Col} md={md} className="mb-3">
         <Form.Label>{label}</Form.Label>
-        <Form.Select name={name} value={value || ''} onChange={onChange}>
+        <Form.Select name={name} value={value || ''} onChange={onChange} required>
             <option value="">-- Select --</option>
-            {options.map(opt => (
-                <option key={opt[keyField]} value={opt[valueField]}>{opt[valueField]}</option>
+            {(options || []).map(opt => (
+                <option key={opt.id} value={opt.name}>{opt.name}</option>
             ))}
         </Form.Select>
     </Form.Group>
 );
 
-const mapToTagOptions = (items, keyField, valueField) =>
+/**
+ * Renders the brand dropdown.
+ * THIS IS THE FIX: It now works exactly like renderSelect, using the name.
+ */
+export const renderBrandSelect = ({ formData, lookups, onChange }) => (
+    <Form.Group as={Col} md={6} className="mb-3">
+        <Form.Label>Brand</Form.Label>
+        <Form.Select
+            name="brandName" // <-- FIX #1: Use 'brandName' to match the pattern.
+            value={formData.brandName || ''} // <-- FIX #2: Read from 'brandName'.
+            onChange={onChange}
+            disabled={!lookups?.brands}
+            required
+        >
+            <option value="">-- Select a Brand --</option>
+            {(lookups?.brands || []).map(brand => (
+                <option key={brand.id} value={brand.name}> {/* <-- FIX #3: Use name as the value. */}
+                    {brand.name}
+                </option>
+            ))}
+        </Form.Select>
+    </Form.Group>
+);
+
+
+/**
+ * Helper to convert lookup items into the format required by the MultiSelectTag component.
+ */
+const mapToTagOptions = (items = [], keyField = 'id', valueField = 'name') =>
     items.map(i => ({ key: i[keyField], value: i[valueField], label: i[valueField] }));
 
-// --- Shared Form Configuration ---
+// --- Component Type Definitions ---
 
 export const componentTypes = [
     { label: "CPU", value: "cpu" },
@@ -41,13 +74,15 @@ export const componentTypes = [
     { label: "Storage Drive", value: "storage" }
 ];
 
+// --- Specific Form Configurations for Each Component Type ---
+
 export const COMPONENT_CONFIG = {
     cpu: {
         initialState: { wattage: "", socket: "" },
         render: ({ formData, lookups, handleChange }) => (
             <Row>
                 {renderField("wattage", "Wattage", { type: "number", value: formData.wattage, onChange: handleChange })}
-                {renderSelect("socket", "Socket", { options: lookups.sockets, keyField: 'id', valueField: 'name', value: formData.socket, onChange: handleChange })}
+                {renderSelect("socket", "Socket", { options: lookups.sockets, value: formData.socket, onChange: handleChange })}
             </Row>
         )
     },
@@ -56,9 +91,9 @@ export const COMPONENT_CONFIG = {
         render: ({ formData, lookups, handleChange }) => (
             <>
                 <Row>
-                    {renderSelect("socket", "Socket", { options: lookups.sockets, keyField: 'id', valueField: 'name', md: 4, value: formData.socket, onChange: handleChange })}
-                    {renderSelect("ram_type", "RAM Type", { options: lookups.ramTypes, keyField: 'id', valueField: 'name', md: 4, value: formData.ram_type, onChange: handleChange })}
-                    {renderSelect("form_factor", "Form Factor", { options: lookups.formFactors.MOTHERBOARD, keyField: 'id', valueField: 'name', md: 4, value: formData.form_factor, onChange: handleChange })}
+                    {renderSelect("socket", "Socket", { options: lookups.sockets, md: 4, value: formData.socket, onChange: handleChange })}
+                    {renderSelect("ram_type", "RAM Type", { options: lookups.ramTypes, md: 4, value: formData.ram_type, onChange: handleChange })}
+                    {renderSelect("form_factor", "Form Factor", { options: lookups.formFactors.MOTHERBOARD, md: 4, value: formData.form_factor, onChange: handleChange })}
                 </Row>
                 <Row>
                     {renderField("wattage", "Wattage", { type: "number", md: 3, value: formData.wattage, onChange: handleChange })}
@@ -77,7 +112,7 @@ export const COMPONENT_CONFIG = {
         initialState: { ram_type: "", ram_size_gb: "", moduleCount: "", wattage: "" },
         render: ({ formData, lookups, handleChange }) => (
             <Row>
-                {renderSelect("ram_type", "RAM Type", { options: lookups.ramTypes, keyField: 'id', valueField: 'name', md: 4, value: formData.ram_type, onChange: handleChange })}
+                {renderSelect("ram_type", "RAM Type", { options: lookups.ramTypes, md: 4, value: formData.ram_type, onChange: handleChange })}
                 {renderField("ram_size_gb", "Total Size (GB)", { type: "number", md: 4, value: formData.ram_size_gb, onChange: handleChange })}
                 {renderField("moduleCount", "Module Count (Sticks)", { type: "number", md: 4, value: formData.moduleCount, onChange: handleChange })}
                 {renderField("wattage", "Wattage", { type: "number", md: 12, value: formData.wattage, onChange: handleChange })}
@@ -98,7 +133,7 @@ export const COMPONENT_CONFIG = {
         render: ({ formData, lookups, handleChange }) => (
             <Row>
                 {renderField("wattage", "Wattage", { type: "number", value: formData.wattage, onChange: handleChange })}
-                {renderSelect("form_factor", "Form Factor", { options: lookups.formFactors.PSU, keyField: 'id', valueField: 'name', value: formData.form_factor, onChange: handleChange })}
+                {renderSelect("form_factor", "Form Factor", { options: lookups.formFactors.PSU, value: formData.form_factor, onChange: handleChange })}
             </Row>
         )
     },
@@ -106,8 +141,8 @@ export const COMPONENT_CONFIG = {
         initialState: { storage_interface: "", capacity_gb: "", form_factor: "" },
         render: ({ formData, lookups, handleChange }) => (
             <Row>
-                {renderSelect("storage_interface", "Interface", { options: lookups.storageInterfaces, keyField: 'id', valueField: 'name', md: 4, value: formData.storage_interface, onChange: handleChange })}
-                {renderSelect("form_factor", "Form Factor", { options: lookups.formFactors.STORAGE, keyField: 'id', valueField: 'name', md: 4, value: formData.form_factor, onChange: handleChange })}
+                {renderSelect("storage_interface", "Interface", { options: lookups.storageInterfaces, md: 4, value: formData.storage_interface, onChange: handleChange })}
+                {renderSelect("form_factor", "Form Factor", { options: lookups.formFactors.STORAGE, md: 4, value: formData.form_factor, onChange: handleChange })}
                 {renderField("capacity_gb", "Capacity (GB)", { type: "number", md: 4, value: formData.capacity_gb, onChange: handleChange })}
             </Row>
         )
@@ -120,7 +155,7 @@ export const COMPONENT_CONFIG = {
                     <Col>
                         <MultiSelectTag 
                             label="Supported Sockets" 
-                            options={mapToTagOptions(lookups.sockets, 'id', 'name')} 
+                            options={mapToTagOptions(lookups.sockets)} 
                             selectedValues={formData.socket_support || []} 
                             onAdd={(v) => handleTagAdd('socket_support', v)} 
                             onRemove={(v) => handleTagRemove('socket_support', v)}
@@ -138,14 +173,14 @@ export const COMPONENT_CONFIG = {
     case: {
         initialState: { motherboard_form_factor_support: [], psu_form_factor_support: [], max_gpu_length_mm: "", max_cooler_height_mm: "", bays_2_5_inch: "", bays_3_5_inch: "", supportedRadiatorSizesMm: [] },
         render: ({ formData, lookups, handleChange, handleTagAdd, handleTagRemove }) => {
-            const radiatorOptions = lookups.radiatorSizes.map(s => ({ key: s, value: s, label: `${s}mm` }));
+            const radiatorOptions = (lookups.radiatorSizes || []).map(s => ({ key: s, value: String(s), label: `${s}mm` }));
             return (
                 <>
                     <Row className="mb-3">
                         <Col md={6}>
                             <MultiSelectTag 
                                 label="Supported MB Form Factors" 
-                                options={mapToTagOptions(lookups.formFactors.MOTHERBOARD, 'id', 'name')} 
+                                options={mapToTagOptions(lookups.formFactors.MOTHERBOARD)} 
                                 selectedValues={formData.motherboard_form_factor_support || []} 
                                 onAdd={(v) => handleTagAdd('motherboard_form_factor_support', v)} 
                                 onRemove={(v) => handleTagRemove('motherboard_form_factor_support', v)} 
@@ -154,7 +189,7 @@ export const COMPONENT_CONFIG = {
                         <Col md={6}>
                             <MultiSelectTag 
                                 label="Supported PSU Form Factors" 
-                                options={mapToTagOptions(lookups.formFactors.PSU, 'id', 'name')} 
+                                options={mapToTagOptions(lookups.formFactors.PSU)} 
                                 selectedValues={formData.psu_form_factor_support || []} 
                                 onAdd={(v) => handleTagAdd('psu_form_factor_support', v)} 
                                 onRemove={(v) => handleTagRemove('psu_form_factor_support', v)}
@@ -174,9 +209,9 @@ export const COMPONENT_CONFIG = {
                             <MultiSelectTag 
                                 label="Supported Radiator Sizes (mm)" 
                                 options={radiatorOptions} 
-                                selectedValues={(formData.supportedRadiatorSizesMm || []).map(s => `${s}`)} 
-                                onAdd={(v) => handleTagAdd('supportedRadiatorSizesMm', parseInt(v))} 
-                                onRemove={(v) => handleTagRemove('supportedRadiatorSizesMm', parseInt(v))}
+                                selectedValues={(formData.supportedRadiatorSizesMm || []).map(s => String(s))} 
+                                onAdd={(v) => handleTagAdd('supportedRadiatorSizesMm', parseInt(v, 10))} 
+                                onRemove={(v) => handleTagRemove('supportedRadiatorSizesMm', parseInt(v, 10))}
                             />
                         </Col>
                     </Row>

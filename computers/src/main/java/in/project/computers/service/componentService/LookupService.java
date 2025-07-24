@@ -42,4 +42,6 @@ public interface LookupService {
     Brand createBrand(BrandRequest request, MultipartFile image);
     Brand updateBrand(String id, BrandRequest request, MultipartFile image);
     void deleteBrand(String id);
+
+
 }

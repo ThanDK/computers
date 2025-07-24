@@ -4,7 +4,7 @@ import in.project.computers.dto.builds.ComputerBuildDetailResponse;
 import in.project.computers.dto.builds.ComputerBuildRequest;
 import in.project.computers.dto.builds.CompatibilityResult;
 import in.project.computers.service.componentCompatibility.ComponentCompatibilityService;
-import in.project.computers.service.ComputerBuildService.UserBuildService;
+import in.project.computers.service.computerBuildService.UserBuildService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

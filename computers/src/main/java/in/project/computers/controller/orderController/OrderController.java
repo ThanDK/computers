@@ -20,10 +20,10 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.util.List;
 
 /**
- * <h3>Order Controller (สำหรับ User)</h3>
+ * <h3>Order Controller (for User)</h3>
  * <p>
- * Controller สำหรับจัดการ API Endpoints ทั้งหมดที่เกี่ยวกับระบบ Order ที่ผู้ใช้ทั่วไปสามารถทำได้
- * ทุก Endpoint ในนี้ (ยกเว้น Callback จาก PayPal) ต้องการการยืนยันตัวตน (Authentication)
+ * Controller for handling user-facing order actions, such as creating an order from a cart,
+ * submitting payment slips, viewing order history, and handling payment provider callbacks.
  * </p>
  */
 @RestController
@@ -34,32 +34,21 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    // ดึงค่า URL ของ Frontend จาก application.properties เพื่อใช้ในการ Redirect
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
     /**
      * <h4>[POST] /api/orders</h4>
-     * <p>Endpoint สำหรับสร้างคำสั่งซื้อใหม่</p>
-     * <p><b>การทำงาน:</b> รับข้อมูลสินค้า, ที่อยู่, และวิธีการชำระเงินจากผู้ใช้ในรูปแบบ JSON และส่งต่อไปยัง OrderService เพื่อสร้าง Order</p>
-     * <p><b>ตัวอย่างการเรียก (Body):</b></p>
-     * <pre>{@code
-     * {
-     *   "shippingAddress": { ... },
-     *   "items": [ { "productId": "cpu-123", "quantity": 1 }, { "productId": "gpu-456", "quantity": 1 } ],
-     *   "paymentMethod": "PAYPAL"
-     * }
-     * }</pre>
-     * <p><b>สิ่งที่ต้องมี:</b> ต้องมี Token ของผู้ใช้ที่ล็อกอินแล้วใน Header (`Authorization: Bearer <TOKEN>`)</p>
-     *
-     * @param request DTO ที่มีข้อมูลคำสั่งซื้อ
-     * @return ResponseEntity ที่มี CreateOrderResponse (อาจมี PayPal link หรือแค่ Order ID)
+     * <p>Endpoint for creating a new order FROM the user's saved cart.</p>
+     * <p><b>Workflow:</b> The backend reads the user's cart items from the `CartService` and creates an order.</p>
+     * @param request DTO containing only checkout information (address, phone, payment method).
+     * @return ResponseEntity with CreateOrderResponse (e.g., PayPal link or just an Order ID).
      */
     @PostMapping
-    @PreAuthorize("isAuthenticated()") // ผู้ใช้ต้องล็อกอินก่อน
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CreateOrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         try {
-            log.info("User authenticated, received request to create order.");
+            log.info("User authenticated, received request to create order from their saved cart.");
             CreateOrderResponse response = orderService.createOrder(request);
             return ResponseEntity.ok(response);
         } catch (PayPalRESTException e) {
@@ -70,14 +59,10 @@ public class OrderController {
 
     /**
      * <h4>[POST] /api/orders/submit-slip/{orderId}</h4>
-     * <p>Endpoint สำหรับยืนยันการชำระเงินด้วยสลิป (สำหรับ Bank Transfer)</p>
-     * <p><b>การทำงาน:</b> รับไฟล์รูปภาพสลิปโอนเงินสำหรับ Order ที่มีอยู่</p>
-     * <p><b>หมายเหตุ:</b> Request นี้ต้องเป็นแบบ `multipart/form-data`</p>
-     * <p><b>สิ่งที่ต้องมี:</b> Token ของผู้ใช้ที่ล็อกอินแล้วใน Header (`Authorization: Bearer <TOKEN>`)</p>
-     *
-     * @param orderId   ID ของ Order ที่ต้องการแจ้งชำระเงิน
-     * @param slipImage ไฟล์รูปภาพสลิปที่แนบมากับ key "slipImage"
-     * @return ResponseEntity ที่มี OrderResponse ที่อัปเดตสถานะแล้ว
+     * <p>Endpoint for submitting a payment slip for a BANK_TRANSFER order.</p>
+     * @param orderId   The ID of the order.
+     * @param slipImage The slip image file.
+     * @return ResponseEntity with the updated order details.
      */
     @PostMapping(value = "/submit-slip/{orderId}", consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
@@ -91,14 +76,8 @@ public class OrderController {
 
     /**
      * <h4>[GET] /api/orders/capture/{orderId}</h4>
-     * <p>Endpoint สำหรับ Callback จาก PayPal เมื่อชำระเงินสำเร็จ (Public Endpoint)</p>
-     * <p><b>การทำงาน:</b> Endpoint นี้จะถูกเรียกโดย Browser ของผู้ใช้หลังจากที่ PayPal redirect กลับมา
-     * ระบบจะทำการยืนยันการจ่ายเงินกับ PayPal และอัปเดตสถานะ Order จากนั้นจะ redirect ผู้ใช้ไปยังหน้า "ชำระเงินสำเร็จ" ของ Frontend</p>
-     *
-     * @param orderId   ID ของ Order
-     * @param paymentId ID ของ Payment จาก PayPal (Query Param)
-     * @param payerId   ID ของผู้จ่าย จาก PayPal (Query Param)
-     * @return RedirectView ไปยังหน้า "Payment Successful" ของ Frontend
+     * <p>PayPal Success Callback. This endpoint is public.</p>
+     * <p>Redirects the user to the frontend's payment success or failure page.</p>
      */
     @GetMapping("/capture/{orderId}")
     public RedirectView captureOrder(
@@ -108,16 +87,11 @@ public class OrderController {
         try {
             log.info("Capturing PayPal payment for order ID: {}, Payment ID: {}", orderId, paymentId);
             orderService.capturePaypalOrder(orderId, paymentId, payerId);
-
-
             String redirectUrl = frontendUrl + "/payment-successful?order_id=" + orderId;
             log.info("Redirecting to success URL: {}", redirectUrl);
             return new RedirectView(redirectUrl);
-
         } catch (PayPalRESTException e) {
             log.error("Error capturing payment with PayPal for order ID: {}. Error: {}", orderId, e.getMessage());
-
-
             String redirectUrl = frontendUrl + "/payment-failed?order_id=" + orderId + "&error=capture_error";
             log.info("Redirecting to failure URL: {}", redirectUrl);
             return new RedirectView(redirectUrl);
@@ -126,12 +100,7 @@ public class OrderController {
 
     /**
      * <h4>[GET] /api/orders/cancel/{orderId}</h4>
-     * <p>Endpoint สำหรับ Callback จาก PayPal เมื่อผู้ใช้ยกเลิกการชำระเงิน (Public Endpoint)</p>
-     * <p><b>การทำงาน:</b> Endpoint นี้จะถูกเรียกโดย Browser ของผู้ใช้หลังจากกดยกเลิกที่หน้า PayPal
-     * ระบบจะ redirect ผู้ใช้ไปยังหน้า "ยกเลิกการชำระเงิน" ของ Frontend</p>
-     *
-     * @param orderId ID ของ Order ที่ถูกยกเลิก
-     * @return RedirectView ไปยังหน้า "Payment Cancelled" ของ Frontend
+     * <p>PayPal Cancel Callback. This endpoint is public.</p>
      */
     @GetMapping("/cancel/{orderId}")
     public RedirectView paymentCancelled(@PathVariable String orderId) {
@@ -143,10 +112,7 @@ public class OrderController {
 
     /**
      * <h4>[GET] /api/orders</h4>
-     * <p>Endpoint สำหรับให้ผู้ใช้ดูรายการ Order ทั้งหมดของตนเอง</p>
-     * <p><b>สิ่งที่ต้องมี:</b> Token ของผู้ใช้ที่ล็อกอินแล้วใน Header (`Authorization: Bearer <TOKEN>`)</p>
-     *
-     * @return รายการ Order ทั้งหมดของผู้ใช้ (List of OrderResponse)
+     * <p>Endpoint for a user to get their own order history.</p>
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -157,11 +123,7 @@ public class OrderController {
 
     /**
      * <h4>[GET] /api/orders/{orderId}</h4>
-     * <p>Endpoint สำหรับให้ผู้ใช้ดูรายละเอียด Order เฉพาะเจาะจงของตนเอง</p>
-     * <p><b>สิ่งที่ต้องมี:</b> Token ของผู้ใช้ที่ล็อกอินแล้วใน Header (`Authorization: Bearer <TOKEN>`)</p>
-     *
-     * @param orderId ID ของ Order ที่ต้องการดู
-     * @return รายละเอียดของ Order นั้น (OrderResponse)
+     * <p>Endpoint for a user to get details of a specific order they own.</p>
      */
     @GetMapping("/{orderId}")
     @PreAuthorize("isAuthenticated()")
@@ -172,11 +134,7 @@ public class OrderController {
 
     /**
      * <h4>[POST] /api/orders/cancel-by-user/{orderId}</h4>
-     * <p>Endpoint สำหรับให้ผู้ใช้ยกเลิก Order ที่ยังไม่ได้ชำระเงิน</p>
-     * <p><b>สิ่งที่ต้องมี:</b> Token ของผู้ใช้ที่ล็อกอินแล้วใน Header (`Authorization: Bearer <TOKEN>`)</p>
-     *
-     * @param orderId ID ของ Order ที่ต้องการยกเลิก
-     * @return OrderResponse ที่มีสถานะเป็น CANCELLED
+     * <p>Endpoint for a user to cancel their own order if it's still in a pending state.</p>
      */
     @PostMapping("/cancel-by-user/{orderId}")
     @PreAuthorize("isAuthenticated()")
@@ -188,12 +146,7 @@ public class OrderController {
 
     /**
      * <h4>[POST] /api/orders/retry-paypal/{orderId}</h4>
-     * <p>Endpoint สำหรับให้ผู้ใช้พยายามชำระเงินผ่าน PayPal อีกครั้ง</p>
-     * <p><b>การทำงาน:</b> สำหรับ Order ที่เคยเลือก PayPal แต่ยังไม่ได้จ่าย หรือจ่ายแล้วล้มเหลว ระบบจะสร้างลิงก์ PayPal ใหม่อีกครั้ง</p>
-     * <p><b>สิ่งที่ต้องมี:</b> Token ของผู้ใช้ที่ล็อกอินแล้วใน Header (`Authorization: Bearer <TOKEN>`)</p>
-     *
-     * @param orderId ID ของ Order ที่ต้องการลองชำระเงินใหม่
-     * @return CreateOrderResponse ที่มีลิงก์สำหรับไปชำระเงินที่ PayPal ใหม่
+     * <p>Endpoint for a user to retry a failed or pending PayPal payment.</p>
      */
     @PostMapping("/retry-paypal/{orderId}")
     @PreAuthorize("isAuthenticated()")
@@ -210,12 +163,7 @@ public class OrderController {
 
     /**
      * <h4>[POST] /api/orders/request-refund/{orderId}</h4>
-     * <p>Endpoint สำหรับให้ผู้ใช้ส่งคำขอคืนเงิน (Request Refund)</p>
-     * <p><b>การทำงาน:</b> ระบบจะเปลี่ยนสถานะ Order เป็น REFUND_REQUESTED เพื่อรอการตรวจสอบจาก Admin</p>
-     * <p><b>สิ่งที่ต้องมี:</b> Token ของผู้ใช้ที่ล็อกอินแล้วใน Header (`Authorization: Bearer <TOKEN>`)</p>
-     *
-     * @param orderId ID ของ Order ที่ต้องการขอคืนเงิน
-     * @return OrderResponse ที่มีสถานะเป็น REFUND_REQUESTED
+     * <p>Endpoint for a user to request a refund on a processed order.</p>
      */
     @PostMapping("/request-refund/{orderId}")
     @PreAuthorize("isAuthenticated()")

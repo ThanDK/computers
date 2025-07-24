@@ -1,4 +1,4 @@
-package in.project.computers.service.ComputerBuildService;
+package in.project.computers.service.computerBuildService;
 
 import in.project.computers.dto.builds.BuildPartDetail;
 import in.project.computers.dto.builds.ComputerBuildDetailResponse;

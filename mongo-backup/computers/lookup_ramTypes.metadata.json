@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"ee40eff262bc4280bf0e419a05700577","collectionName":"lookup_ramTypes","type":"collection"}

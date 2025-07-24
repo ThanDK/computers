@@ -18,6 +18,8 @@ public class OrderItemSnapshot {
     private String name;
     private String mpn;
     private int quantity;
+    private String imageUrl;
     @Field(targetType = FieldType.DECIMAL128)
     private BigDecimal priceAtTimeOfOrder;
+
 }

@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"7ca2c7c7338f4ee989cfa7a0c2bee2aa","collectionName":"storageInterfaces","type":"collection"}

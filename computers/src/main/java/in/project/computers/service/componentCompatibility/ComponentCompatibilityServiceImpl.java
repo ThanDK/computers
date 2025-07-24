@@ -34,16 +34,36 @@ public class ComponentCompatibilityServiceImpl implements ComponentCompatibility
     @PostConstruct
     public void initialize() {
         log.info("Caching IDs for compatibility checker...");
-        this.nvmeInterfaceId = storageInterfaceRepository.findByName("NVMe").map(StorageInterface::getId).orElse(null);
-        if (this.nvmeInterfaceId == null)
-            log.warn("Could not find 'NVMe' in StorageInterface lookup. NVMe checks will be skipped.");
+
+        // --- START OF THE ROBUST FIX ---
+        // Instead of trying to get one, we fetch a list.
+        List<StorageInterface> nvmeInterfaces = storageInterfaceRepository.findAllByName("NVMe");
+
+        if (nvmeInterfaces.size() > 1) {
+            // If there are duplicates, log a severe warning and take the first one.
+            log.error("CRITICAL DATABASE INCONSISTENCY: Found {} entries for 'NVMe' in storage_interfaces. Using the first one found (ID: {}). Please clean up the duplicates.", nvmeInterfaces.size(), nvmeInterfaces.getFirst().getId());
+            this.nvmeInterfaceId = nvmeInterfaces.getFirst().getId();
+        } else if (nvmeInterfaces.size() == 1) {
+            // The ideal case: one was found.
+            this.nvmeInterfaceId = nvmeInterfaces.getFirst().getId();
+            log.info("Successfully cached 'NVMe' interface ID: {}", this.nvmeInterfaceId);
+        } else {
+            // Case where none were found.
+            this.nvmeInterfaceId = null;
+            log.warn("Could not find 'NVMe' in StorageInterface lookup. NVMe compatibility checks will be skipped.");
+        }
+        // --- END OF THE ROBUST FIX ---
 
         this.sataInterfaceIds = storageInterfaceRepository.findAll().stream()
                 .filter(si -> si.getName() != null && si.getName().toUpperCase().contains("SATA"))
                 .map(StorageInterface::getId)
                 .collect(Collectors.toList());
-        if (this.sataInterfaceIds.isEmpty())
+
+        if (this.sataInterfaceIds.isEmpty()) {
             log.warn("Could not find 'SATA' types in StorageInterface lookup. SATA checks will be skipped.");
+        } else {
+            log.info("Successfully cached {} SATA interface IDs.", this.sataInterfaceIds.size());
+        }
     }
 
     @Override

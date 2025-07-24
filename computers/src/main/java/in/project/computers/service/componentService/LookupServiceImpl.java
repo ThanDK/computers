@@ -6,6 +6,7 @@ import in.project.computers.repository.ComponentRepo.ComponentRepository;
 import in.project.computers.repository.lookup.*;
 import in.project.computers.service.AWSS3Bucket.S3Service;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LookupServiceImpl implements LookupService {
 
     private final SocketRepository socketRepository;
@@ -31,7 +33,6 @@ public class LookupServiceImpl implements LookupService {
     private final BrandRepository brandRepository;
     private final S3Service s3Service;
 
-    // ... (getAllLookups, and all Socket, RamType, FormFactor, StorageInterface methods are unchanged) ...
     @Override
     public Map<String, Object> getAllLookups() {
         Map<String, Object> lookups = new HashMap<>();
@@ -73,6 +74,11 @@ public class LookupServiceImpl implements LookupService {
     public Socket updateSocket(String id, SocketRequest request) {
         Socket socket = socketRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Socket not found with id: " + id));
+
+        if (!socket.getName().equals(request.getName()) && componentRepository.existsBySocketId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot change the name of this Socket because it is currently in use. Please create a new Socket instead.");
+        }
+
         Optional<Socket> existingByName = socketRepository.findByName(request.getName());
         if (existingByName.isPresent() && !existingByName.get().getId().equals(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Another socket with name '" + request.getName() + "' already exists.");
@@ -106,6 +112,11 @@ public class LookupServiceImpl implements LookupService {
     public RamType updateRamType(String id, RamTypeRequest request) {
         RamType ramType = ramTypeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "RAM Type not found with id: " + id));
+
+        if (!ramType.getName().equals(request.getName()) && componentRepository.existsByRamTypeId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot change the name of this RAM Type because it is currently in use. Please create a new RAM Type instead.");
+        }
+
         Optional<RamType> existingByName = ramTypeRepository.findByName(request.getName());
         if (existingByName.isPresent() && !existingByName.get().getId().equals(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Another RAM Type with name '" + request.getName() + "' already exists.");
@@ -138,6 +149,11 @@ public class LookupServiceImpl implements LookupService {
     public FormFactor updateFormFactor(String id, FormFactorRequest request) {
         FormFactor formFactor = formFactorRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Form Factor not found with id: " + id));
+
+        // --- FIX: PROTECTION ADDED ---
+        if (!formFactor.getName().equals(request.getName()) && componentRepository.existsByFormFactorId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot change the name of this Form Factor because it is currently in use. Please create a new Form Factor instead.");
+        }
 
         Optional<FormFactor> existing = formFactorRepository.findByNameAndType(request.getName(), request.getType());
         if (existing.isPresent() && !existing.get().getId().equals(id)) {
@@ -172,6 +188,12 @@ public class LookupServiceImpl implements LookupService {
     public StorageInterface updateStorageInterface(String id, StorageInterfaceRequest request) {
         StorageInterface storageInterface = storageInterfaceRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Storage Interface not found with id: " + id));
+
+        // --- FIX: PROTECTION ADDED ---
+        if (!storageInterface.getName().equals(request.getName()) && componentRepository.existsByStorageInterfaceId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot change the name of this Storage Interface because it is currently in use. Please create a new one instead.");
+        }
+
         Optional<StorageInterface> existingByName = storageInterfaceRepository.findByName(request.getName());
         if (existingByName.isPresent() && !existingByName.get().getId().equals(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Another Storage Interface with name '" + request.getName() + "' already exists.");
@@ -190,19 +212,18 @@ public class LookupServiceImpl implements LookupService {
         }
         storageInterfaceRepository.deleteById(id);
     }
+
     @Override
     public ShippingProvider createShippingProvider(ShippingProviderRequest request, MultipartFile image) {
         if (shippingProviderRepository.findByName(request.getName()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Shipping Provider with name '" + request.getName() + "' already exists.");
         }
-
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
             imageUrl = s3Service.uploadFile(image);
         } else if (StringUtils.hasText(request.getImageUrl())) {
             imageUrl = request.getImageUrl();
         }
-
         ShippingProvider provider = new ShippingProvider(null, request.getName(), imageUrl, request.getTrackingUrl());
         return shippingProviderRepository.save(provider);
     }
@@ -211,29 +232,23 @@ public class LookupServiceImpl implements LookupService {
     public ShippingProvider updateShippingProvider(String id, ShippingProviderRequest request, MultipartFile image) {
         ShippingProvider provider = shippingProviderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shipping Provider not found with id: " + id));
-
         Optional<ShippingProvider> existingByName = shippingProviderRepository.findByName(request.getName());
         if (existingByName.isPresent() && !existingByName.get().getId().equals(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Another Shipping Provider with name '" + request.getName() + "' already exists.");
         }
-
         String imageUrl = provider.getImageUrl();
-
         if (image != null && !image.isEmpty()) {
-
             if (StringUtils.hasText(provider.getImageUrl()) && provider.getImageUrl().contains("s3.amazonaws.com")) {
                 String oldKey = extractKeyFromUrl(provider.getImageUrl());
-                s3Service.deleteFile(oldKey);
+                if(oldKey != null) s3Service.deleteFile(oldKey);
             }
             imageUrl = s3Service.uploadFile(image);
         } else if (request.getImageUrl() != null) {
             imageUrl = request.getImageUrl();
         }
-
         provider.setName(request.getName());
         provider.setImageUrl(imageUrl);
         provider.setTrackingUrl(request.getTrackingUrl());
-
         return shippingProviderRepository.save(provider);
     }
 
@@ -241,29 +256,22 @@ public class LookupServiceImpl implements LookupService {
     public void deleteShippingProvider(String id) {
         ShippingProvider provider = shippingProviderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shipping Provider not found with id: " + id));
-
         if (StringUtils.hasText(provider.getImageUrl()) && provider.getImageUrl().contains("s3.amazonaws.com")) {
             String keyToDelete = extractKeyFromUrl(provider.getImageUrl());
-            s3Service.deleteFile(keyToDelete);
+            if(keyToDelete != null) s3Service.deleteFile(keyToDelete);
         }
-
         shippingProviderRepository.deleteById(id);
     }
-
-    // --- BRAND METHODS ---
 
     @Override
     public Brand createBrand(BrandRequest request, MultipartFile image) {
         if (brandRepository.findByName(request.getName()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Brand with name '" + request.getName() + "' already exists.");
         }
-
         String logoUrl = null;
         if (image != null && !image.isEmpty()) {
             logoUrl = s3Service.uploadFile(image);
         }
-        // FIX: Removed the incorrect call to request.getLogoUrl()
-
         Brand brand = Brand.builder()
                 .name(request.getName())
                 .logoUrl(logoUrl)
@@ -275,14 +283,14 @@ public class LookupServiceImpl implements LookupService {
     public Brand updateBrand(String id, BrandRequest request, MultipartFile image) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Brand not found with id: " + id));
-
+        if (!brand.getName().equals(request.getName()) && componentRepository.existsByBrandId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot change the name of this Brand because it is currently in use. Please create a new Brand instead.");
+        }
         Optional<Brand> existingByName = brandRepository.findByName(request.getName());
         if (existingByName.isPresent() && !existingByName.get().getId().equals(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Another brand with name '" + request.getName() + "' already exists.");
         }
-
         String logoUrl = brand.getLogoUrl();
-
         if (image != null && !image.isEmpty()) {
             if (StringUtils.hasText(brand.getLogoUrl()) && brand.getLogoUrl().contains("s3.amazonaws.com")) {
                 String oldKey = extractKeyFromUrl(brand.getLogoUrl());
@@ -290,11 +298,8 @@ public class LookupServiceImpl implements LookupService {
             }
             logoUrl = s3Service.uploadFile(image);
         }
-        // FIX: Removed the incorrect call to request.getLogoUrl()
-
         brand.setName(request.getName());
         brand.setLogoUrl(logoUrl);
-
         return brandRepository.save(brand);
     }
 
@@ -302,30 +307,26 @@ public class LookupServiceImpl implements LookupService {
     public void deleteBrand(String id) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Brand not found with id: " + id));
-
         if (componentRepository.existsByBrandId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete Brand. It is currently in use by one or more components.");
         }
-
         if (StringUtils.hasText(brand.getLogoUrl()) && brand.getLogoUrl().contains("s3.amazonaws.com")) {
             String keyToDelete = extractKeyFromUrl(brand.getLogoUrl());
             if(keyToDelete != null) s3Service.deleteFile(keyToDelete);
         }
-
         brandRepository.deleteById(id);
     }
 
-    // --- FIX: ADDED THE MISSING HELPER METHOD ---
     private String extractKeyFromUrl(String fileUrl) {
         if (!StringUtils.hasText(fileUrl)) {
             return null;
         }
         try {
-            // Assumes a URL structure like https://<bucket-name>.s3.<region>.amazonaws.com/<key>
             return fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
         } catch (Exception e) {
-            // Log the exception if you have a logger configured
             return null;
         }
     }
+
+    // The debug method can now be safely removed.
 }

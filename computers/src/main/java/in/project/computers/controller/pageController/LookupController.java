@@ -196,4 +196,5 @@ public class LookupController {
         lookupService.deleteBrand(id);
         return ResponseEntity.noContent().build();
     }
+
 }

@@ -4,6 +4,7 @@ import com.paypal.api.payments.Payment;
 import com.paypal.base.rest.PayPalRESTException;
 import in.project.computers.dto.order.CreateOrderRequest;
 import in.project.computers.dto.order.OrderResponse;
+import in.project.computers.entity.order.Cart;
 import in.project.computers.entity.order.Order;
 import in.project.computers.entity.order.PaymentDetails;
 import in.project.computers.entity.order.PaymentMethod;
@@ -86,4 +87,6 @@ public interface OrderHelperService {
      * @return อ็อบเจกต์ {@link OrderResponse} สำหรับส่งกลับไปให้ Client
      */
     OrderResponse entityToResponse(Order order);
+
+    Order createAndValidateOrderFromCart(Cart cart, CreateOrderRequest request, UserEntity currentUser);
 }
