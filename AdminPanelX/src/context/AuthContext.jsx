@@ -13,12 +13,12 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
-        // Check if the token is expired
+
         if (decodedToken.exp * 1000 > Date.now()) {
-          // Token is valid, set user state
-          setUser({ email: decodedToken.sub, roles: decodedToken.roles || [] }); // Added safety || []
+
+          setUser({ email: decodedToken.sub, roles: decodedToken.roles || [] }); 
         } else {
-          // Token is expired
+          
           console.warn("AuthContext: Token has expired.");
           logout();
         }
@@ -41,7 +41,6 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // The value passed to consumers. `isAdmin` is calculated on the fly, which is a great pattern.
   const authContextValue = {
     user,
     token,

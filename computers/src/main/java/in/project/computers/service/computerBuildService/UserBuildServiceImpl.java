@@ -7,7 +7,7 @@ import in.project.computers.dto.component.componentResponse.*;
 import in.project.computers.entity.component.*;
 import in.project.computers.entity.computerBuild.BuildPart;
 import in.project.computers.entity.computerBuild.ComputerBuild;
-import in.project.computers.repository.ComponentRepo.ComponentRepository;
+import in.project.computers.repository.componentRepo.ComponentRepository;
 import in.project.computers.repository.generalRepo.ComputerBuildRepository;
 import in.project.computers.service.componentService.ComponentConverter;
 import in.project.computers.service.userAuthenticationService.UserService;

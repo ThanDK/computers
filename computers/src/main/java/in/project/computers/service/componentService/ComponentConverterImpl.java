@@ -5,7 +5,7 @@ import in.project.computers.entity.component.*;
 import in.project.computers.entity.lookup.*;
 import in.project.computers.dto.component.componentRequest.*;
 import in.project.computers.dto.component.componentResponse.*;
-import in.project.computers.repository.ComponentRepo.InventoryRepository;
+import in.project.computers.repository.componentRepo.InventoryRepository;
 import in.project.computers.repository.lookup.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

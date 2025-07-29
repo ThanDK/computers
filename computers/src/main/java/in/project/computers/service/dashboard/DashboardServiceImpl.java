@@ -7,8 +7,8 @@ import in.project.computers.entity.order.LineItemType; // <-- IMPORT THIS
 import in.project.computers.entity.order.Order;
 import in.project.computers.entity.order.OrderStatus;
 import in.project.computers.entity.order.PaymentStatus;
-import in.project.computers.repository.ComponentRepo.ComponentRepository;
-import in.project.computers.repository.ComponentRepo.InventoryRepository;
+import in.project.computers.repository.componentRepo.ComponentRepository;
+import in.project.computers.repository.componentRepo.InventoryRepository;
 import in.project.computers.repository.generalRepo.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

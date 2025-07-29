@@ -7,8 +7,8 @@ import in.project.computers.entity.order.Cart;
 import in.project.computers.entity.order.CartItem;
 import in.project.computers.entity.order.LineItemType;
 import in.project.computers.entity.order.OrderItemSnapshot;
-import in.project.computers.repository.ComponentRepo.ComponentRepository;
-import in.project.computers.repository.ComponentRepo.InventoryRepository;
+import in.project.computers.repository.componentRepo.ComponentRepository;
+import in.project.computers.repository.componentRepo.InventoryRepository;
 import in.project.computers.repository.generalRepo.CartRepository;
 import in.project.computers.repository.generalRepo.ComputerBuildRepository;
 import in.project.computers.service.userAuthenticationService.UserService;
@@ -236,14 +236,23 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartResponse entityToResponse(Cart cart) {
-        AtomicInteger totalItems = new AtomicInteger(0);
-
-        if (cart == null || cart.getItems() == null) {
-            return CartResponse.builder().id(cart != null ? cart.getId() : null).userId(cart != null ? cart.getUserId() : null).items(java.util.Collections.emptyList()).subtotal(BigDecimal.ZERO).totalItems(0).build();
+        // Handle null or empty cart gracefully
+        if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
+            return CartResponse.builder()
+                    .id(cart != null ? cart.getId() : null)
+                    .userId(cart != null ? cart.getUserId() : null)
+                    .items(java.util.Collections.emptyList())
+                    .subtotal(BigDecimal.ZERO)
+                    .cartIconCount(0)
+                    .totalProductCount(0)
+                    .build();
         }
 
+        AtomicInteger totalProductCounter = new AtomicInteger(0);
+
         List<CartItemResponse> itemResponses = cart.getItems().stream().map(item -> {
-            totalItems.addAndGet(item.getQuantity());
+            totalProductCounter.addAndGet(item.getQuantity());
+
             return CartItemResponse.builder()
                     .cartItemId(item.getCartItemId())
                     .productId(item.getProductId())
@@ -257,14 +266,22 @@ public class CartServiceImpl implements CartService {
                     .build();
         }).collect(Collectors.toList());
 
-        BigDecimal subtotal = itemResponses.stream().map(CartItemResponse::getLineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int iconCount = cart.getItems().size();
+
+        int productCount = totalProductCounter.get();
+
+        BigDecimal subtotal = itemResponses.stream()
+                .map(CartItemResponse::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return CartResponse.builder()
                 .id(cart.getId())
                 .userId(cart.getUserId())
                 .items(itemResponses)
                 .subtotal(subtotal)
-                .totalItems(totalItems.get())
+                .cartIconCount(iconCount)
+                .totalProductCount(productCount)
                 .build();
     }
 }

@@ -19,7 +19,6 @@ export async function loginUser(email, password) {
   });
 
   if (!response.ok) {
-    // Attempt to parse the error message from the server, otherwise throw a generic error.
     try {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Login failed. Please check your credentials.');

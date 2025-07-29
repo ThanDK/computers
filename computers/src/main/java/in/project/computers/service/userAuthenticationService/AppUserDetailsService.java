@@ -27,7 +27,15 @@ public class AppUserDetailsService implements UserDetailsService {
 
         //"ROLE_ADMIN", "ROLE_USER" in the database.
         List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole()));
-
-        return new User(user.getEmail(), user.getPassword(), authorities); // Pass the authorities here
+        String password = user.getPassword() != null ? user.getPassword() : "";
+        return new User(user.getEmail(), password, authorities);
+    }
+    public UserDetails buildUserDetails(UserEntity user) {
+        if (user == null) {
+            throw new IllegalArgumentException("UserEntity cannot be null");
+        }
+        List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole()));
+        String password = user.getPassword() != null ? user.getPassword() : "";
+        return new User(user.getEmail(), password, authorities);
     }
 }

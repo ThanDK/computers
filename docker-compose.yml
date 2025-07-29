@@ -1,5 +1,5 @@
 services:
-  # The "computers" Spring Boot API service
+
   computers-api:
     build:
       context: ./computers
@@ -16,14 +16,14 @@ services:
     networks:
       - computers-network
 
-  # NEW: The React Admin Panel Frontend service
+
   admin-panel-frontend:
     build:
       context: ./AdminPanelX
       dockerfile: Dockerfile
     container_name: admin-panel-container
     ports:
-      # Map local port 5173 to port 80 inside the container (where Nginx runs)
+
       - "5173:80"
     restart: unless-stopped
     networks:

@@ -10,9 +10,8 @@ import in.project.computers.dto.order.OrderResponse;
 import in.project.computers.entity.component.*;
 import in.project.computers.entity.order.*;
 import in.project.computers.entity.user.UserEntity;
-import in.project.computers.repository.ComponentRepo.ComponentRepository;
-import in.project.computers.repository.ComponentRepo.InventoryRepository;
-import in.project.computers.repository.generalRepo.OrderRepository;
+import in.project.computers.repository.componentRepo.ComponentRepository;
+import in.project.computers.repository.componentRepo.InventoryRepository;
 
 import in.project.computers.service.paypalService.PaypalService;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +35,6 @@ public class OrderHelperServiceImpl implements OrderHelperService {
 
     private final ComponentRepository componentRepository;
     private final InventoryRepository inventoryRepository;
-    private final OrderRepository orderRepository;
     private final PaypalService paypalService;
     private final APIContext apiContext;
 
@@ -46,14 +44,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
     @Value("${app.tax-rate:0.00}")
     private BigDecimal taxRate;
 
-    /**
-     * @deprecated Use createAndValidateOrderFromCart instead. This method works with the old DTO.
-     */
-    @Override
-    @Deprecated
-    public Order createAndValidateBaseOrder(CreateOrderRequest request, UserEntity currentUser) {
-        throw new UnsupportedOperationException("This method is deprecated. Use createAndValidateOrderFromCart instead.");
-    }
+
 
     @Override
     public Order createAndValidateOrderFromCart(Cart cart, CreateOrderRequest request, UserEntity currentUser) {
@@ -78,7 +69,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                         .containedItems(cartItem.getContainedItemsSnapshot())
                         .imageUrl(null)
                         .build();
-            } else { // COMPONENT
+            } else {
                 Component component = componentRepository.findById(cartItem.getProductId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component with ID " + cartItem.getProductId() + " not found."));
 
@@ -146,7 +137,6 @@ public class OrderHelperServiceImpl implements OrderHelperService {
             }
         }
     }
-
 
     @Override
     public void decrementStockForOrder(Order order) {
@@ -226,22 +216,6 @@ public class OrderHelperServiceImpl implements OrderHelperService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not derive Sale ID from PayPal payment's related resources.");
         }
         return sale.getId();
-    }
-
-    @Override
-    public Order findOrderForProcessing(String orderId, String userId, PaymentMethod expectedMethod) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
-        if (!order.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this order.");
-        }
-        if (order.getPaymentDetails() == null || order.getPaymentDetails().getPaymentMethod() != expectedMethod) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect payment method for this action.");
-        }
-        if (order.getPaymentStatus() != PaymentStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "This order is not pending payment.");
-        }
-        return order;
     }
 
     @Override

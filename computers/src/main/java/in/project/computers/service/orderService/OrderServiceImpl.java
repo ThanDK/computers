@@ -85,7 +85,6 @@ public class OrderServiceImpl implements OrderService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported payment method.");
         }
 
-        // [CO-6-NEW] IMPORTANT: Clear the user's cart after the order is successfully initiated.
         cartService.clearCart(currentUser.getId());
         log.info("Successfully created order {} and cleared the cart for user {}", order.getId(), currentUser.getId());
 
@@ -515,9 +514,9 @@ public class OrderServiceImpl implements OrderService {
         String formattedCancelUrl = String.format(cancelUrl, order.getId());
 
         // === [INIT-PAYPAL-3] [MODIFIED] เรียกใช้ PaypalService ด้วย Order object ทั้งหมด ===
-        // The service now has all the data it needs to build a detailed transaction.
+
         Payment payment = paypalService.createPayment(
-                order, // Pass the entire order object
+                order,
                 "sale",
                 "Order #" + order.getId(),
                 formattedCancelUrl,
@@ -539,6 +538,7 @@ public class OrderServiceImpl implements OrderService {
         PaymentDetails details = order.getPaymentDetails();
         details.setTransactionId(paypalPaymentId);
         details.setProviderStatus("CREATED_IN_PAYPAL");
+        //Save Order ตรงนี้
         orderRepository.save(order);
         log.info("Updated order ID {} with PayPal Payment ID: {}", order.getId(), paypalPaymentId);
 

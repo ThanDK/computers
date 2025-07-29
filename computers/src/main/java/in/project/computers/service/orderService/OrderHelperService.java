@@ -7,24 +7,10 @@ import in.project.computers.dto.order.OrderResponse;
 import in.project.computers.entity.order.Cart;
 import in.project.computers.entity.order.Order;
 import in.project.computers.entity.order.PaymentDetails;
-import in.project.computers.entity.order.PaymentMethod;
 import in.project.computers.entity.user.UserEntity;
 
 
 public interface OrderHelperService {
-
-    /**
-     * สร้างและตรวจสอบความถูกต้องของอ็อบเจกต์ Order พื้นฐานจาก Request
-     * <p>
-     * เมธอดนี้จะรวบรวมสินค้าทั้งหมด (ทั้งแบบชิ้นและแบบชุดประกอบ), ตรวจสอบสต็อก,
-     * คำนวณราคารวม, และสร้างอ็อบเจกต์ Order ที่พร้อมสำหรับขั้นตอนการชำระเงิน
-     * </p>
-     *
-     * @param request      ข้อมูลคำสั่งซื้อจาก Client
-     * @param currentUser  ข้อมูลผู้ใช้ที่กำลังทำรายการ
-     * @return อ็อบเจกต์ {@link Order} ที่สร้างขึ้นและยังไม่ได้บันทึกลงฐานข้อมูล
-     */
-    Order createAndValidateBaseOrder(CreateOrderRequest request, UserEntity currentUser);
 
     /**
      * ลดจำนวนสต็อกสินค้าตามรายการใน Order
@@ -66,20 +52,6 @@ public interface OrderHelperService {
      * @return Sale ID ที่เป็น String
      */
     String extractSaleIdFromPaypalPayment(Payment originalPaypalPayment, String orderIdForLog);
-
-    /**
-     * ค้นหาและตรวจสอบ Order สำหรับการประมวลผลบางอย่าง (เช่น การส่งสลิป)
-     * <p>
-     * เป็นเมธอดที่รวบรวมการตรวจสอบทั่วไป เช่น หาออเดอร์, เช็คความเป็นเจ้าของ,
-     * เช็ควิธีการชำระเงิน, และเช็คสถานะการชำระเงิน
-     * </p>
-     *
-     * @param orderId        ID ของออเดอร์
-     * @param userId         ID ของผู้ใช้ที่กำลังทำรายการเพื่อตรวจสอบความเป็นเจ้าของ
-     * @param expectedMethod วิธีการชำระเงินที่คาดหวังสำหรับ Action นี้
-     * @return อ็อบเจกต์ {@link Order} ที่ผ่านการตรวจสอบแล้ว
-     */
-    Order findOrderForProcessing(String orderId, String userId, PaymentMethod expectedMethod);
 
     /**
      * แปลงอ็อบเจกต์ Order (Entity) ไปเป็น OrderResponse (DTO)

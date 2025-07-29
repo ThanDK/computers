@@ -2,7 +2,7 @@ package in.project.computers.service.componentService;
 
 import in.project.computers.dto.lookup.*;
 import in.project.computers.entity.lookup.*;
-import in.project.computers.repository.ComponentRepo.ComponentRepository;
+import in.project.computers.repository.componentRepo.ComponentRepository;
 import in.project.computers.repository.lookup.*;
 import in.project.computers.service.AWSS3Bucket.S3Service;
 import lombok.RequiredArgsConstructor;

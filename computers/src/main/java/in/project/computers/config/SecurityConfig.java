@@ -2,7 +2,8 @@ package in.project.computers.config;
 
 import in.project.computers.filters.JwtAuthenticationFilter;
 import in.project.computers.service.userAuthenticationService.AppUserDetailsService;
-import lombok.AllArgsConstructor;
+import in.project.computers.service.userAuthenticationService.CustomOAuth2UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,53 +23,55 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // สำคัญมาก: ต้องเปิดใช้งาน @EnableMethodSecurity เพื่อให้ @PreAuthorize ทำงาน
-@AllArgsConstructor
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
     private final AppUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOidcUserService; // This is your OidcUserService
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-
                         .requestMatchers("/actuator/**").permitAll()
-
-
-                        // --- 1. Public Endpoints (Anyone can access) ---
+                        // Public endpoints
                         .requestMatchers("/api/register", "/api/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/components/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/orders/capture/**").permitAll() // PayPal Success Callback
-                        .requestMatchers(HttpMethod.GET, "/api/orders/cancel/**").permitAll()  // PayPal Cancel Callback
+                        .requestMatchers(HttpMethod.GET, "/api/orders/capture/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/cancel/**").permitAll()
                         .requestMatchers("/api/lookups/debug/**").permitAll()
-                        // --- 2. Admin-Only Endpoints ---
-                        .requestMatchers("/api/admin/orders/**").hasRole("ADMIN") // *** เพิ่มสำหรับ Admin Order Controller ***
+                        // Admin-Only endpoints
+                        .requestMatchers("/api/admin/orders/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/components/**").hasRole("ADMIN")
-
-                        // --- 3. Authenticated User Endpoints ---
-                        .requestMatchers("/api/orders/**").authenticated() // User Order Controller (ต้องอยู่หลัง Admin และ Public)
+                        // Authenticated User endpoints
+                        .requestMatchers("/api/orders/**").authenticated()
                         .requestMatchers("/api/builds/**").authenticated()
-
-                        // --- 4. Default Rule (Catch-all) ---
+                        // Default Rule
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(this.customOidcUserService) // Correctly wires the OIDC service
+                        )
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
-    // --- Beans อื่นๆ เหมือนเดิม ---
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -77,7 +80,6 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        // NOTE: For Docker, you might need to allow the frontend service name or gateway IP
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
