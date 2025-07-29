@@ -1,4 +1,4 @@
-package in.project.computers.controller.userAuthController;
+package in.project.computers.controller.serAuthController;
 
 import in.project.computers.dto.user.AuthenticationRequest;
 import in.project.computers.dto.user.AuthenticationResponse;
