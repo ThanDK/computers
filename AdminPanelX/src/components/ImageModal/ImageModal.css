@@ -1,0 +1,35 @@
+/* src/components/ImageModal/ImageModal.css */
+
+.clickable-image {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.clickable-image:hover {
+  transform: scale(1.1);
+}
+
+.image-modal .modal-content {
+  background-color: transparent;
+  border: none;
+}
+
+.image-modal .modal-header {
+  border-bottom: none;
+}
+
+.image-modal .modal-body {
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fullscreen-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}

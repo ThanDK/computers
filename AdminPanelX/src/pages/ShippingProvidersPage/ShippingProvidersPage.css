@@ -1,47 +1,5 @@
-/* src/pages/ShippingProvidersPage/ShippingProvidersPage.css */
-/* THIS IS A DIRECT COPY OF LookupsPage.css FOR A PERFECT LAYOUT MATCH */
+/* DELETE ALL OF THESE RULES from ShippingProvidersPage.css */
 
-.table-controls-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    gap: 1rem;
-}
-
-.filter-controls {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-grow: 1;
-}
-
-.search-bar {
-    max-width: 400px;
-    flex-grow: 1;
-}
-
-/* Action Button Styles from ComponentsPage/LookupsPage */
-.action-btn {
-    font-weight: 500;
-    min-width: 65px;
-}
-.action-btn-edit {
-    --bs-btn-color: #60a5fa;
-    --bs-btn-border-color: #60a5fa;
-    --bs-btn-hover-bg: #3b82f6;
-    --bs-btn-hover-border-color: #3b82f6;
-    --bs-btn-hover-color: #fff;
-}
-.action-btn-delete {
-    --bs-btn-color: #f87171;
-    --bs-btn-border-color: #f87171;
-    --bs-btn-hover-bg: #ef4444;
-    --bs-btn-hover-border-color: #ef4444;
-    --bs-btn-hover-color: #fff;
-}
-
-/* Dark Theme Modal Styles */
 .provider-form-modal .modal-content {
     background-color: var(--secondary-bg);
     color: var(--text-primary);
@@ -74,7 +32,6 @@
     border-color: var(--accent-color);
     box-shadow: 0 0 0 0.2rem rgba(136, 132, 216, 0.25);
 }
-/* Style for the logo preview inside the modal */
 .logo-preview {
     max-height: 80px;
     width: auto;
@@ -86,7 +43,6 @@
     background-color: var(--table-header-bg);
 }
 
-/* Style for the smaller logo inside the table */
 .table-logo {
     height: 30px;
     width: auto;

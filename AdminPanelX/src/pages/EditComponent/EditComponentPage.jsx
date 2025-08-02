@@ -1,5 +1,7 @@
+// src/pages/EditComponentPage/EditComponentPage.js
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom'; // <-- 1. IMPORT useLocation
 import { Form, Button, Row, Col, Spinner, Card, Alert } from 'react-bootstrap';
 
 // Import Services and Components
@@ -22,9 +24,13 @@ import {
 function EditComponentPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation(); // <-- 2. GET THE CURRENT LOCATION
     const { token } = useAuth();
 
-    // --- State Management ---
+    // --- 3. GET THE LOCATION WE CAME FROM ---
+    const fromLocation = location.state?.from || { pathname: '/components' };
+
+    // --- State Management (Your correct version) ---
     const [componentType, setComponentType] = useState('');
     const [formData, setFormData] = useState({});
     const [lookups, setLookups] = useState(null);
@@ -36,11 +42,9 @@ function EditComponentPage() {
     const [originalImageSrc, setOriginalImageSrc] = useState('');
     const [removeImage, setRemoveImage] = useState(false);
     const [cropModalState, setCropModalState] = useState({ show: false, src: '' });
-
-    // --- Hooks and Refs ---
     const fileInputRef = useRef(null);
 
-    // --- Side Effects (useEffect) ---
+    // --- Side Effects (Your correct version) ---
     useEffect(() => {
         const fetchData = async () => {
             if (!token || !id) return;
@@ -51,21 +55,14 @@ function EditComponentPage() {
                     getComponentById(id, token),
                     fetchAllLookups(token)
                 ]);
-
-                // When data arrives, make sure brandId is set if brandName exists
                 if (componentData.brandName && !componentData.brandId) {
                     const foundBrand = lookupData.brands.find(b => b.name === componentData.brandName);
-                    if (foundBrand) {
-                        componentData.brandId = foundBrand.id;
-                    }
+                    if (foundBrand) { componentData.brandId = foundBrand.id; }
                 }
-
                 setLookups(lookupData);
                 setFormData(componentData);
                 setComponentType(componentData.type);
-                if (componentData.imageUrl) {
-                    setImagePreviewUrl(componentData.imageUrl);
-                }
+                if (componentData.imageUrl) { setImagePreviewUrl(componentData.imageUrl); }
             } catch (err) {
                 setError("Failed to load component data. It may have been deleted or an error occurred.");
                 console.error(err);
@@ -84,18 +81,12 @@ function EditComponentPage() {
         };
     }, [imagePreviewUrl]);
     
-    // --- Event Handlers ---
+    // --- Event Handlers (Your correct version) ---
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
-        
-        // Special handling for brandName to keep brandId in sync
         if (name === 'brandName') {
             const selectedBrand = lookups?.brands.find(b => b.name === value);
-            setFormData(prev => ({
-                ...prev,
-                brandName: value,
-                brandId: selectedBrand ? selectedBrand.id : ''
-            }));
+            setFormData(prev => ({ ...prev, brandName: value, brandId: selectedBrand ? selectedBrand.id : '' }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -151,12 +142,12 @@ function EditComponentPage() {
         setError('');
         setIsSubmitting(true);
         try {
-            // Create a copy of the data to send, ensuring brandName is not sent if not needed
             const { quantity, isActive, brandName, ...updateData } = formData; 
             
             await updateComponent(id, updateData, imageFile, removeImage, token);
             notifySuccess('Component updated successfully!');
-            navigate('/components');
+            // --- 4. NAVIGATE BACK TO THE SAVED LOCATION ---
+            navigate(fromLocation);
         } catch (err) {
             setError(err.message || 'An unexpected error occurred. Please try again.');
         } finally {
@@ -164,7 +155,6 @@ function EditComponentPage() {
         }
     };
     
-    // --- Render ---
     if (isLoading) {
         return <div className="text-center p-5"><Spinner animation="border" variant="light" /></div>;
     }
@@ -178,31 +168,29 @@ function EditComponentPage() {
                 title={`Edit ${typeLabel}`}
                 subtitle={`Editing component with MPN: ${formData.mpn || 'N/A'}`}
                 showBackButton={true}
-                onBack={() => navigate('/components')}
+                // --- 5. MAKE THE BACK BUTTON ALSO USE THE SAVED LOCATION ---
+                onBack={() => navigate(fromLocation)}
             />
 
             <Card className="form-card">
                 <Card.Body>
                     {error && <Alert variant="danger">{error}</Alert>}
                     <Form noValidate onSubmit={handleSubmit}>
+                        {/* --- The rest of your form JSX is correct and unchanged --- */}
                         <Row className="mb-4">
                             <Form.Group as={Col} md="6" lg="4">
                                 <Form.Label className="step-label">Component Type</Form.Label>
                                 <Form.Control type="text" value={typeLabel} readOnly disabled />
                             </Form.Group>
                         </Row>
-                        
                         <h5 className="section-header">Common Details</h5>
                         <Row>
                             {renderField("name", "Component Name", { value: formData.name, onChange: handleChange })}
                             {renderField("mpn", "MPN (Manufacturer Part Number)", { value: formData.mpn, onChange: handleChange })}
                         </Row>
-
                         <Row>
-                            {/* This now correctly uses the generic handleChange */}
                             {lookups && renderBrandSelect({ formData, lookups, onChange: handleChange })}
                         </Row>
-
                         <Row className="mt-3">
                             <Form.Group as={Col}>
                                 <Form.Label>Description</Form.Label>
@@ -228,9 +216,7 @@ function EditComponentPage() {
                                 )}
                             </Form.Group>
                         </Row>
-
                         <hr className="form-divider my-4" />
-
                         <h5 className="section-header">Specific Details for {typeLabel}</h5>
                         {lookups && COMPONENT_CONFIG[componentType]?.render({
                             formData,
@@ -239,7 +225,6 @@ function EditComponentPage() {
                             handleTagAdd,
                             handleTagRemove
                         })}
-
                         <Button type="submit" variant="primary" size="lg" disabled={isSubmitting} className="mt-4 w-100">
                             {isSubmitting ? <><Spinner as="span" animation="border" size="sm" /> Saving...</> : 'Save Changes'}
                         </Button>

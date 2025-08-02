@@ -1,0 +1,35 @@
+/*
+  ==========================================================================
+  Shared Image Preview Styles
+  ==========================================================================
+  This file contains the beautiful, reusable styles for image previews
+  that appear inside modals on various pages.
+*/
+
+.image-preview-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem; /* Space below the preview */
+    padding: 0.5rem;
+    background-color: var(--primary-bg); /* A slightly lighter background */
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius-lg, 12px); /* Use a larger border radius */
+    min-height: 120px; /* Ensure the container has a minimum height */
+}
+
+.image-preview-placeholder {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.logo-preview {
+    max-height: 100px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    border-radius: var(--border-radius, 8px);
+    background-color: #ffffff; /* White background for transparent logos */
+    padding: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* A subtle shadow */
+}

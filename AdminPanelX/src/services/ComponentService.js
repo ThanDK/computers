@@ -11,7 +11,13 @@ export async function fetchAllComponents(token) {
     return response.json();
 };
 
+// =======================
+// ===== FIX IS HERE =====
+// =======================
+// This function now correctly uses the full component object it receives
+// for both the user-facing messages and the API call.
 export async function deleteComponent(component, token) {
+    // Uses component.name for the confirmation dialog
     const isConfirmed = await showConfirmation(
         'Are you sure?',
         `You are about to delete "${component.name}". This cannot be undone.`
@@ -19,14 +25,16 @@ export async function deleteComponent(component, token) {
 
     if (!isConfirmed) return false;
 
+    // Uses component.id for the API call URL
     const promise = fetch(`${API_BASE_URL}/${component.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
     }).then(response => {
         if (!response.ok) throw new Error('Deletion failed.');
-        return true;
+        return true; // Return true on success
     });
 
+    // Uses component.name again for the success notification
     handlePromise(promise, {
         loading: 'Deleting component...',
         success: `"${component.name}" deleted successfully.`,
@@ -52,14 +60,18 @@ export async function updateComponentStock(componentId, quantityChange, token) {
         return response.json();
     });
 
+    // Added promise handler for consistent UI feedback.
     handlePromise(promise, {
         loading: 'Updating stock...',
-        success: 'Stock updated!',
+        success: (updatedComponent) => `Stock for "${updatedComponent.name}" updated!`,
         error: (err) => err.message,
     });
 
     return promise;
 };
+
+
+// --- The functions below were already correct, no changes needed ---
 
 export async function createComponent(componentData, imageFile, token) {
     const formData = new FormData();

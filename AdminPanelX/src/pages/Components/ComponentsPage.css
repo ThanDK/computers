@@ -1,38 +1,10 @@
+/* ComponentPage.css */
+
 .page-header-container {
     flex-grow: 1;
 }
 
-.table-controls-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    gap: 1rem; /* MODIFICATION: Added gap for spacing */
-}
-
-/* MODIFICATION: New container for search and filter */
-.filter-controls {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-grow: 1; /* Allow it to take available space */
-}
-
-.search-bar {
-    max-width: 400px;
-    flex-grow: 1; /* Allow search bar to grow */
-}
-
-/* MODIFICATION: Styles for the new Type filter dropdown */
-.type-filter {
-    max-width: 200px;
-    background-color: var(--primary-bg) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid #4a5a76 !important;
-    box-shadow: none !important;
-}
-
-/* --- Table Container & Main Styles --- */
+/* --- Table Container & Main Styles (Unique to this page layout) --- */
 .table-container {
     background-color: var(--secondary-bg);
     border-radius: 12px;
@@ -44,7 +16,7 @@
     --bs-table-striped-bg: #344258;
     --bs-table-hover-bg: #3a4a63;
     border: none !important;
-    table-layout: fixed;
+    /* table-layout: fixed;  <-- REMOVE OR COMMENT OUT THIS LINE */
     width: 100%;
 }
 
@@ -68,7 +40,8 @@
     word-wrap: break-word;
 }
 
-/* --- Text Truncation (With Hover effect) --- */
+/* ... all other styles in this file remain the same ... */
+
 .truncate-text {
     white-space: nowrap;
     overflow: hidden;
@@ -85,7 +58,6 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* --- Stock Status Dot --- */
 .status-dot-container {
     display: flex;
     align-items: center;
@@ -115,38 +87,6 @@
     background-color: #ef4444; /* Red */
 }
 
-/* --- Alignment & Action Buttons --- */
-.text-center-header, 
-.text-center-cell { 
-    text-align: center; 
-}
-
-.text-center-cell > * { 
-    margin: auto; 
-}
-
-.action-btn {
-    font-weight: 500;
-    min-width: 65px;
-}
-
-.action-btn-edit {
-    --bs-btn-color: #60a5fa;
-    --bs-btn-border-color: #60a5fa;
-    --bs-btn-hover-bg: #3b82f6;
-    --bs-btn-hover-border-color: #3b82f6;
-    --bs-btn-hover-color: #fff;
-}
-
-.action-btn-delete {
-    --bs-btn-color: #f87171;
-    --bs-btn-border-color: #f87171;
-    --bs-btn-hover-bg: #ef4444;
-    --bs-btn-hover-border-color: #ef4444;
-    --bs-btn-hover-color: #fff;
-}
-
-/* --- Other Styles --- */
 .clickable-image { 
     cursor: pointer; 
     transition: transform 0.2s ease-in-out; 
@@ -176,22 +116,6 @@
     border-radius: 8px; 
 }
 
-.search-input {
-    background-color: var(--primary-bg) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid #4a5a76 !important;
-    box-shadow: none !important;
-}
-.search-input::placeholder { 
-    color: var(--text-secondary); 
-}
-.search-input-group-text {
-    background-color: var(--primary-bg) !important;
-    border: 1px solid #4a5a76 !important;
-    border-left: none !important;
-    color: var(--text-secondary) !important;
-}
-
 .pagination-btn {
     --bs-btn-color: var(--text-secondary);
     --bs-btn-border-color: #4a5a76;
@@ -203,4 +127,3 @@
     --bs-btn-disabled-color: #4a5a76;
     --bs-btn-disabled-border-color: #344258;
 }
-

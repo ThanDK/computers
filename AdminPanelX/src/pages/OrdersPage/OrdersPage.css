@@ -1,4 +1,4 @@
-/* src/pages/OrdersPage/OrdersPage.css */
+
 
 .order-id {
     font-family: 'Courier New', Courier, monospace;
@@ -8,10 +8,4 @@
     border-radius: 4px;
     color: var(--text-secondary);
     cursor: pointer;
-}
-
-/* --- ADD THIS TO MAKE TABLE LAYOUT WORK CORRECTLY WITH ReusableTable --- */
-.custom-table { /* This targets the table inside ReusableTable */
-    table-layout: fixed;
-    width: 100%;
 }

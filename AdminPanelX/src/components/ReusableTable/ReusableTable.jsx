@@ -1,6 +1,6 @@
 // src/components/ReusableTable/ReusableTable.js
 
-import React from 'react';
+import React from 'react'; // <-- No longer need useState
 import { Table, Spinner, Button, Alert } from 'react-bootstrap';
 import {
     useReactTable,
@@ -11,21 +11,6 @@ import {
     flexRender
 } from '@tanstack/react-table';
 
-/**
- * A reusable table component built with @tanstack/react-table.
- * It handles rendering, sorting, pagination, and filtering based on props.
- *
- * @param {Array} data - The array of data to display.
- * @param {Array} columns - The column definitions for the table. See @tanstack/react-table docs.
- * @param {boolean} isLoading - If true, shows a loading spinner in the table body.
- * @param {string} error - If present, shows an error message.
- * @param {Array} sorting - The current sorting state.
- * @param {Function} setSorting - The state setter for sorting.
- * @param {Array} columnFilters - The current column filters state.
- * @param {Function} setColumnFilters - The state setter for column filters.
- * @param {string} globalFilter - The current global filter state.
- * @param {Function} setGlobalFilter - The state setter for the global filter.
- */
 const ReusableTable = ({
     data,
     columns,
@@ -36,8 +21,14 @@ const ReusableTable = ({
     columnFilters,
     setColumnFilters,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    // --- (CHANGE) RECEIVE PAGINATION STATE AS PROPS ---
+    pagination,
+    onPaginationChange,
+    keepPageOnDataUpdate = false
 }) => {
+    
+    // --- (CHANGE) LOCAL PAGINATION STATE REMOVED ---
 
     const table = useReactTable({
         data,
@@ -46,7 +37,13 @@ const ReusableTable = ({
             sorting,
             columnFilters,
             globalFilter,
+            pagination, // Use pagination state from props
         },
+        // --- (CHANGE) USE THE PROP TO UPDATE PAGINATION IN PARENT ---
+        onPaginationChange: onPaginationChange, 
+        
+        autoResetPageIndex: !keepPageOnDataUpdate,
+        
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
@@ -56,7 +53,7 @@ const ReusableTable = ({
         getPaginationRowModel: getPaginationRowModel(),
     });
 
-    // Main render logic
+    // Main render logic (JSX is unchanged, it now reads from props via table.getState())
     return (
         <>
             <div className="table-container">
@@ -67,10 +64,7 @@ const ReusableTable = ({
                                 {headerGroup.headers.map(header => (
                                     <th 
                                         key={header.id} 
-                                        style={{ 
-
-                                            width: header.column.columnDef.meta?.width ?? 'auto' 
-                                        }} 
+                                        style={{ width: header.column.columnDef.meta?.width ?? 'auto' }} 
                                         className={header.column.columnDef.meta?.cellClassName}
                                         onClick={header.column.getToggleSortingHandler()}
                                     >
@@ -117,14 +111,35 @@ const ReusableTable = ({
                 </Table>
             </div>
 
-            <div className="d-flex justify-content-end align-items-center mt-3 gap-2">
-                <Button className="pagination-btn" variant="outline-light" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Previous</Button>
-                <span className="mx-2">Page{' '}
-                    <strong>
-                        {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-                    </strong>
-                </span>
-                <Button className="pagination-btn" variant="outline-light" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Next</Button>
+            <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                <div className="d-flex align-items-center gap-2">
+                    <span className="text-secondary">Rows per page:</span>
+                    <select
+                        className="form-select form-select-sm"
+                        style={{ width: '75px', backgroundColor: 'var(--primary-bg)', color: 'var(--text-primary)', border: '1px solid #4a5a76' }}
+                        value={table.getState().pagination.pageSize}
+                        onChange={e => {
+                            table.setPageSize(Number(e.target.value))
+                        }}
+                    >
+                        {[10, 20, 30, 40, 50].map(pageSize => (
+                            <option key={pageSize} value={pageSize}>
+                                {pageSize}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                    <Button className="pagination-btn" variant="outline-light" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>{'<<'}</Button>
+                    <Button className="pagination-btn" variant="outline-light" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Previous</Button>
+                    <span className="mx-2">Page{' '}
+                        <strong>
+                            {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                        </strong>
+                    </span>
+                    <Button className="pagination-btn" variant="outline-light" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Next</Button>
+                    <Button className="pagination-btn" variant="outline-light" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>{'>>'}</Button>
+                </div>
             </div>
         </>
     );

@@ -1,0 +1,88 @@
+/*
+  ==========================================================================
+  Global Common Styles
+  ==========================================================================
+  This file contains reusable styles for common UI elements like form inputs,
+  buttons, and table layouts that are used across multiple pages.
+  This file should be imported ONCE in your main App.js or index.js.
+*/
+
+/* --- Reusable Filter/Action Bar Controls --- */
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1;
+    flex-wrap: wrap;
+}
+
+.search-bar {
+    max-width: 400px;
+    flex-grow: 1;
+}
+
+/* This is the style for STANDARD, shorter dropdowns */
+.type-filter {
+    max-width: 200px;
+    background-color: var(--primary-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid #4a5a76 !important;
+    box-shadow: none !important;
+}
+
+
+.customer-filter {
+    max-width: 300px; 
+    flex-grow: 1;   
+}
+
+
+.search-input {
+    background-color: var(--primary-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid #4a5a76 !important;
+    box-shadow: none !important;
+}
+.search-input::placeholder { 
+    color: var(--text-secondary); 
+}
+.search-input-group-text {
+    background-color: var(--primary-bg) !important;
+    border: 1px solid #4a5a76 !important;
+    border-left: none !important;
+    color: var(--text-secondary) !important;
+}
+
+
+/* --- Reusable Action Buttons --- */
+.action-btn {
+    font-weight: 500;
+    min-width: 65px;
+}
+
+.action-btn-edit {
+    --bs-btn-color: #60a5fa;
+    --bs-btn-border-color: #60a5fa;
+    --bs-btn-hover-bg: #3b82f6;
+    --bs-btn-hover-border-color: #3b82f6;
+    --bs-btn-hover-color: #fff;
+}
+
+.action-btn-delete {
+    --bs-btn-color: #f87171;
+    --bs-btn-border-color: #f87171;
+    --bs-btn-hover-bg: #ef4444;
+    --bs-btn-hover-border-color: #ef4444;
+    --bs-btn-hover-color: #fff;
+}
+
+
+/* --- Reusable Table Cell Alignment --- */
+.text-center-header, 
+.text-center-cell { 
+    text-align: center; 
+}
+
+.text-center-cell > * { 
+    margin: auto; 
+}
