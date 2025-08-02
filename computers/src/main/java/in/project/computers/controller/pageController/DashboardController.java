@@ -1,6 +1,6 @@
 package in.project.computers.controller.pageController;
 
-import in.project.computers.dto.dashboard.DashboardResponse;
+import in.project.computers.DTO.dashboard.DashboardResponse;
 import in.project.computers.service.dashboard.DashboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

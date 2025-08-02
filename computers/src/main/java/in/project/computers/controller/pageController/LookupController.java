@@ -1,6 +1,6 @@
 package in.project.computers.controller.pageController;
 
-import in.project.computers.dto.lookup.*;
+import in.project.computers.DTO.lookup.*;
 import in.project.computers.entity.lookup.*;
 import in.project.computers.service.componentService.LookupService;
 import jakarta.validation.Valid;

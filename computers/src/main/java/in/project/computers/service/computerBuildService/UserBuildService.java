@@ -1,7 +1,7 @@
 package in.project.computers.service.computerBuildService;
 
-import in.project.computers.dto.builds.ComputerBuildDetailResponse;
-import in.project.computers.dto.builds.ComputerBuildRequest;
+import in.project.computers.DTO.builds.ComputerBuildDetailResponse;
+import in.project.computers.DTO.builds.ComputerBuildRequest;
 
 import java.util.List;
 

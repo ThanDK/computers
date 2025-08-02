@@ -1,7 +1,7 @@
 package in.project.computers.controller.userAuthController;
 
-import in.project.computers.dto.user.UserRequest;
-import in.project.computers.dto.user.UserResponse;
+import in.project.computers.DTO.user.userRequest.UserRequest;
+import in.project.computers.DTO.user.userResponse.UserResponse;
 import in.project.computers.service.userAuthenticationService.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

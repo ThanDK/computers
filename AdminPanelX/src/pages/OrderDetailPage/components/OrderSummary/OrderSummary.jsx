@@ -1,4 +1,3 @@
-// src/pages/OrderDetailPage/components/OrderSummary/OrderSummary.jsx
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { format } from 'date-fns';
@@ -26,7 +25,11 @@ function OrderSummary({ order }) {
     } = order || {};
 
     const getPaypalTransactionUrl = (txId) => `https://www.sandbox.paypal.com/activity/payment/${txId}`;
-    const slipUrl = (paymentDetails?.paymentMethod === 'BANK_TRANSFER' && paymentDetails?.transactionId) ? paymentDetails.transactionId : null;
+    
+    // --- THIS IS THE ONLY LINE THAT NEEDS TO CHANGE ---
+    // Use the correct field 'slipImageUrl' to get the URL for the slip.
+    const slipUrl = (paymentDetails?.paymentMethod === 'BANK_TRANSFER' && paymentDetails?.slipImageUrl) ? paymentDetails.slipImageUrl : null;
+    
     const isRejected = orderStatus === 'REJECTED_SLIP';
     const buttonVariant = isRejected ? 'outline-danger' : 'outline-info';
     const buttonText = isRejected ? 'View Rejected Slip' : 'View Payment Slip';
@@ -53,7 +56,7 @@ function OrderSummary({ order }) {
                 <DetailRow icon={<BsCalendarPlus />} label="Created">{createdAt ? format(new Date(createdAt), 'dd MMM yyyy, HH:mm') : 'N/A'}</DetailRow>
                 <DetailRow icon={<BsCalendarCheck />} label="Last Update">{updatedAt ? format(new Date(updatedAt), 'dd MMM yyyy, HH:mm') : 'N/A'}</DetailRow>
 
-                {/* The print button has been removed. Only the slip button remains if applicable. */}
+                {/* This block of code now works correctly because slipUrl is derived from the right field. */}
                 {slipUrl && (
                     <div className="mt-3 d-grid">
                         <Button

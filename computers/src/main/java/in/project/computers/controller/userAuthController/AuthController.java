@@ -1,7 +1,7 @@
 package in.project.computers.controller.serAuthController;
 
-import in.project.computers.dto.user.AuthenticationRequest;
-import in.project.computers.dto.user.AuthenticationResponse;
+import in.project.computers.DTO.user.userRequest.AuthenticationRequest;
+import in.project.computers.DTO.user.userResponse.AuthenticationResponse;
 import in.project.computers.service.userAuthenticationService.AppUserDetailsService;
 import in.project.computers.util.JwtUtil;
 import lombok.RequiredArgsConstructor;

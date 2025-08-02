@@ -1,10 +1,12 @@
 package in.project.computers.entity.component;
 
 import lombok.*;
+import lombok.experimental.Accessors;
 import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Accessors(chain = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)

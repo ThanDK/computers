@@ -1,11 +1,11 @@
 package in.project.computers.service.userAuthenticationService;
 
-import in.project.computers.dto.user.AdminUserRequest;
-import in.project.computers.dto.user.UserProfileUpdateRequest;
-import in.project.computers.dto.user.UserRequest;
-import in.project.computers.dto.user.UserResponse;
+import in.project.computers.DTO.user.userRequest.AdminUserRequest;
+import in.project.computers.DTO.user.userRequest.UserProfileUpdateRequest;
+import in.project.computers.DTO.user.userRequest.UserRequest;
+import in.project.computers.DTO.user.userResponse.UserResponse;
 import in.project.computers.entity.user.UserEntity;
-import in.project.computers.repository.generalRepo.UserRepository;
+import in.project.computers.repository.generalReposiroty.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,9 +15,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Service สำหรับจัดการตรรกะที่เกี่ยวข้องกับผู้ใช้ เช่น การลงทะเบียน, การอัปเดต
- */
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -132,7 +130,7 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(userId);
     }
 
-    // --- (Helper methods remain the same) ---
+
     private UserEntity convertToEntity(UserRequest request) {
         return UserEntity.builder()
                 .email(request.getEmail())

@@ -1,8 +1,8 @@
 package in.project.computers.controller.pageController;
 
-import in.project.computers.dto.builds.ComputerBuildDetailResponse;
-import in.project.computers.dto.builds.ComputerBuildRequest;
-import in.project.computers.dto.builds.CompatibilityResult;
+import in.project.computers.DTO.builds.ComputerBuildDetailResponse;
+import in.project.computers.DTO.builds.ComputerBuildRequest;
+import in.project.computers.DTO.builds.CompatibilityResult;
 import in.project.computers.service.componentCompatibility.ComponentCompatibilityService;
 import in.project.computers.service.computerBuildService.UserBuildService;
 import jakarta.validation.Valid;

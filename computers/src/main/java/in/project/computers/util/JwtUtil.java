@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser; // FIX: Import OidcUser
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -31,10 +32,7 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    /**
-     * Generates a token from a UserDetails object.
-     * This is typically used after a standard form-based login.
-     */
+
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", userDetails.getAuthorities().stream()
@@ -43,20 +41,28 @@ public class JwtUtil {
         return createToken(claims, userDetails.getUsername());
     }
 
-    /**
-     * Generates a token from an Authentication object.
-     * This is a universal method that works for both form-based login and OAuth2 login,
-     * resolving the ClassCastException.
-     */
+
     public String generateToken(Authentication authentication) {
-        // This is the corrected implementation. It uses the generic Authentication interface.
-        String username = authentication.getName();
+        String username = getString(authentication);
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()));
 
         return createToken(claims, username);
+    }
+
+    private static String getString(Authentication authentication) {
+        String username;
+
+        if (authentication.getPrincipal() instanceof OidcUser oidcUser) {
+            username = oidcUser.getEmail();
+        } else {
+
+            username = authentication.getName();
+        }
+        return username;
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
@@ -86,8 +92,6 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
-
-
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -97,8 +101,13 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+
+    public Boolean isTokenValid(String token, UserDetails userDetails) {
+        try {
+            final String username = extractUsername(token);
+            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

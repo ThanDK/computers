@@ -2,6 +2,7 @@ package in.project.computers.entity.component;
 
 import in.project.computers.entity.lookup.Socket;
 import lombok.*;
+import lombok.experimental.Accessors;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Data
 @SuperBuilder
+@Accessors(chain = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)

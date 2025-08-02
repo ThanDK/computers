@@ -1,7 +1,7 @@
 package in.project.computers.service.userAuthenticationService;
 
 import in.project.computers.entity.user.UserEntity;
-import in.project.computers.repository.generalRepo.UserRepository;
+import in.project.computers.repository.generalReposiroty.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority; // Import this
 import org.springframework.security.core.userdetails.User;

@@ -25,42 +25,52 @@ public class PaypalServiceImpl implements PaypalService {
 
     @Override
     public Payment createPayment(Order order, String intent, String description, String cancelUrl, String successUrl) throws PayPalRESTException {
-
+        // === [CREATE-PAYMENT-1] สร้างรายการ Transaction จากข้อมูลออเดอร์ ===
         List<Transaction> transactions = getTransactions(order, description);
 
+        // === [CREATE-PAYMENT-2] กำหนดข้อมูลผู้ชำระเงิน (Payer) และวิธีการชำระเงิน ===
         Payer payer = new Payer();
         payer.setPaymentMethod("paypal");
 
+        // === [CREATE-PAYMENT-3] ประกอบอ็อบเจกต์ Payment หลัก ===
         Payment payment = new Payment();
         payment.setIntent(intent);
         payment.setPayer(payer);
         payment.setTransactions(transactions);
 
+        // === [CREATE-PAYMENT-4] ตั้งค่า URL สำหรับ Redirect หลังจากทำรายการเสร็จสิ้น ===
         RedirectUrls redirectUrls = new RedirectUrls();
         redirectUrls.setCancelUrl(cancelUrl);
         redirectUrls.setReturnUrl(successUrl);
         payment.setRedirectUrls(redirectUrls);
 
+        // === [CREATE-PAYMENT-5] ส่งคำขอสร้าง Payment ไปยัง PayPal API ===
+        log.info("Creating PayPal payment for order ID: {}", order.getId());
         return payment.create(apiContext);
     }
 
-
+    /**
+     * เมธอดภายในสำหรับสร้างรายการ Transaction โดยพยายามสร้างแบบมีรายละเอียดสินค้า (Itemized) ก่อน
+     * หากล้มเหลว จะเปลี่ยนไปใช้แบบไม่มีรายละเอียด (Non-itemized) เพื่อให้การชำระเงินดำเนินต่อไปได้
+     */
     private List<Transaction> getTransactions(Order order, String description) {
         try {
-
+            // === [GET-TX-1] สร้างรายการสินค้า (Items) สำหรับ PayPal จาก OrderLineItem ===
             List<Item> paypalItems = new ArrayList<>();
             for (OrderLineItem lineItem : order.getLineItems()) {
+                // === [GET-TX-1.1] กรณีเป็นสินค้าจัดสเปค (Build): แยกส่วนประกอบย่อยออกมาเป็น Item แต่ละชิ้น ===
                 if (lineItem.getItemType() == LineItemType.BUILD && lineItem.getContainedItems() != null && !lineItem.getContainedItems().isEmpty()) {
                     for (OrderItemSnapshot part : lineItem.getContainedItems()) {
                         Item item = new Item();
                         item.setName(part.getName())
-                                .setQuantity(String.valueOf(part.getQuantity() * lineItem.getQuantity()))
+                                .setQuantity(String.valueOf(part.getQuantity() * lineItem.getQuantity())) // คำนวณจำนวนรวม
                                 .setPrice(part.getPriceAtTimeOfOrder().setScale(2, RoundingMode.HALF_UP).toString())
                                 .setCurrency(order.getCurrency())
                                 .setSku(part.getMpn());
                         paypalItems.add(item);
                     }
                 } else {
+                    // === [GET-TX-1.2] กรณีเป็นชิ้นส่วน (Component) ทั่วไป ===
                     Item item = new Item();
                     item.setName(lineItem.getName())
                             .setQuantity(String.valueOf(lineItem.getQuantity()))
@@ -71,33 +81,32 @@ public class PaypalServiceImpl implements PaypalService {
                 }
             }
 
-
+            // === [GET-TX-2] คำนวณยอดรวมย่อย (Subtotal) จากรายการสินค้าที่สร้างขึ้น ===
             BigDecimal calculatedSubtotal = paypalItems.stream()
                     .map(item -> new BigDecimal(item.getPrice()).multiply(new BigDecimal(item.getQuantity())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal tax = order.getTaxAmount() != null ? order.getTaxAmount() : BigDecimal.ZERO;
 
-
+            // === [GET-TX-3] ตรวจสอบความถูกต้องของยอดรวม (Validation) เพื่อป้องกันข้อผิดพลาดจาก PayPal ===
             BigDecimal expectedTotal = calculatedSubtotal.add(tax).setScale(2, RoundingMode.HALF_UP);
             BigDecimal actualTotal = order.getTotalAmount().setScale(2, RoundingMode.HALF_UP);
 
             if (expectedTotal.compareTo(actualTotal) != 0) {
-                log.error("PayPal itemization mismatch for order ID: {}. Itemized Total ({}) does not match Order Total ({}). " +
-                                "Falling back to non-itemized transaction.",
+                log.error("PayPal itemization mismatch for order ID: {}. Itemized Total ({}) does not match Order Total ({}). Falling back to non-itemized transaction.",
                         order.getId(), expectedTotal, actualTotal);
                 return createNonItemizedTransaction(order, description);
             }
 
-            // 4. Build the detailed transaction, with shipping explicitly set to zero
+            // === [GET-TX-4] สร้าง Transaction แบบมีรายละเอียด (Itemized) เมื่อยอดรวมถูกต้อง ===
             Details details = new Details();
-            details.setShipping("0.00"); // Explicitly set shipping to 0.
+            details.setShipping("0.00"); // กำหนดค่าส่งเป็น 0.00 เพื่อให้ยอดรวมถูกต้อง
             details.setSubtotal(calculatedSubtotal.setScale(2, RoundingMode.HALF_UP).toString());
             details.setTax(tax.setScale(2, RoundingMode.HALF_UP).toString());
 
             Amount amount = new Amount();
             amount.setCurrency(order.getCurrency());
-            amount.setTotal(actualTotal.toString()); // Use the validated total
+            amount.setTotal(actualTotal.toString()); // ใช้ยอดรวมจากออเดอร์ที่ตรวจสอบแล้ว
             amount.setDetails(details);
 
             ItemList itemList = new ItemList();
@@ -108,66 +117,75 @@ public class PaypalServiceImpl implements PaypalService {
             transaction.setDescription(description);
             transaction.setItemList(itemList);
 
-            List<Transaction> transactions = new ArrayList<>();
-            transactions.add(transaction);
-            return transactions;
+            return List.of(transaction);
+
         } catch (Exception e) {
-            log.error("An unexpected error occurred while building the itemized PayPal transaction for order ID: {}. " +
-                    "Falling back to non-itemized transaction. Error: {}", order.getId(), e.getMessage(), e);
+            // === [GET-TX-5] จัดการข้อผิดพลาดที่ไม่คาดคิดและใช้ Fallback ===
+            log.error("An unexpected error occurred while building the itemized PayPal transaction for order ID: {}. Falling back to non-itemized transaction. Error: {}", order.getId(), e.getMessage(), e);
             return createNonItemizedTransaction(order, description);
         }
     }
 
     /**
-     * Creates a simple, non-itemized transaction as a robust fallback.
-     * This ensures payment can always proceed even if the complex itemization logic fails.
-     * @param order The order object to get total amount and currency from.
-     * @param description A short description for the transaction.
-     * @return A list containing one simple transaction object.
+     * สร้าง Transaction แบบง่าย (ไม่มีรายละเอียดสินค้า) เพื่อเป็น Fallback
+     * ทำให้การชำระเงินสามารถดำเนินต่อไปได้เสมอ แม้ว่าตรรกะการแจกแจงสินค้าจะล้มเหลว
+     * @param order อ็อบเจกต์ Order เพื่อดึงยอดรวมและสกุลเงิน
+     * @param description คำอธิบายสั้นๆ สำหรับ Transaction
+     * @return List ที่มี Transaction แบบง่ายเพียง 1 รายการ
      */
     private List<Transaction> createNonItemizedTransaction(Order order, String description) {
+        // === [FALLBACK-TX-1] สร้าง Amount แบบไม่มีรายละเอียดสินค้า มีเพียงยอดรวม ===
         Amount amount = new Amount();
         amount.setCurrency(order.getCurrency());
         amount.setTotal(order.getTotalAmount().setScale(2, RoundingMode.HALF_UP).toString());
 
+        // === [FALLBACK-TX-2] สร้าง Transaction แบบง่าย ===
         Transaction transaction = new Transaction();
         transaction.setDescription(description);
         transaction.setAmount(amount);
 
-        List<Transaction> transactions = new ArrayList<>();
-        transactions.add(transaction);
-        return transactions;
+        return List.of(transaction);
     }
 
     @Override
     public Payment executePayment(String paymentId, String payerId) throws PayPalRESTException {
+        // === [EXEC-PAYMENT-1] สร้างอ็อบเจกต์ Payment และระบุ ID ที่ได้จาก PayPal Callback ===
         Payment payment = new Payment();
         payment.setId(paymentId);
 
+        // === [EXEC-PAYMENT-2] สร้างอ็อบเจกต์ PaymentExecution และระบุ Payer ID ===
         PaymentExecution paymentExecute = new PaymentExecution();
         paymentExecute.setPayerId(payerId);
 
+        // === [EXEC-PAYMENT-3] ส่งคำขอยืนยันการชำระเงินไปยัง PayPal API ===
+        log.info("Executing PayPal payment with PaymentID: {} and PayerID: {}", paymentId, payerId);
         return payment.execute(apiContext, paymentExecute);
     }
 
     @Override
     public Refund refundPayment(String saleId, BigDecimal amount, String currency) throws PayPalRESTException {
+        // === [REFUND-1] สร้างอ็อบเจกต์ Sale และระบุ Sale ID ที่ต้องการจะคืนเงิน ===
         Sale sale = new Sale();
         sale.setId(saleId);
 
+        // === [REFUND-2] สร้างอ็อบเจกต์ RefundRequest ===
         RefundRequest refundRequest = new RefundRequest();
 
+        // === [REFUND-3] ตรวจสอบว่าเป็น Partial หรือ Full Refund และตั้งค่า Amount ตามนั้น ===
         if (amount != null) {
+            // กรณีคืนเงินบางส่วน (Partial Refund)
             Amount refundAmount = new Amount();
             refundAmount.setCurrency(currency);
             refundAmount.setTotal(amount.setScale(2, RoundingMode.HALF_UP).toString());
             refundRequest.setAmount(refundAmount);
             log.info("Initiating PARTIAL refund for Sale ID: {}, Amount: {} {}", saleId, amount, currency);
         } else {
+            // กรณีคืนเงินเต็มจำนวน (Full Refund) - ไม่ต้องระบุ Amount ใน Request
             log.info("Initiating FULL refund for Sale ID: {}", saleId);
         }
 
         try {
+            // === [REFUND-4] ส่งคำขอ Refund ไปยัง PayPal API ===
             Refund refund = sale.refund(apiContext, refundRequest);
             log.info("PayPal refund API call successful for Sale ID: {}. Refund ID: {}, State: {}",
                     saleId, refund.getId(), refund.getState());

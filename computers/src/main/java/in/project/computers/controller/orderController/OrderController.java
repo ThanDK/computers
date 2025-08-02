@@ -1,9 +1,9 @@
 package in.project.computers.controller.orderController;
 
 import com.paypal.base.rest.PayPalRESTException;
-import in.project.computers.dto.order.CreateOrderRequest;
-import in.project.computers.dto.order.CreateOrderResponse;
-import in.project.computers.dto.order.OrderResponse;
+import in.project.computers.DTO.order.orderRequest.CreateOrderRequest;
+import in.project.computers.DTO.order.orderResponse.CreateOrderResponse;
+import in.project.computers.DTO.order.orderResponse.OrderResponse;
 import in.project.computers.service.orderService.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -6,6 +6,7 @@ import in.project.computers.entity.lookup.Brand;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -30,6 +31,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 })
 @Data
 @SuperBuilder
+@Accessors(chain = true)
 @Document(collection = "component")
 @AllArgsConstructor
 @NoArgsConstructor

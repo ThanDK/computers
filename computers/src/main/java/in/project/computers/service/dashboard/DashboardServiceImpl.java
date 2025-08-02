@@ -1,15 +1,16 @@
 package in.project.computers.service.dashboard;
 
-import in.project.computers.dto.dashboard.DashboardResponse;
+import in.project.computers.DTO.dashboard.DashboardResponse;
 import in.project.computers.entity.component.Component;
 import in.project.computers.entity.component.Inventory;
 import in.project.computers.entity.order.LineItemType; // <-- IMPORT THIS
 import in.project.computers.entity.order.Order;
 import in.project.computers.entity.order.OrderStatus;
 import in.project.computers.entity.order.PaymentStatus;
-import in.project.computers.repository.componentRepo.ComponentRepository;
-import in.project.computers.repository.componentRepo.InventoryRepository;
-import in.project.computers.repository.generalRepo.OrderRepository;
+
+import in.project.computers.repository.componentRepository.ComponentRepository;
+import in.project.computers.repository.componentRepository.InventoryRepository;
+import in.project.computers.repository.generalReposiroty.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

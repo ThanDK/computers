@@ -42,25 +42,49 @@
     opacity: 0.6;
 }
 
+/* --- Informational Box (Blue) --- */
 .action-info-box {
     display: flex;
-    align-items: flex-start; 
+    align-items: flex-start;
     gap: 0.75rem;
     padding: 0.75rem;
-    background-color: rgba(45, 85, 133, 0.2); 
+    background-color: rgba(45, 85, 133, 0.2);
     border: 1px solid rgba(67, 129, 202, 0.4);
     border-radius: 8px;
     font-size: 0.9em;
-    color: var(--text-secondary); 
+    color: var(--text-secondary);
     line-height: 1.5;
 }
 
 .action-info-box .info-icon {
     font-size: 1.2rem;
-    color: var(--accent-color); 
-    flex-shrink: 0; 
-    margin-top: 2px; 
+    color: var(--accent-color);
+    flex-shrink: 0;
+    margin-top: 2px;
 }
+
+/* --- *** THIS WAS THE MISSING PART *** --- */
+/* --- Warning Box (Amber/Yellow) --- */
+.action-warning-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background-color: rgba(181, 138, 32, 0.15); /* Amber background */
+    border: 1px solid rgba(255, 193, 7, 0.4);   /* Amber border */
+    border-radius: 8px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.action-warning-box .warning-icon {
+    font-size: 1.2rem;
+    color: #ffc107; /* Amber icon color */
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+/* --- *** END OF MISSING PART *** --- */
 
 .action-divider {
     border: none;

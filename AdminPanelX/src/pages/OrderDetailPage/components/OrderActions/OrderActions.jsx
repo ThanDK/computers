@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button, Modal, Form, Spinner, Image } from 'react-bootstrap';
 import { useAuth } from '../../../../context/AuthContext';
-// --- 1. IMPORT THE NEW SERVICE FUNCTION ---
+// 1. Service functions remain the same
 import { approveSlip, shipOrder, approveRefund, rejectRefund, fetchValidNextStatuses, updateOrderStatus, updateShippingDetails, rejectSlip, revertSlipApproval, forceRefundByAdmin } from '../../../../services/OrderService';
 import { fetchAllShippingProviders } from '../../../../services/LookupService';
 import { handlePromise } from '../../../../services/NotificationService';
 import ConfirmationModal from '../../../../components/ConfirmationModal/ConfirmationModal';
 import ReasonModal from '../../../../components/ReasonModal/ReasonModal';
-// --- 2. IMPORT THE NEW ICON ---
-import { BsTruck, BsPencilSquare, BsCheckCircle, BsXCircle, BsArrowRepeat, BsShieldX, BsBackspaceReverseFill, BsInfoCircleFill, BsCurrencyExchange } from 'react-icons/bs';
+// 2. IMPORT THE NEW ICON
+import { BsTruck, BsPencilSquare, BsCheckCircle, BsXCircle, BsArrowRepeat, BsShieldX, BsBackspaceReverseFill, BsInfoCircleFill, BsCurrencyExchange, BsExclamationTriangleFill } from 'react-icons/bs';
 import './OrderActions.css';
 
 function OrderActions({ order, onActionSuccess }) {
     const { token } = useAuth();
-    
+
     const [showShippingModal, setShowShippingModal] = useState(false);
     const [shippingModalMode, setShippingModalMode] = useState('create');
     const [shippingInfo, setShippingInfo] = useState({ shippingProvider: '', trackingNumber: '' });
-    
+
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [confirmState, setConfirmState] = useState({ show: false, title: '', body: '', onConfirm: null, confirmVariant: 'primary', confirmText: 'Confirm' });
     const [reasonModalState, setReasonModalState] = useState({ show: false, title: '', onSubmit: null });
@@ -63,7 +63,7 @@ function OrderActions({ order, onActionSuccess }) {
         try {
             await handlePromise(actionPromise, { loading: 'Processing...', success: successMessage, error: (err) => err.message });
             onActionSuccess();
-        } catch (err) {}
+        } catch (err) { }
     };
 
     const confirmApproveSlip = () => setConfirmState({ show: true, title: 'Approve Payment Slip?', body: 'This will approve the payment, mark the order as PROCESSING, and deduct stock. Are you sure?', onConfirm: () => handleAction(approveSlip(order.id, token), 'Payment slip approved!'), confirmVariant: 'success', confirmText: 'Yes, Approve' });
@@ -72,14 +72,14 @@ function OrderActions({ order, onActionSuccess }) {
     const openRejectSlipModal = () => setReasonModalState({ show: true, title: 'Reject Payment Slip', label: 'Reason for Rejection', placeholder: 'e.g., Incorrect amount, Blurry image...', onSubmit: (reason) => handleAction(rejectSlip(order.id, reason, token), 'Payment slip rejected.') });
     const openRevertApprovalModal = () => setReasonModalState({ show: true, title: 'Revert Slip Approval', label: 'Reason for Reversion', placeholder: 'e.g., Approved by mistake, Customer request...', onSubmit: (reason) => handleAction(revertSlipApproval(order.id, reason, token), 'Approval reverted and stock returned.') });
 
-   
-    const confirmForceRefund = () => setConfirmState({ 
-        show: true, 
-        title: 'Force Refund This Order?', 
-        body: 'This will immediately process a refund for the customer and return stock. This is for admin-initiated refunds (e.g., due to product defects). Are you sure?', 
-        onConfirm: () => handleAction(forceRefundByAdmin(order.id, token), 'Order has been forcibly refunded!'), 
-        confirmVariant: 'danger', 
-        confirmText: 'Yes, Force Refund' 
+
+    const confirmForceRefund = () => setConfirmState({
+        show: true,
+        title: 'Force Refund This Order?',
+        body: 'This will immediately process a refund for the customer and return stock. This is for admin-initiated refunds (e.g., due to product defects). Are you sure?',
+        onConfirm: () => handleAction(forceRefundByAdmin(order.id, token), 'Order has been forcibly refunded!'),
+        confirmVariant: 'danger',
+        confirmText: 'Yes, Force Refund'
     });
 
     const handleOpenCreateShipModal = () => {
@@ -106,16 +106,15 @@ function OrderActions({ order, onActionSuccess }) {
         const successMessage = shippingModalMode === 'create' ? 'Order marked as shipped!' : 'Shipping details updated!';
         handleAction(actionPromise, successMessage);
     };
-    
+
     const handleStatusChangeSubmit = (e) => {
         e.preventDefault();
         if (!selectedStatus) return;
         handleAction(updateOrderStatus(order.id, selectedStatus, token), `Order status updated to ${selectedStatus}!`);
     };
 
-    // --- 4. ADD A VARIABLE TO CHECK IF THE BUTTON SHOULD BE SHOWN ---
     const canBeForciblyRefunded = [
-        'PROCESSING', 'SHIPPED', 'COMPLETED', 
+        'PROCESSING', 'SHIPPED', 'COMPLETED',
         'DELIVERY_FAILED', 'RETURNED_TO_SENDER', 'REFUND_REJECTED'
     ].includes(order.orderStatus);
 
@@ -130,11 +129,22 @@ function OrderActions({ order, onActionSuccess }) {
                             <Button variant="danger" onClick={openRejectSlipModal} className="d-flex align-items-center justify-content-center gap-2"><BsShieldX /> Reject Payment Slip</Button>
                         </>
                     )}
+
+                    {/* --- NEW: Contextual warning for REJECTED_SLIP status --- */}
+                    {order.orderStatus === 'REJECTED_SLIP' && (
+                        <div className="action-warning-box">
+                            <BsExclamationTriangleFill className="warning-icon" />
+                            <span>
+                                The payment slip was rejected. The customer has been notified and can submit a new one.
+                            </span>
+                        </div>
+                    )}
+
                     {order.orderStatus === 'PROCESSING' && order.paymentDetails?.paymentMethod === 'BANK_TRANSFER' && (
                         <Button variant="outline-warning" onClick={openRevertApprovalModal} className="d-flex align-items-center justify-content-center gap-2"><BsBackspaceReverseFill /> Revert Slip Approval</Button>
                     )}
                     {(order.orderStatus === 'PROCESSING' || order.orderStatus === 'RETURNED_TO_SENDER') && (
-                         <Button variant="primary" onClick={handleOpenCreateShipModal} className="d-flex align-items-center justify-content-center gap-2"><BsTruck /> Ship Order</Button>
+                        <Button variant="primary" onClick={handleOpenCreateShipModal} className="d-flex align-items-center justify-content-center gap-2"><BsTruck /> Ship Order</Button>
                     )}
                     {order.orderStatus === 'SHIPPED' && (
                         <Button variant="info" onClick={handleOpenUpdateShipModal} className="d-flex align-items-center justify-content-center gap-2"><BsPencilSquare /> Update Shipping Details</Button>
@@ -145,23 +155,32 @@ function OrderActions({ order, onActionSuccess }) {
                             <Button variant="danger" onClick={confirmRejectRefund} className="d-flex align-items-center justify-content-center gap-2"><BsXCircle /> Reject Refund Request</Button>
                         </>
                     )}
+
+                    {/* --- NEW: Contextual warning for REFUND_REJECTED status --- */}
+                    {order.orderStatus === 'REFUND_REJECTED' && (
+                         <div className="action-warning-box">
+                            <BsShieldX className="warning-icon" />
+                            <span>
+                                Refund request rejected. You may force a refund or manually change the status if needed.
+                            </span>
+                         </div>
+                    )}
                     
                     {canBeForciblyRefunded && (
                         <Button variant="outline-danger" onClick={confirmForceRefund} className="d-flex align-items-center justify-content-center gap-2">
                             <BsCurrencyExchange /> Force Refund
                         </Button>
                     )}
-                    
-                    {/* The info box for paid orders */}
+
                     {['PROCESSING', 'SHIPPED'].includes(order.orderStatus) && order.orderStatus !== 'REFUND_REQUESTED' && (
-                         <div className="action-info-box">
+                        <div className="action-info-box">
                             <BsInfoCircleFill className="info-icon" />
                             <span>
                                 To cancel a paid order, it must be refunded. The customer can request this, or an admin can initiate it using 'Force Refund'.
                             </span>
-                         </div>
+                        </div>
                     )}
-                    
+
                     <hr className="action-divider" />
 
                     <Button variant="outline-secondary" onClick={() => setShowStatusModal(true)} disabled={isFetchingStatuses || nextStatuses.length === 0} className="d-flex align-items-center justify-content-center gap-2">
@@ -220,11 +239,11 @@ function OrderActions({ order, onActionSuccess }) {
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Tracking Number</Form.Label>
-                            <Form.Control 
-                                type="text" 
-                                placeholder="Enter tracking number" 
-                                required 
-                                value={shippingInfo.trackingNumber} 
+                            <Form.Control
+                                type="text"
+                                placeholder="Enter tracking number"
+                                required
+                                value={shippingInfo.trackingNumber}
                                 onChange={e => setShippingInfo({ ...shippingInfo, trackingNumber: e.target.value })}
                             />
                         </Form.Group>
@@ -235,7 +254,7 @@ function OrderActions({ order, onActionSuccess }) {
                     </Modal.Footer>
                 </Form>
             </Modal>
-            
+
             <Modal show={showStatusModal} onHide={() => setShowStatusModal(false)} centered>
                 <Modal.Header closeButton><Modal.Title>Manually Change Order Status</Modal.Title></Modal.Header>
                 <Form onSubmit={handleStatusChangeSubmit}>
@@ -258,5 +277,4 @@ function OrderActions({ order, onActionSuccess }) {
         </>
     );
 }
-
 export default OrderActions;

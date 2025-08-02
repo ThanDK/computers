@@ -1,14 +1,14 @@
 package in.project.computers.service.computerBuildService;
 
-import in.project.computers.dto.builds.BuildPartDetail;
-import in.project.computers.dto.builds.ComputerBuildDetailResponse;
-import in.project.computers.dto.builds.ComputerBuildRequest;
-import in.project.computers.dto.component.componentResponse.*;
+import in.project.computers.DTO.builds.BuildPartDetail;
+import in.project.computers.DTO.builds.ComputerBuildDetailResponse;
+import in.project.computers.DTO.builds.ComputerBuildRequest;
+import in.project.computers.DTO.component.componentResponse.*;
 import in.project.computers.entity.component.*;
 import in.project.computers.entity.computerBuild.BuildPart;
 import in.project.computers.entity.computerBuild.ComputerBuild;
-import in.project.computers.repository.componentRepo.ComponentRepository;
-import in.project.computers.repository.generalRepo.ComputerBuildRepository;
+import in.project.computers.repository.componentRepository.ComponentRepository;
+import in.project.computers.repository.generalReposiroty.ComputerBuildRepository;
 import in.project.computers.service.componentService.ComponentConverter;
 import in.project.computers.service.userAuthenticationService.UserService;
 import lombok.RequiredArgsConstructor;

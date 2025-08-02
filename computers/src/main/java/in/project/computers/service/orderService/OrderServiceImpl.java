@@ -3,15 +3,15 @@ package in.project.computers.service.orderService;
 import com.paypal.api.payments.Links;
 import com.paypal.api.payments.Payment;
 import com.paypal.base.rest.PayPalRESTException;
-import in.project.computers.dto.order.CreateOrderRequest;
-import in.project.computers.dto.order.CreateOrderResponse;
-import in.project.computers.dto.order.OrderResponse;
-import in.project.computers.dto.order.ShipOrderRequest;
+import in.project.computers.DTO.order.orderRequest.CreateOrderRequest;
+import in.project.computers.DTO.order.orderResponse.CreateOrderResponse;
+import in.project.computers.DTO.order.orderResponse.OrderResponse;
+import in.project.computers.DTO.order.orderRequest.ShipOrderRequest;
 import in.project.computers.entity.order.*;
 import in.project.computers.entity.user.UserEntity;
-import in.project.computers.repository.generalRepo.OrderRepository;
-import in.project.computers.repository.generalRepo.UserRepository;
-import in.project.computers.service.AWSS3Bucket.S3Service;
+import in.project.computers.repository.generalReposiroty.OrderRepository;
+import in.project.computers.repository.generalReposiroty.UserRepository;
+import in.project.computers.service.awsS3Bucket.S3Service;
 import in.project.computers.service.cartService.CartService;
 import in.project.computers.service.paypalService.PaypalService;
 import in.project.computers.service.userAuthenticationService.UserService;
@@ -51,25 +51,25 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public CreateOrderResponse createOrder(CreateOrderRequest request) throws PayPalRESTException {
-        // [CO-1] Get current user
+        // === [CREATE-1] ตรวจสอบและดึงข้อมูลผู้ใช้ปัจจุบัน ===
         UserEntity currentUser = userRepository.findById(userService.findByUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        // [CO-2-NEW] Get the user's persistent cart from the new CartService
+        // === [CREATE-2] ตรวจสอบว่าตะกร้าสินค้าไม่ว่างเปล่า ===
         Cart userCart = cartService.getCartEntityByUserId(currentUser.getId());
         if (userCart == null || userCart.getItems().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create an order with an empty cart.");
         }
 
-        // [CO-3-NEW] Delegate order creation to the helper, now using the Cart object
+        // === [CREATE-3] สร้างและตรวจสอบความถูกต้องของออเดอร์จากตะกร้าสินค้า ===
         Order order = orderHelper.createAndValidateOrderFromCart(userCart, request, currentUser);
 
-        // [CO-4] Set payment details
+        // === [CREATE-4] ตั้งค่ารายละเอียดการชำระเงินเริ่มต้น ===
         order.setPaymentDetails(PaymentDetails.builder()
                 .paymentMethod(request.getPaymentMethod())
                 .build());
 
-        // [CO-5] Handle payment initiation
+        // === [CREATE-5] แยกกระบวนการตามวิธีการชำระเงิน ===
         CreateOrderResponse response;
         switch (request.getPaymentMethod()) {
             case PAYPAL:
@@ -85,6 +85,7 @@ public class OrderServiceImpl implements OrderService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported payment method.");
         }
 
+        // === [CREATE-6] ล้างตะกร้าสินค้าหลังจากสร้างออเดอร์สำเร็จ ===
         cartService.clearCart(currentUser.getId());
         log.info("Successfully created order {} and cleared the cart for user {}", order.getId(), currentUser.getId());
 
@@ -94,8 +95,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse capturePaypalOrder(String orderId, String paymentId, String payerId) throws PayPalRESTException {
-        // === [PPC-1] เริ่มกระบวนการ Capture: ค้นหาออเดอร์จาก ID ที่ได้จาก Callback ===
+    public void capturePaypalOrder(String orderId, String paymentId, String payerId) throws PayPalRESTException {
+        // === [PPC-1] ค้นหาออเดอร์จาก ID ที่ได้รับจาก PayPal Callback ===
         log.info("Attempting to capture PayPal payment for order ID: {}", orderId);
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> {
@@ -103,20 +104,21 @@ public class OrderServiceImpl implements OrderService {
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId);
                 });
 
-        // === [PPC-2] ตรวจสอบความถูกต้องของออเดอร์ ===
+        // === [PPC-2] ตรวจสอบความถูกต้องของออเดอร์ว่าเป็น PayPal และสถานะถูกต้องหรือไม่ ===
         if (order.getPaymentDetails() == null || order.getPaymentDetails().getPaymentMethod() != PaymentMethod.PAYPAL) {
             log.error("PayPal callback error: Order {} is not a PayPal order or missing payment details.", orderId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This order is not designated for PayPal payment or is missing payment details.");
         }
         if (order.getPaymentStatus() != PaymentStatus.PENDING) {
             log.warn("PayPal callback warning: Attempt to capture an already processed or non-pending order. Order ID: {}, Status: {}", orderId, order.getPaymentStatus());
-            return orderHelper.entityToResponse(order);
+            orderHelper.entityToResponse(order);
+            return;
         }
 
         // === [PPC-3] ยืนยันการชำระเงินกับ PayPal ===
         Payment payment = paypalService.executePayment(paymentId, payerId);
 
-        // === [PPC-4] ประมวลผลหลังจากการยืนยันสำเร็จ ===
+        // === [PPC-4] กรณีการยืนยันสำเร็จ: อัปเดตสถานะออเดอร์และตัดสต็อก ===
         if ("approved".equals(payment.getState())) {
             orderHelper.decrementStockForOrder(order);
 
@@ -128,9 +130,9 @@ public class OrderServiceImpl implements OrderService {
 
             updateOrderStatusToPaid(order);
             log.info("Successfully captured PayPal payment for order ID: {}", orderId);
-            return orderHelper.entityToResponse(orderRepository.save(order));
+            orderHelper.entityToResponse(orderRepository.save(order));
         } else {
-            // === [PPC-5] กรณีการยืนยันล้มเหลว ===
+            // === [PPC-5] กรณีการยืนยันล้มเหลว: อัปเดตสถานะเป็น FAILED ===
             order.setPaymentStatus(PaymentStatus.FAILED);
             orderRepository.save(order);
             log.error("PayPal payment capture failed for order ID: {}. State: {}", orderId, payment.getState());
@@ -138,25 +140,19 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    // --- METHOD UPDATED ---
     @Override
     @Transactional
     public OrderResponse submitPaymentSlip(String orderId, MultipartFile slipImage) {
-        // === [SLIP-1] ตรวจสอบไฟล์สลิป ===
+        // === [SLIP-1] ตรวจสอบว่ามีไฟล์สลิปแนบมาหรือไม่ ===
         if (slipImage == null || slipImage.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment slip image is required.");
         }
 
+        // === [SLIP-2] ค้นหาออเดอร์และตรวจสอบสถานะที่อนุญาตให้อัปโหลดสลิปได้ ===
         String userId = userService.findByUserId();
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        // --- NEW COMMENT: Explaining the updated logic ---
-        // === [SLIP-2] [ปรับปรุง] ตรวจสอบสถานะที่อนุญาตให้อัปโหลดสลิปได้ ===
-        // A user can submit a slip if:
-        // 1. It's a new order (PENDING_PAYMENT / PENDING)
-        // 2. A previous slip was rejected (REJECTED_SLIP / PENDING)
-        // ผู้ใช้สามารถส่งสลิปได้ใน 2 กรณี: 1. เป็นออเดอร์ใหม่ที่ยังไม่จ่ายเงิน 2. เป็นออเดอร์ที่สลิปเก่าถูกปฏิเสธ
         boolean isInitialSubmission = order.getOrderStatus() == OrderStatus.PENDING_PAYMENT && order.getPaymentStatus() == PaymentStatus.PENDING;
         boolean isResubmissionAfterRejection = order.getOrderStatus() == OrderStatus.REJECTED_SLIP && order.getPaymentStatus() == PaymentStatus.PENDING;
 
@@ -166,19 +162,17 @@ public class OrderServiceImpl implements OrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This order is not in a state to accept a payment slip.");
         }
 
+        // === [SLIP-3] ตรวจสอบความเป็นเจ้าของออเดอร์และวิธีการชำระเงิน ===
         if (!order.getUserId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.");
         }
-
         if (order.getPaymentDetails() == null || order.getPaymentDetails().getPaymentMethod() != PaymentMethod.BANK_TRANSFER) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect payment method for this action.");
         }
 
-        // === [SLIP-3] จัดการ PaymentDetails ===
+        // === [SLIP-4] หากมีการส่งสลิปซ้ำ ให้ลบไฟล์สลิปเก่าออกจาก S3 ===
         PaymentDetails details = order.getPaymentDetails();
-
-        // === [SLIP-4] [ปรับปรุง] ลบสลิปเก่า (ถ้ามี) ===
-        String oldSlipUrl = details.getTransactionId();
+        String oldSlipUrl = details.getSlipImageUrl();
         if (oldSlipUrl != null && !oldSlipUrl.isBlank() && oldSlipUrl.contains("s3.amazonaws.com")) {
             try {
                 String oldFilename = oldSlipUrl.substring(oldSlipUrl.lastIndexOf("/") + 1);
@@ -193,19 +187,18 @@ public class OrderServiceImpl implements OrderService {
         String newSlipImageUrl = s3Service.uploadFile(slipImage);
         log.info("New payment slip uploaded for order {}. URL: {}", orderId, newSlipImageUrl);
 
-        // === [SLIP-6] อัปเดตข้อมูลในออเดอร์ ===
-        details.setTransactionId(newSlipImageUrl);
+        // === [SLIP-6] อัปเดตข้อมูลสลิปและสถานะ ===
+        details.setSlipImageUrl(newSlipImageUrl);
         details.setProviderStatus("SUBMITTED");
+        details.setSlipRejectionReason(null); // ล้างเหตุผลการปฏิเสธเก่าออกไปเมื่อมีการส่งสลิปใหม่
 
-        // --- NEW COMMENT: Explaining the status reset ---
-        // === [SLIP-7] [ปรับปรุง] รีเซ็ตสถานะเพื่อเข้าสู่กระบวนการอนุมัติ ===
-        // This brings the order back into the standard approval flow, whether it's the first submission or a re-submission.
-        // การตั้งค่าสถานะนี้จะทำให้ออเดอร์กลับเข้าสู่ Flow การตรวจสอบตามปกติ ไม่ว่าจะส่งครั้งแรกหรือส่งซ้ำ
+        // === [SLIP-7] รีเซ็ตสถานะเพื่อเข้าสู่กระบวนการอนุมัติอีกครั้ง ===
+        // การตั้งค่านี้จะทำให้ออเดอร์กลับเข้าสู่ Flow การตรวจสอบตามปกติ ไม่ว่าจะส่งครั้งแรกหรือส่งซ้ำ
         order.setPaymentStatus(PaymentStatus.PENDING_APPROVAL);
-        order.setOrderStatus(OrderStatus.PENDING_PAYMENT); // Reset order status for consistency
+        order.setOrderStatus(OrderStatus.PENDING_PAYMENT); // รีเซ็ตสถานะออเดอร์หลักเพื่อความสอดคล้องกัน
         order.setUpdatedAt(Instant.now());
 
-        // === [SLIP-8] บันทึกและส่งคืนข้อมูล ===
+        // === [SLIP-8] บันทึกและส่งคืนข้อมูลออเดอร์ที่อัปเดตแล้ว ===
         orderRepository.save(order);
         log.info("Payment slip submitted/re-submitted and order {} updated. Awaiting admin approval.", orderId);
         return orderHelper.entityToResponse(order);
@@ -245,7 +238,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found."));
 
-        // === [CANCEL-2] ตรวจสอบสิทธิ์และความถูกต้อง ===
+        // === [CANCEL-2] ตรวจสอบสิทธิ์และความถูกต้องของสถานะออเดอร์ ===
         if (!order.getUserId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.");
         }
@@ -297,7 +290,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        // === [REFUND-REQ-2] ตรวจสอบสิทธิ์ ===
+        // === [REFUND-REQ-2] ตรวจสอบสิทธิ์ความเป็นเจ้าของออเดอร์ ===
         if (!order.getUserId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied. You do not own this order.");
         }
@@ -311,7 +304,7 @@ public class OrderServiceImpl implements OrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A refund request for this order already exists or has been processed.");
         }
 
-        // === [REFUND-REQ-4] อัปเดตสถานะเป็น "ส่งคำขอคืนเงิน" ===
+        // === [REFUND-REQ-4] อัปเดตสถานะเป็น "ร้องขอคืนเงิน" ===
         order.setOrderStatus(OrderStatus.REFUND_REQUESTED);
         order.setUpdatedAt(Instant.now());
         orderRepository.save(order);
@@ -322,28 +315,29 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponse approveRefund(String orderId) throws PayPalRESTException {
-        // === [REFUND-APP-1] ค้นหาออเดอร์ (Admin action, ไม่ต้องเช็คเจ้าของ) ===
+        // === [APPROVE-REFUND-1] ค้นหาออเดอร์ ===
         log.info("Admin is approving a user's refund request for order ID: {}", orderId);
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        // === [REFUND-APP-2] ตรวจสอบสถานะว่ารอการอนุมัติคืนเงินจริงหรือไม่ ===
+        // === [APPROVE-REFUND-2] ตรวจสอบว่าออเดอร์อยู่ในสถานะที่รอการอนุมัติคืนเงินจริง ===
         if (order.getOrderStatus() != OrderStatus.REFUND_REQUESTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This order is not awaiting a refund approval. Use 'force refund' for other statuses.");
         }
-        // === [REFUND-APP-3] มอบหมายให้ Helper Method กลางจัดการ ===
+
+        // === [APPROVE-REFUND-3] เรียกใช้เมธอดกลางเพื่อดำเนินการคืนเงิน ===
         return processRefund(order);
     }
 
     @Override
     @Transactional
     public OrderResponse forceRefundByAdmin(String orderId) throws PayPalRESTException {
-        // === [FORCE-REFUND-1] ค้นหาออเดอร์และบันทึก Log การกระทำของ Admin ===
+        // === [FORCE-REFUND-1] ค้นหาออเดอร์ ===
         log.info("Admin is forcing a refund for order ID: {}", orderId);
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        // === [FORCE-REFUND-2] ตรวจสอบว่า Order อยู่ในสถานะที่สามารถบังคับคืนเงินได้หรือไม่ ===
+        // === [FORCE-REFUND-2] ตรวจสอบว่าสถานะปัจจุบันสามารถบังคับคืนเงินได้หรือไม่ ===
         List<OrderStatus> validStatusesForForceRefund = List.of(
                 OrderStatus.PROCESSING,
                 OrderStatus.SHIPPED,
@@ -357,7 +351,7 @@ public class OrderServiceImpl implements OrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot force a refund on an order with status: " + order.getOrderStatus());
         }
 
-        // === [FORCE-REFUND-3] มอบหมายให้ Helper Method กลางจัดการ ===
+        // === [FORCE-REFUND-3] เรียกใช้เมธอดกลางเพื่อดำเนินการคืนเงิน ===
         return processRefund(order);
     }
 
@@ -369,7 +363,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        // === [SHIP-2] ตรวจสอบสถานะของออเดอร์ (แก้ไข) ===
+        // === [SHIP-2] ตรวจสอบสถานะของออเดอร์ว่าพร้อมจัดส่งหรือไม่ ===
         List<OrderStatus> shippableStatuses = List.of(OrderStatus.PROCESSING, OrderStatus.RETURNED_TO_SENDER);
         if (!shippableStatuses.contains(order.getOrderStatus())) {
             log.warn("Attempted to ship an order with invalid status. Order ID: {}, Status: {}", orderId, order.getOrderStatus());
@@ -383,7 +377,7 @@ public class OrderServiceImpl implements OrderService {
                 .shippedAt(Instant.now())
                 .build();
 
-        // === [SHIP-4] อัปเดตข้อมูลในออเดอร์ ===
+        // === [SHIP-4] อัปเดตข้อมูลการจัดส่งและสถานะในออเดอร์ ===
         order.setShippingDetails(shippingDetails);
         order.setOrderStatus(OrderStatus.SHIPPED);
         order.setUpdatedAt(Instant.now());
@@ -405,7 +399,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        // === [SHIP-UPDATE-2] ตรวจสอบสถานะ ===
+        // === [SHIP-UPDATE-2] ตรวจสอบสถานะว่าสามารถอัปเดตข้อมูลการจัดส่งได้ ===
         if (order.getOrderStatus() != OrderStatus.SHIPPED && order.getOrderStatus() != OrderStatus.COMPLETED) {
             log.warn("Attempted to update shipping info for an order with invalid status. Order ID: {}, Status: {}",
                     orderId, order.getOrderStatus());
@@ -413,7 +407,7 @@ public class OrderServiceImpl implements OrderService {
                     "Cannot update shipping details. The order has not been shipped yet. Current status: " + order.getOrderStatus());
         }
 
-        // === [SHIP-UPDATE-3] ตรวจสอบความสอดคล้องของข้อมูล ===
+        // === [SHIP-UPDATE-3] ตรวจสอบความสอดคล้องของข้อมูล ShippingDetails ===
         if (order.getShippingDetails() == null) {
             log.error("Data inconsistency: Order {} is SHIPPED but has no ShippingDetails object.", orderId);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -445,13 +439,13 @@ public class OrderServiceImpl implements OrderService {
         OrderStatus currentStatus = order.getOrderStatus();
         log.info("Admin request to transition order {} from [{}] to [{}]", orderId, currentStatus, newStatus);
 
-        // === [STATUS-UPDATE-2] ตรวจสอบว่าการเปลี่ยนสถานะถูกต้องตาม Flow หรือไม่ ===
+        // === [STATUS-UPDATE-2] ตรวจสอบว่าการเปลี่ยนสถานะถูกต้องตาม Flow ที่กำหนดหรือไม่ ===
         List<OrderStatus> validTransitions = getValidManualTransitionsFor(currentStatus);
         if (!validTransitions.contains(newStatus)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invalid status transition from '" + currentStatus + "' to '" + newStatus + "'.");
         }
 
-        // === [STATUS-UPDATE-3] จัดการ Logic พิเศษบางกรณี ===
+        // === [STATUS-UPDATE-3] จัดการ Logic พิเศษสำหรับบางกรณีการเปลี่ยนสถานะ ===
         if (currentStatus == OrderStatus.PENDING_PAYMENT && newStatus == OrderStatus.CANCELLED && order.getPaymentStatus() != PaymentStatus.COMPLETED) {
             order.setPaymentStatus(PaymentStatus.FAILED);
         }
@@ -502,19 +496,20 @@ public class OrderServiceImpl implements OrderService {
     // --- Private Helper Methods ---
 
     /**
-     * เมธอดภายในสำหรับจัดการกระบวนการสร้าง Payment กับ PayPal
+     * เมธอดภายในสำหรับจัดการกระบวนการสร้าง Payment กับ PayPal และอัปเดตออเดอร์
      */
     private CreateOrderResponse initiatePaypalPayment(Order order) throws PayPalRESTException {
+        // === [INIT-PAYPAL-1] บันทึกออเดอร์เพื่อสร้าง ID หากยังไม่มี ===
         if (order.getId() == null) {
             orderRepository.save(order);
             log.info("Order ID {} generated and saved before initiating PayPal payment.", order.getId());
         }
 
+        // === [INIT-PAYPAL-2] เตรียม URL สำหรับ Success และ Cancel ===
         String formattedSuccessUrl = String.format(successUrl, order.getId());
         String formattedCancelUrl = String.format(cancelUrl, order.getId());
 
-        // === [INIT-PAYPAL-3] [MODIFIED] เรียกใช้ PaypalService ด้วย Order object ทั้งหมด ===
-
+        // === [INIT-PAYPAL-3] เรียกใช้ PaypalService เพื่อสร้าง Payment ===
         Payment payment = paypalService.createPayment(
                 order,
                 "sale",
@@ -523,6 +518,7 @@ public class OrderServiceImpl implements OrderService {
                 formattedSuccessUrl
         );
 
+        // === [INIT-PAYPAL-4] ดึงลิงก์สำหรับให้ผู้ใช้อนุมัติ (Approval Link) ===
         String approvalLink = "";
         for (Links link : payment.getLinks()) {
             if ("approval_url".equals(link.getRel())) {
@@ -535,13 +531,14 @@ public class OrderServiceImpl implements OrderService {
             throw new PayPalRESTException("Could not get approval link or payment ID from PayPal.");
         }
 
+        // === [INIT-PAYPAL-5] อัปเดตออเดอร์ด้วย Payment ID จาก PayPal ===
         PaymentDetails details = order.getPaymentDetails();
         details.setTransactionId(paypalPaymentId);
         details.setProviderStatus("CREATED_IN_PAYPAL");
-        //Save Order ตรงนี้
         orderRepository.save(order);
         log.info("Updated order ID {} with PayPal Payment ID: {}", order.getId(), paypalPaymentId);
 
+        // === [INIT-PAYPAL-6] สร้าง Response เพื่อส่งคืนให้แก่ Frontend ===
         return CreateOrderResponse.builder()
                 .orderId(order.getId())
                 .paypalOrderId(paypalPaymentId)
@@ -551,7 +548,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderResponse> getAllOrders() {
-        // === [GET-ALL-ADMIN-1] ดึงออเดอร์ทั้งหมดจากฐานข้อมูล ===
+        // === [GET-ALL-ADMIN-1] ดึงออเดอร์ทั้งหมดจากฐานข้อมูลสำหรับ Admin ===
         log.info("Admin action: Fetching all orders from the system.");
         return orderRepository.findAll()
                 .stream()
@@ -575,11 +572,14 @@ public class OrderServiceImpl implements OrderService {
 
         // === [APPROVE-SLIP-3] ตัดสต็อกสินค้า ===
         orderHelper.decrementStockForOrder(order);
+
         // === [APPROVE-SLIP-4] อัปเดตสถานะเป็น "ชำระเงินแล้ว" และ "กำลังดำเนินการ" ===
         updateOrderStatusToPaid(order);
 
         if (order.getPaymentDetails() != null) {
-            order.getPaymentDetails().setProviderStatus("APPROVED_BY_ADMIN");
+            PaymentDetails details = order.getPaymentDetails();
+            details.setProviderStatus("APPROVED");
+            details.setSlipRejectionReason(null); // ล้างเหตุผลการปฏิเสธเมื่ออนุมัติสำเร็จ
         }
 
         // === [APPROVE-SLIP-5] บันทึกและส่งคืนข้อมูล ===
@@ -589,46 +589,46 @@ public class OrderServiceImpl implements OrderService {
         return orderHelper.entityToResponse(order);
     }
 
-    // --- METHOD ---
     @Override
     @Transactional
     public OrderResponse rejectPaymentSlip(String orderId, String reason) {
+        // === [REJECT-SLIP-1] ค้นหาออเดอร์และตรวจสอบสถานะที่สามารถปฏิเสธสลิปได้ ===
         log.info("Admin action: Rejecting payment slip for order ID: {} with reason: {}", orderId, reason);
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        // === [REJECT-SLIP-1] ตรวจสอบว่าสามารถปฏิเสธสลิปได้หรือไม่ ===
-        // Ensure we can only reject a slip that is pending approval
         if (order.getPaymentStatus() != PaymentStatus.PENDING_APPROVAL) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot reject slip. Order is not awaiting payment approval.");
         }
 
-        // === [REJECT-SLIP-2] [ปรับปรุง] เปลี่ยนสถานะเพื่อให้ผู้ใช้สามารถอัปโหลดสลิปใหม่ได้ ===
-        // This puts the order in a state where the user can re-upload a slip.
-        order.setOrderStatus(OrderStatus.REJECTED_SLIP);    // Set the specific new status.
-        order.setPaymentStatus(PaymentStatus.PENDING);      // **Crucial:** Set payment back to PENDING to unlock user action.
+        // === [REJECT-SLIP-2] เปลี่ยนสถานะเพื่อให้ผู้ใช้สามารถอัปโหลดสลิปใหม่ได้ ===
+        // การตั้งค่าสถานะ OrderStatus เป็น REJECTED_SLIP และ PaymentStatus เป็น PENDING
+        // จะทำให้ออเดอร์กลับไปสู่สถานะที่ผู้ใช้สามารถส่งหลักฐานการชำระเงินใหม่ได้
+        order.setOrderStatus(OrderStatus.REJECTED_SLIP);
+        order.setPaymentStatus(PaymentStatus.PENDING);
         order.setUpdatedAt(Instant.now());
 
-        // === [REJECT-SLIP-3] บันทึกเหตุผลที่ปฏิเสธ ===
-        // Store the rejection reason
+        // === [REJECT-SLIP-3] บันทึกเหตุผลที่ปฏิเสธในฟิลด์เฉพาะ ===
         if (order.getPaymentDetails() != null) {
-            order.getPaymentDetails().setProviderStatus("REJECTED_BY_ADMIN: " + reason);
+            PaymentDetails details = order.getPaymentDetails();
+            details.setProviderStatus("REJECTED");
+            details.setSlipRejectionReason(reason);
         }
 
+        // === [REJECT-SLIP-4] บันทึกและส่งคืนข้อมูล ===
         orderRepository.save(order);
         log.info("Payment slip for order ID {} has been rejected. Awaiting user action.", orderId);
         return orderHelper.entityToResponse(order);
     }
 
-
     @Override
     @Transactional
     public OrderResponse revertSlipApproval(String orderId, String reason) {
+        // === [REVERT-1] ค้นหาออเดอร์และตรวจสอบว่าสามารถย้อนกลับการอนุมัติได้หรือไม่ ===
         log.info("Admin action: Reverting slip approval for order ID: {} with reason: {}", orderId, reason);
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        // === [REVERT-1] ตรวจสอบว่าสามารถย้อนกลับได้หรือไม่ ===
         if (order.getOrderStatus() != OrderStatus.PROCESSING || order.getPaymentDetails() == null || order.getPaymentDetails().getPaymentMethod() != PaymentMethod.BANK_TRANSFER) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot revert approval. Order is not in a valid state for this action.");
         }
@@ -636,14 +636,17 @@ public class OrderServiceImpl implements OrderService {
         // === [REVERT-2] คืนสต็อกสินค้าเข้าระบบ ===
         orderHelper.incrementStockForOrder(order);
 
-        // === [REVERT-3] เปลี่ยนสถานะกลับไปรอให้ผู้ใช้อัปโหลดสลิปใหม่ ===1
+        // === [REVERT-3] เปลี่ยนสถานะกลับไปรอให้ผู้ใช้อัปโหลดสลิปใหม่ ===
         order.setOrderStatus(OrderStatus.REJECTED_SLIP);
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setUpdatedAt(Instant.now());
 
-        // === [REVERT-4] บันทึกเหตุผลที่ย้อนกลับ ===
-        order.getPaymentDetails().setProviderStatus("APPROVAL_REVERTED_BY_ADMIN: " + reason);
+        // === [REVERT-4] บันทึกเหตุผลที่ย้อนกลับการอนุมัติ ===
+        PaymentDetails details = order.getPaymentDetails();
+        details.setProviderStatus("APPROVAL_REVERTED");
+        details.setSlipRejectionReason(reason);
 
+        // === [REVERT-5] บันทึกและส่งคืนข้อมูล ===
         orderRepository.save(order);
         log.info("Approval for order {} reverted. Stock has been incremented back. Awaiting user action.", orderId);
         return orderHelper.entityToResponse(order);
@@ -651,7 +654,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse getAnyOrderByIdForAdmin(String orderId) {
-        // === [GET-ANY-ADMIN-1] ดึงออเดอร์โดยไม่เช็คเจ้าของ ===
+        // === [GET-ANY-ADMIN-1] ดึงออเดอร์โดยไม่ตรวจสอบความเป็นเจ้าของสำหรับ Admin ===
         log.info("Admin action: Fetching order details for ID: {} without ownership check.", orderId);
 
         Order order = orderRepository.findById(orderId)
@@ -668,16 +671,21 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedAt(Instant.now());
     }
 
+    /**
+     * เมธอดกลางสำหรับจัดการกระบวนการคืนเงิน (Refund) ทั้ง PayPal และ Bank Transfer
+     */
     private OrderResponse processRefund(Order order) throws PayPalRESTException {
+        // === [PROCESS-REFUND-1] ตรวจสอบว่ามี PaymentDetails หรือไม่ ===
         PaymentDetails paymentDetails = order.getPaymentDetails();
         if (paymentDetails == null) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Payment details are missing for this order.");
         }
 
+        // === [PROCESS-REFUND-2] แยกกระบวนการคืนเงินตาม Payment Method ===
         if (paymentDetails.getPaymentMethod() == PaymentMethod.PAYPAL) {
             orderHelper.processPaypalRefund(order, paymentDetails);
         } else if (paymentDetails.getPaymentMethod() == PaymentMethod.BANK_TRANSFER) {
-
+            // สำหรับ Bank Transfer เป็นการบันทึกสถานะว่าคืนเงินแล้ว (Admin ต้องจัดการคืนเงินเอง)
             if (order.getOrderStatus() == OrderStatus.REFUND_REQUESTED) {
                 paymentDetails.setProviderStatus("MANUALLY_REFUNDED_APPROVED");
             } else {
@@ -687,13 +695,15 @@ public class OrderServiceImpl implements OrderService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unsupported payment method for refund.");
         }
 
-
+        // === [PROCESS-REFUND-3] คืนสต็อกสินค้าเข้าระบบ ===
         orderHelper.incrementStockForOrder(order);
 
+        // === [PROCESS-REFUND-4] อัปเดตสถานะสุดท้ายของออเดอร์เป็น "คืนเงินแล้ว" ===
         order.setPaymentStatus(PaymentStatus.REFUNDED);
         order.setOrderStatus(OrderStatus.REFUNDED);
         order.setUpdatedAt(Instant.now());
 
+        // === [PROCESS-REFUND-5] บันทึกและส่งคืนข้อมูล ===
         orderRepository.save(order);
         log.info("Refund for order ID: {} has been successfully processed.", order.getId());
         return orderHelper.entityToResponse(order);

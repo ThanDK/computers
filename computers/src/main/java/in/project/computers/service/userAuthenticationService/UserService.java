@@ -1,9 +1,9 @@
 package in.project.computers.service.userAuthenticationService;
 
-import in.project.computers.dto.user.AdminUserRequest;
-import in.project.computers.dto.user.UserProfileUpdateRequest; // Import the new DTO
-import in.project.computers.dto.user.UserRequest;
-import in.project.computers.dto.user.UserResponse;
+import in.project.computers.DTO.user.userRequest.AdminUserRequest;
+import in.project.computers.DTO.user.userRequest.UserProfileUpdateRequest; // Import the new DTO
+import in.project.computers.DTO.user.userRequest.UserRequest;
+import in.project.computers.DTO.user.userResponse.UserResponse;
 
 import java.util.List;
 

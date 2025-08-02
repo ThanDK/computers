@@ -1,6 +1,6 @@
 package in.project.computers.service.dashboard;
 
-import in.project.computers.dto.dashboard.DashboardResponse;
+import in.project.computers.DTO.dashboard.DashboardResponse;
 import java.time.Instant;
 import java.util.List;
 

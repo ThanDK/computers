@@ -1,9 +1,9 @@
 package in.project.computers.controller.adminController;
 
 import com.paypal.base.rest.PayPalRESTException;
-import in.project.computers.dto.order.OrderResponse;
-import in.project.computers.dto.order.ShipOrderRequest;
-import in.project.computers.dto.order.UpdateOrderStatusRequest;
+import in.project.computers.DTO.order.orderResponse.OrderResponse;
+import in.project.computers.DTO.order.orderRequest.ShipOrderRequest;
+import in.project.computers.DTO.order.orderRequest.UpdateOrderStatusRequest;
 import in.project.computers.entity.order.OrderStatus;
 import in.project.computers.service.orderService.OrderService;
 import jakarta.validation.Valid;

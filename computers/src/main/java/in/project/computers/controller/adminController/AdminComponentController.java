@@ -1,9 +1,9 @@
 
 package in.project.computers.controller.adminController;
 
-import in.project.computers.dto.component.componentRequest.ComponentRequest;
-import in.project.computers.dto.component.componentRequest.StockAdjustmentRequest;
-import in.project.computers.dto.component.componentResponse.ComponentResponse;
+import in.project.computers.DTO.component.componentRequest.ComponentRequest;
+import in.project.computers.DTO.component.componentRequest.StockAdjustmentRequest;
+import in.project.computers.DTO.component.componentResponse.ComponentResponse;
 import in.project.computers.service.componentService.ComponentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,6 @@ public class AdminComponentController {
 
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ComponentResponse>> getAllComponents() {
         log.info("Request to fetch all components");
         List<ComponentResponse> components = componentService.getAllComponents();

@@ -1,8 +1,8 @@
 package in.project.computers.service.cartService;
 
-import in.project.computers.dto.cart.AddItemToCartRequest;
-import in.project.computers.dto.cart.CartResponse;
-import in.project.computers.dto.cart.UpdateCartItemRequest;
+import in.project.computers.DTO.cart.cartRequest.AddItemToCartRequest;
+import in.project.computers.DTO.cart.cartResponse.CartResponse;
+import in.project.computers.DTO.cart.cartRequest.UpdateCartItemRequest;
 import in.project.computers.entity.order.Cart;
 
 public interface CartService {

@@ -3,6 +3,7 @@ package in.project.computers.config;
 import in.project.computers.filters.JwtAuthenticationFilter;
 import in.project.computers.service.userAuthenticationService.AppUserDetailsService;
 import in.project.computers.service.userAuthenticationService.CustomOAuth2UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,10 +63,18 @@ public class SecurityConfig {
                         // Default Rule
                         .anyRequest().authenticated()
                 )
+
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage()))
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage()))
+                )
+
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2LoginSuccessHandler)
                         .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(this.customOidcUserService) // Correctly wires the OIDC service
+                                .oidcUserService(this.customOidcUserService)
                         )
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

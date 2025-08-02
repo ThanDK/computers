@@ -17,10 +17,27 @@ import LookupsPage from './pages/Lookups/LookupsPage';
 import OrdersPage from './pages/OrdersPage/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage/OrderDetailPage';
 import ShippingProvidersPage from './pages/ShippingProvidersPage/ShippingProvidersPage';
-
+import './styles/common.css'; 
+import './styles/ImagePreview.css';
 const PrivateRoute = () => {
-    const { user, isAdmin } = useAuth();
-    if (!user) { return <Navigate to="/login" replace />; }
+    const { user, isAdmin, isLoading } = useAuth(); // Get the new isLoading state
+
+    // 1. First, check if we are still loading the auth state
+    if (isLoading) {
+        // You can render a loading spinner here for a better user experience
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--primary-bg)' }}>
+                {/* Optional: Add a Bootstrap Spinner or any loading component */}
+            </div>
+        );
+    }
+
+    // 2. After loading is finished, check for the user
+    if (!user) { 
+        return <Navigate to="/login" replace />; 
+    }
+
+    // 3. Finally, check for admin role
     if (!isAdmin) {
         return (
             <div style={{ textAlign: 'center', marginTop: '5rem', color: 'white' }}>
@@ -29,6 +46,8 @@ const PrivateRoute = () => {
             </div>
         );
     }
+
+    // If all checks pass, render the layout
     return <AdminLayout />;
 };
 

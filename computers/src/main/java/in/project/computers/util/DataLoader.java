@@ -1,10 +1,10 @@
 package in.project.computers.util;
 
 import in.project.computers.entity.lookup.*;
-import in.project.computers.repository.lookup.FormFactorRepository;
-import in.project.computers.repository.lookup.RamTypeRepository;
-import in.project.computers.repository.lookup.SocketRepository;
-import in.project.computers.repository.lookup.StorageInterfaceRepository;
+import in.project.computers.repository.lookupRepository.FormFactorRepository;
+import in.project.computers.repository.lookupRepository.RamTypeRepository;
+import in.project.computers.repository.lookupRepository.SocketRepository;
+import in.project.computers.repository.lookupRepository.StorageInterfaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
