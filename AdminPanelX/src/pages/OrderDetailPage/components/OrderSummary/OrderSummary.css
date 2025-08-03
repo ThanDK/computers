@@ -55,3 +55,23 @@
     width: 100%;
     white-space: pre-wrap;
 }
+.image-header-cell {
+    width: 90px;
+    text-align: center;
+}
+
+.component-image-cell {
+    width: 90px;
+    padding: 0.5rem !important;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.component-image {
+    max-width: 60px;
+    max-height: 60px;
+    object-fit: contain;
+    background-color: #fff; /* Add a white background for transparent PNGs */
+    border-radius: 4px;
+    padding: 2px;
+}

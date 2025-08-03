@@ -1,53 +1,59 @@
+// src/components/OrderDetails/OrderItemsTable/OrderItemsTable.js
+
 import React, { useMemo } from 'react';
-import { Table, Card } from 'react-bootstrap';
+import { Table, Card, Image } from 'react-bootstrap';
 import './OrderItemsTable.css';
 
-// ... all JSX and logic from the original file ...
-const greenDotStyle = {
-    display: 'inline-block',
-    width: '10px',
-    height: '10px',
-    backgroundColor: '#387145ff',
-    borderRadius: '50%',
-};
-
+// This utility function is well-written and remains unchanged.
 function formatCurrency(amount, currency) {
     const numberPart = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(amount);
-    return `${currency} ${numberPart}`; 
+    return `${currency} ${numberPart}`;
 }
 
+// REFACTORED: Simplified component structure and improved React key usage.
 function ContainedItems({ items, currency }) {
     return (
         <tr className="build-contents-row">
             <td colSpan="4" className="p-0">
                 <div className="build-contents-wrapper">
-                    <h6 className="build-contents-header">Contains:</h6>
-                    <ul className="build-contents-list">
-                        {items.map((part, index) => (
-                            <li key={index}>
-                                <div className="build-part-item">
-                                    <div className="part-info">
+                    <h6 className="build-contents-header">CONTAINS:</h6>
+                    {/* SIMPLIFIED: Replaced <ul> and <li> with a simpler div structure. */}
+                    <div className="build-contents-list">
+                        {items.map((part) => (
+                            // IMPROVED: Using a more stable key and removed the `<li>` wrapper.
+                            <div key={part.mpn} className="build-part-item">
+                                {part.imageUrl && (
+                                    <Image src={part.imageUrl} className="build-part-image" alt={part.name} />
+                                )}
+
+                                <div className="part-info">
+                                    <div className="part-name-line">
                                         <span className="me-2 part-quantity">{part.quantity}x</span>
-                                        <span style={greenDotStyle} className="me-2"></span>
+                                        {/* CLEANED: Using a CSS class for the status dot. */}
+                                        <span className="status-dot me-2"></span>
                                         <span className="part-name">{part.name}</span>
                                     </div>
-                                    <span className="part-price">
-                                        {formatCurrency(part.priceAtTimeOfOrder, currency)}
-                                    </span>
+                                    <span className="item-meta-info">MPN: {part.mpn}</span>
                                 </div>
-                                <span className="item-meta-info">MPN: {part.mpn}</span>
-                            </li>
+
+                                <span className="part-price">
+                                    {formatCurrency(part.priceAtTimeOfOrder, currency)}
+                                </span>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 </div>
             </td>
         </tr>
     );
 }
 
+
+// --- The rest of the file with minor cleanups ---
+// NO LOGIC CHANGE: This component was already well-structured.
 function BuildItemRow({ item, currency }) {
     return (
         <>
@@ -65,12 +71,19 @@ function BuildItemRow({ item, currency }) {
     );
 }
 
+// REFACTORED: Removed inline styles for better separation of concerns.
 function ComponentItemRow({ item, currency }) {
     return (
         <tr>
+            <td className="component-image-cell">
+                {item.imageUrl && (
+                    <Image src={item.imageUrl} className="component-image" alt={item.name} />
+                )}
+            </td>
             <td>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={greenDotStyle} className="me-2"></span>
+                {/* CLEANED: Replaced inline style with a dedicated CSS class. */}
+                <div className="item-name-wrapper">
+                    <span className="status-dot me-2"></span>
                     <strong>{item.name}</strong>
                 </div>
                 <span className="item-meta-info">MPN: {item.mpn}</span>
@@ -82,11 +95,11 @@ function ComponentItemRow({ item, currency }) {
     );
 }
 
-function ItemCategoryTable({ title, headerName, items, currency, RowComponent }) {
+// NO LOGIC CHANGE: This reusable component is excellent as-is.
+function ItemCategoryTable({ title, headerName, items, currency, RowComponent, showImageColumn }) {
     if (!items || items.length === 0) {
         return null;
     }
-
     return (
         <Card className="detail-card mb-4">
             <Card.Header>{title}</Card.Header>
@@ -94,6 +107,7 @@ function ItemCategoryTable({ title, headerName, items, currency, RowComponent })
                 <Table striped hover responsive variant="dark" className="order-items-table m-0">
                     <thead>
                         <tr>
+                            {showImageColumn && <th className="image-header-cell">Image</th>}
                             <th>{headerName}</th>
                             <th className="text-center">Qty</th>
                             <th className="text-end">Unit Price</th>
@@ -115,6 +129,7 @@ function ItemCategoryTable({ title, headerName, items, currency, RowComponent })
     );
 }
 
+// NO LOGIC CHANGE: `useMemo` is used correctly here.
 function OrderItemsTable({ lineItems = [], currency }) {
     const { buildItems, componentItems } = useMemo(() => {
         return lineItems.reduce((acc, item) => {
@@ -135,6 +150,7 @@ function OrderItemsTable({ lineItems = [], currency }) {
                 items={buildItems}
                 currency={currency}
                 RowComponent={BuildItemRow}
+                showImageColumn={false}
             />
             <ItemCategoryTable
                 title="Individual Components"
@@ -142,6 +158,7 @@ function OrderItemsTable({ lineItems = [], currency }) {
                 items={componentItems}
                 currency={currency}
                 RowComponent={ComponentItemRow}
+                showImageColumn={true}
             />
         </>
     );

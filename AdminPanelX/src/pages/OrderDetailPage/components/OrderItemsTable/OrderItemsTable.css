@@ -18,6 +18,8 @@
     --bs-table-bg: transparent;
     --bs-table-striped-bg: #344258;
     --bs-table-hover-bg: #3a4a63;
+    /* UPDATED: Changed to a brighter blue for better quantity visibility */
+    --quantity-color: #a0b8ff; 
     margin-bottom: 0;
     color: var(--text-primary);
 }
@@ -30,8 +32,42 @@
     font-size: 0.85em;
     color: var(--text-secondary);
     margin-top: 0.25rem;
-    width: 100%; /* For part MPN layout */
 }
+
+/* --- Utility & Shared Item Styles --- */
+.status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: #387145;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.item-name-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+/* --- Individual Component Table Image Styles --- */
+.image-header-cell,
+.component-image-cell {
+    width: 90px;
+    text-align: center;
+}
+.component-image-cell {
+    padding: 0.5rem !important;
+    vertical-align: middle;
+}
+.component-image {
+    max-width: 60px;
+    max-height: 60px;
+    object-fit: contain;
+    background-color: #fff;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+/* --- Custom Build "CONTAINS" Section Styles --- */
 .build-contents-row td {
     background-color: #2c384c !important;
 }
@@ -46,40 +82,51 @@
     text-transform: uppercase;
 }
 .build-contents-list {
-    list-style-type: none;
-    padding-left: 0;
-    margin-bottom: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
 }
+
+/* --- Contained Build Part Styles --- */
 .build-part-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid #3c4a60;
+}
+.build-part-item:last-child {
+    border-bottom: none;
+}
+.build-part-image {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    background-color: #fff;
+    border-radius: 4px;
+    padding: 3px;
+    margin-right: 15px;
+    flex-shrink: 0;
 }
 .part-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.part-name-line {
     display: flex;
     align-items: center;
 }
 .part-price {
     font-weight: 600;
     color: var(--text-primary);
+    text-align: right;
+    flex-shrink: 0;
 }
 .part-quantity {
     font-weight: 600;
-    color: rgb(147, 147, 236);
-    flex-shrink: 0;
+    color: var(--quantity-color); /* This now uses the brighter color */
 }
 .part-name {
     font-weight: 500;
     color: var(--text-primary);
-}
-.part-mpn {
-    font-family: monospace;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    text-align: right;
-    flex-shrink: 0;
 }
