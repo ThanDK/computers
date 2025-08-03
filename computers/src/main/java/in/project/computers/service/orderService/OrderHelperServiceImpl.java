@@ -5,16 +5,18 @@ import com.paypal.api.payments.Refund;
 import com.paypal.api.payments.Sale;
 import com.paypal.base.rest.APIContext;
 import com.paypal.base.rest.PayPalRESTException;
+import in.project.computers.DTO.address.AddressDTO;
 import in.project.computers.DTO.order.orderRequest.CreateOrderRequest;
 import in.project.computers.DTO.order.orderResponse.OrderResponse;
-import in.project.computers.DTO.order.orderResponse.PaymentDetailsResponse; // Import the new DTO
+import in.project.computers.DTO.order.orderResponse.PaymentDetailsResponse;
 import in.project.computers.entity.component.*;
 import in.project.computers.entity.order.*;
+import in.project.computers.entity.user.Address; // <<--- IMPORT the Address entity
 import in.project.computers.entity.user.UserEntity;
-
-
 import in.project.computers.repository.componentRepository.ComponentRepository;
 import in.project.computers.repository.componentRepository.InventoryRepository;
+import in.project.computers.service.addressService.AddressConverter;
+import in.project.computers.service.addressService.AddressService;
 import in.project.computers.service.paypalService.PaypalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,20 +42,23 @@ public class OrderHelperServiceImpl implements OrderHelperService {
     private final InventoryRepository inventoryRepository;
     private final PaypalService paypalService;
     private final APIContext apiContext;
+    private final AddressService addressService;
+    private final AddressConverter addressConverter;
 
     @Value("${app.currency:THB}")
     private String currency;
 
     @Value("${app.tax-rate:0.00}")
     private BigDecimal taxRate;
-
-
     @Override
     public Order createAndValidateOrderFromCart(Cart cart, CreateOrderRequest request, UserEntity currentUser) {
         // === [CREATE-3.1] ตรวจสอบว่าตะกร้าสินค้าไม่ว่างเปล่า ===
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order cannot be created from an empty cart.");
         }
+
+        // +++ [NEW LOGIC] ดึงข้อมูลที่อยู่สำหรับจัดส่งจาก Request +++
+        Address shippingAddress = resolveShippingAddress(request, currentUser);
 
         // === [CREATE-3.2] ตรวจสอบสต็อกสินค้าทั้งหมดที่ต้องการในตะกร้าก่อนสร้างออเดอร์ ===
         validateOverallStockFromCart(cart);
@@ -98,11 +103,10 @@ public class OrderHelperServiceImpl implements OrderHelperService {
         BigDecimal taxAmount = subtotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
         BigDecimal totalAmount = subtotal.add(taxAmount);
 
-        // === [CREATE-3.5] สร้างอ็อบเจกต์ Order พร้อมข้อมูลทั้งหมด ===
+        // === [CREATE-3.5] สร้างอ็อบเจกต์ Order พร้อมข้อมูลทั้งหมด (UPDATED) ===
         Order order = Order.builder()
                 .userId(currentUser.getId())
-                .userAddress(request.getUserAddress())
-                .phoneNumber(request.getPhoneNumber())
+                .shippingAddress(shippingAddress)
                 .email(currentUser.getEmail())
                 .lineItems(lineItems)
                 .totalAmount(totalAmount)
@@ -114,8 +118,8 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                 .updatedAt(Instant.now())
                 .build();
 
-        log.info("Structured order from cart created for user: {}. Subtotal: {}, Tax: {}, Total: {} {}",
-                currentUser.getEmail(), subtotal, taxAmount, totalAmount, this.currency);
+        log.info("Structured order from cart created for user: {}. Address: {}, Subtotal: {}, Tax: {}, Total: {} {}",
+                currentUser.getEmail(), shippingAddress.getLine1(), subtotal, taxAmount, totalAmount, this.currency);
         return order;
     }
 
@@ -254,6 +258,22 @@ public class OrderHelperServiceImpl implements OrderHelperService {
         return sale.getId();
     }
 
+    private Address resolveShippingAddress(CreateOrderRequest request, UserEntity user) {
+        if (request.getSavedAddressId() != null && !request.getSavedAddressId().isBlank()) {
+            log.info("Resolving address using savedAddressId: {}", request.getSavedAddressId());
+            AddressDTO savedAddressDto = addressService.getAddressById(user.getId(), request.getSavedAddressId());
+            return addressConverter.convertDtoToEntity(savedAddressDto);
+
+        } else if (request.getNewAddress() != null) {
+            log.info("Resolving address using newAddress object.");
+            AddressDTO newAddrDTO = request.getNewAddress();
+            return addressConverter.convertDtoToEntity(newAddrDTO);
+
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A shipping address is required. Please provide either a savedAddressId or a newAddress object.");
+        }
+    }
+
     @Override
     public OrderResponse entityToResponse(Order order) {
         // === [RESPONSE-MAPPER-1] แปลง Order Entity เป็น OrderResponse DTO ===
@@ -271,13 +291,14 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                     .payerEmail(detailsEntity.getPayerEmail())
                     .build();
         }
-        // *** END: MODIFIED SECTION ***
+
+        // +++ [2] CONVERT the Address entity to AddressDTO +++
+        AddressDTO shippingAddressDto = addressConverter.convertEntityToDto(order.getShippingAddress());
 
         return OrderResponse.builder()
                 .id(order.getId())
                 .userId(order.getUserId())
-                .userAddress(order.getUserAddress())
-                .phoneNumber(order.getPhoneNumber())
+                .shippingAddress(shippingAddressDto)
                 .email(order.getEmail())
                 .lineItems(order.getLineItems())
                 .totalAmount(order.getTotalAmount())
@@ -291,4 +312,5 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                 .updatedAt(order.getUpdatedAt())
                 .build();
     }
+
 }

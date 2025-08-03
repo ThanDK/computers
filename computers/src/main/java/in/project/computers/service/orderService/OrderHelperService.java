@@ -1,3 +1,4 @@
+// package in.project.computers.service.orderService;
 package in.project.computers.service.orderService;
 
 import com.paypal.api.payments.Payment;
@@ -19,10 +20,10 @@ public interface OrderHelperService {
      * โดยมีการตรวจสอบสต็อกสินค้า, คำนวณยอดรวม และกำหนดสถานะเริ่มต้น
      * </p>
      * @param cart อ็อบเจกต์ Cart ที่มีรายการสินค้าทั้งหมดที่ผู้ใช้ต้องการสั่งซื้อ
-     * @param request ข้อมูลเพิ่มเติมจากผู้ใช้ เช่น ที่อยู่และเบอร์โทรศัพท์
+     * @param request ข้อมูลเพิ่มเติมจากผู้ใช้ เช่น ที่อยู่สำหรับจัดส่ง (โดยระบุ ID ของที่อยู่ที่บันทึกไว้ หรือส่งข้อมูลที่อยู่ใหม่) และวิธีการชำระเงิน
      * @param currentUser ข้อมูลผู้ใช้ปัจจุบันที่กำลังทำการสั่งซื้อ
      * @return อ็อบเจกต์ {@link Order} ที่พร้อมสำหรับบันทึกลงฐานข้อมูล
-     * @throws ResponseStatusException หากตะกร้าว่างเปล่าหรือสต็อกสินค้าไม่เพียงพอ
+     * @throws ResponseStatusException หากตะกร้าว่างเปล่า, สต็อกสินค้าไม่เพียงพอ, หรือข้อมูลที่อยู่ไม่ถูกต้อง
      */
     Order createAndValidateOrderFromCart(Cart cart, CreateOrderRequest request, UserEntity currentUser);
 

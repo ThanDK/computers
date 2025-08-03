@@ -1,5 +1,3 @@
-// src/pages/ComponentsPage/ComponentsPage.js
-
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -11,14 +9,13 @@ import {
 import {
   notifySuccess,
   notifyError,
-  showConfirmation,
 } from '../../services/NotificationService';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import MainHeader from '../../components/MainHeader/MainHeader';
 import ReusableTable from '../../components/ReusableTable/ReusableTable';
 import ImageModal from '../../components/ImageModal/ImageModal';
 import TableControls from '../../components/TableControls/TableControls';
-import { Alert, Spinner, Button, Form, InputGroup } from 'react-bootstrap';
+import { Button, Form, InputGroup } from 'react-bootstrap';
 import {
   BsSearch,
   BsPlusCircleFill,
@@ -343,35 +340,6 @@ function ComponentsPage() {
   const typeFilterValue =
     columnFilters.find((f) => f.id === 'type')?.value || '';
 
-  if (loading && !components.length) {
-    return (
-      <>
-        <MainHeader />
-        <PageHeader
-          title="Manage Components"
-          subtitle="View, search, and manage product components"
-        />
-        <div className="text-center p-5">
-          <Spinner animation="border" />
-        </div>
-      </>
-    );
-  }
-  if (error && !components.length) {
-    return (
-      <>
-        <MainHeader />
-        <PageHeader
-          title="Manage Components"
-          subtitle="View, search, and manage product components"
-        />
-        <Alert variant="danger" className="m-4">
-          {error}
-        </Alert>
-      </>
-    );
-  }
-
   return (
     <>
       <MainHeader />
@@ -435,7 +403,7 @@ function ComponentsPage() {
         columns={columns}
         data={components}
         isLoading={loading}
-        error={error}
+        error={error && !components.length ? error : null}
         sorting={sorting}
         setSorting={setSorting}
         globalFilter={globalFilter}

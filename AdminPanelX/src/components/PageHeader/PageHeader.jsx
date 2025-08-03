@@ -4,16 +4,7 @@ import { Button, Spinner } from 'react-bootstrap';
 import { BsArrowLeft, BsArrowCounterclockwise } from 'react-icons/bs';
 import './PageHeader.css';
 
-/**
- * A consistent header for pages.
- * @param {object} props
- * @param {string} props.title - The main title of the page.
- * @param {string} [props.subtitle] - The smaller text below the title.
- * @param {boolean} [props.showBackButton=false] - Whether to show the back button.
- * @param {Function} [props.onBack] - Custom function for the back button. Defaults to navigate(-1).
- * @param {Function} [props.onRefresh] - Function to call when the refresh button is clicked.
- * @param {boolean} [props.isRefreshing=false] - If true, shows a spinner on the refresh button.
- */
+
 function PageHeader({ 
     title, 
     subtitle, 

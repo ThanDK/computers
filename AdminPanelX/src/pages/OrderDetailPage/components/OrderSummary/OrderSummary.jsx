@@ -1,3 +1,5 @@
+// src/components/OrderDetails/OrderSummary/OrderSummary.js
+
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { format } from 'date-fns';
@@ -18,16 +20,29 @@ const DetailRow = ({ icon, label, children }) => (
     </div>
 );
 
+const formatAddress = (address) => {
+    if (!address) {
+        return "N/A";
+    }
+    const { line1, line2, subdistrict, district, province, zipCode, country } = address;
+    const parts = [
+        line1,
+        line2,
+        `ต. ${subdistrict}, อ. ${district}`,
+        `จ. ${province} ${zipCode}`,
+        country
+    ];
+    return parts.filter(part => part && part.trim() !== '').join(', ');
+};
+
 function OrderSummary({ order }) {
     const {
-        email, userAddress, phoneNumber, paymentDetails,
+        email, shippingAddress, paymentDetails,
         shippingDetails, createdAt, updatedAt, orderStatus
     } = order || {};
 
     const getPaypalTransactionUrl = (txId) => `https://www.sandbox.paypal.com/activity/payment/${txId}`;
     
-    // --- THIS IS THE ONLY LINE THAT NEEDS TO CHANGE ---
-    // Use the correct field 'slipImageUrl' to get the URL for the slip.
     const slipUrl = (paymentDetails?.paymentMethod === 'BANK_TRANSFER' && paymentDetails?.slipImageUrl) ? paymentDetails.slipImageUrl : null;
     
     const isRejected = orderStatus === 'REJECTED_SLIP';
@@ -39,24 +54,33 @@ function OrderSummary({ order }) {
         <Card className="detail-card">
             <Card.Header>Customer & Shipping</Card.Header>
             <Card.Body className="detail-card-body">
-                <DetailRow icon={<BsPerson />} label="Customer">{email}</DetailRow>
-                <DetailRow icon={<BsTelephone />} label="Phone">{phoneNumber}</DetailRow>
+                <DetailRow icon={<BsPerson />} label="Contact Name">{shippingAddress?.contactName || 'N/A'}</DetailRow>
+                <DetailRow icon={<BsTelephone />} label="Phone">{shippingAddress?.phoneNumber || 'N/A'}</DetailRow>
+                <DetailRow icon={<BsPerson />} label="Account Email">{email}</DetailRow>
+                
                 <div className="detail-item-full-width">
                     <div className="detail-label mb-2"><BsGeoAlt /><span>Shipping Address</span></div>
-                    <p className="address-block">{userAddress}</p>
+                    <p className="address-block">{formatAddress(shippingAddress)}</p>
                 </div>
+
                 {shippingDetails?.shippingProvider && (<DetailRow icon={<BsBoxSeam />} label="Shipped Via">{shippingDetails.shippingProvider}</DetailRow>)}
                 {shippingDetails?.trackingNumber && (<DetailRow icon={<BsHash />} label="Tracking #">{shippingDetails.trackingNumber}</DetailRow>)}
+                
+                {/* --- THIS BLOCK IS NOW CORRECTED --- */}
                 {paymentDetails?.paymentMethod && (
                     <DetailRow icon={<BsWallet2 />} label="Paid Via">
                         {paymentDetails.paymentMethod.replace(/_/g, ' ')}
-                        {paymentDetails.transactionId && paymentDetails.paymentMethod === 'PAYPAL' && (<a href={getPaypalTransactionUrl(paymentDetails.transactionId)} target="_blank" rel="noopener noreferrer" className="ms-1">(View Transaction)</a>)}
+                        {paymentDetails.transactionId && paymentDetails.paymentMethod === 'PAYPAL' && (
+                            <a href={getPaypalTransactionUrl(paymentDetails.transactionId)} target="_blank" rel="noopener noreferrer" className="ms-1">
+                                (View Transaction)
+                            </a>
+                        )}
                     </DetailRow>
                 )}
+                
                 <DetailRow icon={<BsCalendarPlus />} label="Created">{createdAt ? format(new Date(createdAt), 'dd MMM yyyy, HH:mm') : 'N/A'}</DetailRow>
                 <DetailRow icon={<BsCalendarCheck />} label="Last Update">{updatedAt ? format(new Date(updatedAt), 'dd MMM yyyy, HH:mm') : 'N/A'}</DetailRow>
 
-                {/* This block of code now works correctly because slipUrl is derived from the right field. */}
                 {slipUrl && (
                     <div className="mt-3 d-grid">
                         <Button

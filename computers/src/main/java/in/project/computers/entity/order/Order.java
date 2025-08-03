@@ -1,5 +1,6 @@
 package in.project.computers.entity.order;
 
+import in.project.computers.entity.user.Address;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -32,8 +33,7 @@ public class Order {
 
     // --- ส่วนข้อมูลผู้ใช้และที่อยู่ ---
     private String userId;
-    private String userAddress;
-    private String phoneNumber;
+    private Address shippingAddress;
     private String email;
 
     // --- ส่วนข้อมูลรายการสินค้าและยอดรวม ---

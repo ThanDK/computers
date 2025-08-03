@@ -1,6 +1,8 @@
 package in.project.computers.DTO.order.orderRequest;
 
+import in.project.computers.DTO.address.AddressDTO;
 import in.project.computers.entity.order.PaymentMethod;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -14,11 +16,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateOrderRequest {
 
-    @NotBlank(message = "User address is required")
-    private String userAddress;
+    private String savedAddressId;
 
-    @NotBlank(message = "Phone number is required")
-    private String phoneNumber;
+    @Valid
+    private AddressDTO newAddress;
 
     @NotNull(message = "Payment method must be specified")
     private PaymentMethod paymentMethod;

@@ -79,20 +79,12 @@
 
 .sidebar-link-text {
   opacity: 1;
-  /* --- FASTER ANIMATION --- */
   transition: opacity 0.2s ease-in-out 0.1s;
 }
-
-
-/* =================================================== */
-/* ---        Collapsed Sidebar Styles             --- */
-/* =================================================== */
 
 .sidebar.collapsed { 
   width: var(--sidebar-width-collapsed, 80px);
 }
-
-/* This part remains the same: the text should still fade out instantly on collapse */
 .sidebar.collapsed .sidebar-title,
 .sidebar.collapsed .sidebar-category,
 .sidebar.collapsed .sidebar-link-text {

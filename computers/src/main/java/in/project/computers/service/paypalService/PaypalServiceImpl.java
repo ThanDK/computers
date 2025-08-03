@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -98,7 +99,7 @@ public class PaypalServiceImpl implements PaypalService {
                 return createNonItemizedTransaction(order, description);
             }
 
-            // === [GET-TX-4] สร้าง Transaction แบบมีรายละเอียด (Itemized) เมื่อยอดรวมถูกต้อง ===
+            // === [GET-TX-4] สร้างอ็อบเจกต์ ItemList และ Amount พร้อม Details ===
             Details details = new Details();
             details.setShipping("0.00"); // กำหนดค่าส่งเป็น 0.00 เพื่อให้ยอดรวมถูกต้อง
             details.setSubtotal(calculatedSubtotal.setScale(2, RoundingMode.HALF_UP).toString());
@@ -112,6 +113,31 @@ public class PaypalServiceImpl implements PaypalService {
             ItemList itemList = new ItemList();
             itemList.setItems(paypalItems);
 
+            // === [GET-TX-5] เพิ่มข้อมูลที่อยู่สำหรับจัดส่ง (Shipping Address) เพื่อ Seller Protection ===
+            if (order.getShippingAddress() != null) {
+                // === [GET-TX-5.1] สร้างอ็อบเจกต์ ShippingAddress ของ PayPal จากข้อมูลในออเดอร์ ===
+                in.project.computers.entity.user.Address ourAddress = order.getShippingAddress();
+                ShippingAddress paypalShippingAddress = new ShippingAddress();
+
+                paypalShippingAddress.setRecipientName(ourAddress.getContactName());
+                paypalShippingAddress.setLine1(ourAddress.getLine1());
+                if (ourAddress.getLine2() != null && !ourAddress.getLine2().isBlank()) {
+                    paypalShippingAddress.setLine2(ourAddress.getLine2());
+                }
+                paypalShippingAddress.setCity(ourAddress.getDistrict());
+                paypalShippingAddress.setState(ourAddress.getProvince());
+                paypalShippingAddress.setPostalCode(ourAddress.getZipCode());
+                paypalShippingAddress.setCountryCode(getCountryCode(ourAddress.getCountry()));
+
+                // === [GET-TX-5.2] กำหนดที่อยู่ให้กับ ItemList เพื่อส่งให้ PayPal ===
+                itemList.setShippingAddress(paypalShippingAddress);
+                log.info("Shipping address for Order ID {} attached to PayPal payment.", order.getId());
+            } else {
+                // === [GET-TX-5.3] บันทึก Log เมื่อไม่มีที่อยู่ (เพื่อเตือนเรื่อง Seller Protection) ===
+                log.warn("Order ID {} is proceeding to PayPal without a shipping address. Seller Protection might not apply.", order.getId());
+            }
+
+            // === [GET-TX-6] สร้าง Transaction แบบมีรายละเอียด (Itemized) เมื่อข้อมูลทั้งหมดถูกต้อง ===
             Transaction transaction = new Transaction();
             transaction.setAmount(amount);
             transaction.setDescription(description);
@@ -120,7 +146,7 @@ public class PaypalServiceImpl implements PaypalService {
             return List.of(transaction);
 
         } catch (Exception e) {
-            // === [GET-TX-5] จัดการข้อผิดพลาดที่ไม่คาดคิดและใช้ Fallback ===
+            // === [GET-TX-7] จัดการข้อผิดพลาดที่ไม่คาดคิดและใช้ Fallback ===
             log.error("An unexpected error occurred while building the itemized PayPal transaction for order ID: {}. Falling back to non-itemized transaction. Error: {}", order.getId(), e.getMessage(), e);
             return createNonItemizedTransaction(order, description);
         }
@@ -194,5 +220,25 @@ public class PaypalServiceImpl implements PaypalService {
             log.error("PayPalRESTException during refund for Sale ID: {}. Error: {}", saleId, e.getDetails() != null ? e.getDetails().getMessage() : e.getMessage(), e);
             throw e;
         }
+    }
+
+    private String getCountryCode(String countryName) {
+        // === [COUNTRY-CODE-1] ตั้งค่าเริ่มต้นเป็น "TH" หากไม่มีข้อมูลประเทศส่งมา ===
+        if (countryName == null || countryName.isBlank()) {
+            return "TH";
+        }
+
+        if (countryName.equalsIgnoreCase("thailand")) {
+            return "TH";
+        }
+        if (countryName.equalsIgnoreCase("united states")) {
+            return "US";
+        }
+        if (countryName.equalsIgnoreCase("singapore")) {
+            return "SG";
+        }
+
+        // === [COUNTRY-CODE-3] ใช้ Locale เป็นทางเลือกสุดท้าย (Fallback) ===
+        return new Locale.Builder().setRegion(countryName).build().getCountry();
     }
 }

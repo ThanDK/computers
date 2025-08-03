@@ -6,7 +6,6 @@ import {
   BsFillGrid3X3GapFill,
   BsWrench,
   BsListCheck,
-  BsReceipt,
   BsPeopleFill,
   BsJustify,
   BsTruck
@@ -51,11 +50,6 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
           <BsTruck className='sidebar-link-icon' />
           <span className="sidebar-link-text">Shipping Providers</span>
         </NavLink>
-        <NavLink to="/reports" className="sidebar-link">
-          <BsReceipt className='sidebar-link-icon' />
-          <span className="sidebar-link-text">Reports</span>
-        </NavLink>
-
         {/* --- User Management Section --- */}
         <div className="sidebar-category">User Management</div>
         <NavLink to="/users" className="sidebar-link">
