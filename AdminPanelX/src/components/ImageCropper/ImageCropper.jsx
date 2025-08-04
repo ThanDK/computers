@@ -1,12 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal, Button, ButtonGroup } from 'react-bootstrap'; // Import ButtonGroup
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
-// --- Helper Functions ---
-
-// Creates a centered crop area with a specific aspect ratio.
+// --- Helper Functions (No changes here) ---
 function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
+    if (!aspect) { // Handle freeform case
+        return centerCrop(
+            { unit: '%', width: 90, height: 90 },
+            mediaWidth,
+            mediaHeight
+        );
+    }
     return centerCrop(
         makeAspectCrop({ unit: '%', width: 90 }, aspect, mediaWidth, mediaHeight),
         mediaWidth,
@@ -14,7 +19,6 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
     );
 }
 
-// Generates a cropped image File object from a source image and crop data.
 async function getCroppedImg(image, crop, fileName) {
     const canvas = document.createElement('canvas');
     const scaleX = image.naturalWidth / image.width;
@@ -41,38 +45,38 @@ async function getCroppedImg(image, crop, fileName) {
                 console.error('Canvas is empty');
                 return;
             }
-            // Return a new File object
             resolve(new File([blob], fileName, { type: 'image/jpeg' }));
-        }, 'image/jpeg', 0.9); // Use JPEG format for good compression
+        }, 'image/jpeg', 0.9);
     });
 }
 
 
-/**
- * A reusable modal component for cropping images.
- * @param {object} props
- * @param {string} props.imageSrc - The source of the image to be cropped (Data URL).
- * @param {boolean} props.show - Controls the visibility of the modal.
- * @param {function} props.onHide - Function to call when the modal should be closed.
- * @param {function} props.onCropComplete - Callback that receives the final cropped File object.
- * @param {number} [props.aspect=1] - The aspect ratio for the crop (e.g., 1 for square).
- */
 function ImageCropper({ imageSrc, show, onHide, onCropComplete, aspect = 1 }) {
     const [crop, setCrop] = useState();
     const [completedCrop, setCompletedCrop] = useState(null);
+    const [currentAspect, setCurrentAspect] = useState(aspect);
     const imageRef = useRef(null);
+
 
     const onImageLoad = (e) => {
         imageRef.current = e.currentTarget;
         const { width, height } = e.currentTarget;
-        setCrop(centerAspectCrop(width, height, aspect));
+        setCrop(centerAspectCrop(width, height, currentAspect));
+    };
+    
+    const handleAspectChange = (newAspect) => {
+        setCurrentAspect(newAspect);
+        if (imageRef.current) {
+            const { width, height } = imageRef.current;
+            setCrop(centerAspectCrop(width, height, newAspect));
+        }
     };
 
     const handleConfirm = async () => {
         if (completedCrop?.width && completedCrop?.height && imageRef.current) {
             const croppedFile = await getCroppedImg(imageRef.current, completedCrop, 'cropped-component.jpg');
-            onCropComplete(croppedFile); // Send the result back to the parent
-            onHide(); // Close the modal
+            onCropComplete(croppedFile);
+            onHide();
         }
     };
 
@@ -87,20 +91,29 @@ function ImageCropper({ imageSrc, show, onHide, onCropComplete, aspect = 1 }) {
                         crop={crop}
                         onChange={c => setCrop(c)}
                         onComplete={c => setCompletedCrop(c)}
-                        aspect={aspect}
+                        aspect={currentAspect}
                         className="d-inline-block"
                     >
                         <img ref={imageRef} src={imageSrc} onLoad={onImageLoad} alt="Crop" style={{ maxHeight: '70vh' }}/>
                     </ReactCrop>
                 )}
             </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>
-                    Cancel
-                </Button>
-                <Button variant="primary" onClick={handleConfirm} disabled={!completedCrop?.width}>
-                    Confirm Crop
-                </Button>
+            <Modal.Footer className="d-flex justify-content-between">
+                <ButtonGroup>
+                    <Button variant="outline-secondary" active={currentAspect === 16/9} onClick={() => handleAspectChange(16/9)}>16:9</Button>
+                    <Button variant="outline-secondary" active={currentAspect === 9/16} onClick={() => handleAspectChange(9/16)}>9:16</Button>
+                    <Button variant="outline-secondary" active={currentAspect === 1} onClick={() => handleAspectChange(1)}>Square Only</Button>
+                    <Button variant="outline-secondary" active={!currentAspect} onClick={() => handleAspectChange(undefined)}>Free Square</Button>
+                </ButtonGroup>
+                
+                <div>
+                    <Button variant="secondary" onClick={onHide} className="me-2">
+                        Cancel
+                    </Button>
+                    <Button variant="primary" onClick={handleConfirm} disabled={!completedCrop?.width}>
+                        Confirm Crop
+                    </Button>
+                </div>
             </Modal.Footer>
         </Modal>
     );
