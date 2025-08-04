@@ -1,27 +1,22 @@
+// src/config/ComponentFormConfig.jsx
+
 import React from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import MultiSelectTag from '../components/MultiSelectTag/MultiSelectTag';
 
 // --- Shared Helper Functions ---
 
-/**
- * Renders a standard text or number input field.
- */
-export const renderField = (name, label, { type = "text", md = 6, value, onChange }) => (
+export const renderField = (name, label, { type = "text", md = 6, value, onChange, required = true }) => (
     <Form.Group as={Col} md={md} className="mb-3">
         <Form.Label>{label}</Form.Label>
-        <Form.Control type={type} name={name} value={value || ''} onChange={onChange} required />
+        <Form.Control type={type} name={name} value={value || ''} onChange={onChange} required={required} />
     </Form.Group>
 );
 
-/**
- * Renders a standard single-select dropdown for generic lookups (like Socket, RAM Type).
- * It uses the 'name' property for both the value and display text for consistency.
- */
-export const renderSelect = (name, label, { options, md = 6, value, onChange }) => (
+export const renderSelect = (name, label, { options, md = 6, value, onChange, required = true }) => (
     <Form.Group as={Col} md={md} className="mb-3">
         <Form.Label>{label}</Form.Label>
-        <Form.Select name={name} value={value || ''} onChange={onChange} required>
+        <Form.Select name={name} value={value || ''} onChange={onChange} required={required}>
             <option value="">-- Select --</option>
             {(options || []).map(opt => (
                 <option key={opt.id} value={opt.name}>{opt.name}</option>
@@ -30,23 +25,19 @@ export const renderSelect = (name, label, { options, md = 6, value, onChange }) 
     </Form.Group>
 );
 
-/**
- * Renders the brand dropdown.
- * THIS IS THE FIX: It now works exactly like renderSelect, using the name.
- */
 export const renderBrandSelect = ({ formData, lookups, onChange }) => (
     <Form.Group as={Col} md={6} className="mb-3">
         <Form.Label>Brand</Form.Label>
         <Form.Select
-            name="brandName" // <-- FIX #1: Use 'brandName' to match the pattern.
-            value={formData.brandName || ''} // <-- FIX #2: Read from 'brandName'.
+            name="brandId"
+            value={formData.brandId || ''}
             onChange={onChange}
             disabled={!lookups?.brands}
             required
         >
             <option value="">-- Select a Brand --</option>
             {(lookups?.brands || []).map(brand => (
-                <option key={brand.id} value={brand.name}> {/* <-- FIX #3: Use name as the value. */}
+                <option key={brand.id} value={brand.id}>
                     {brand.name}
                 </option>
             ))}
@@ -54,15 +45,13 @@ export const renderBrandSelect = ({ formData, lookups, onChange }) => (
     </Form.Group>
 );
 
-
-/**
- * Helper to convert lookup items into the format required by the MultiSelectTag component.
- */
 const mapToTagOptions = (items = [], keyField = 'id', valueField = 'name') =>
     items.map(i => ({ key: i[keyField], value: i[valueField], label: i[valueField] }));
 
 // --- Component Type Definitions ---
-
+// =========================================================================
+// ===== MY INCORRECT CHANGE IS REVERTED HERE. VALUES ARE NOW CORRECTLY LOWERCASE. =====
+// =========================================================================
 export const componentTypes = [
     { label: "CPU", value: "cpu" },
     { label: "Motherboard", value: "motherboard" },
@@ -77,8 +66,15 @@ export const componentTypes = [
 // --- Specific Form Configurations for Each Component Type ---
 
 export const COMPONENT_CONFIG = {
+    // =========================================================================
+    // ===== KEYS ARE NOW CORRECTLY LOWERCASE. VALIDATION IS ADDED. =====
+    // =========================================================================
     cpu: {
         initialState: { wattage: "", socket: "" },
+        fields: [
+            { name: 'wattage', label: 'Wattage', type: 'number', required: true },
+            { name: 'socket', label: 'Socket', type: 'select', required: true }
+        ],
         render: ({ formData, lookups, handleChange }) => (
             <Row>
                 {renderField("wattage", "Wattage", { type: "number", value: formData.wattage, onChange: handleChange })}
@@ -88,6 +84,17 @@ export const COMPONENT_CONFIG = {
     },
     motherboard: {
         initialState: { socket: "", ram_type: "", form_factor: "", max_ram_gb: "", pcie_x16_slot_count: "", ram_slot_count: "", sata_port_count: "", m2_slot_count: "", wattage: "" },
+        fields: [
+            { name: 'socket', label: 'Socket', type: 'select', required: true },
+            { name: 'ram_type', label: 'RAM Type', type: 'select', required: true },
+            { name: 'form_factor', label: 'Form Factor', type: 'select', required: true },
+            { name: 'wattage', label: 'Wattage', type: 'number', required: true },
+            { name: 'max_ram_gb', label: 'Max RAM (GB)', type: 'number', required: true },
+            { name: 'ram_slot_count', label: 'RAM Slots', type: 'number', required: true },
+            { name: 'pcie_x16_slot_count', label: 'PCIe x16 Slots', type: 'number', required: true },
+            { name: 'sata_port_count', label: 'SATA Ports', type: 'number', required: true },
+            { name: 'm2_slot_count', label: 'M.2 Slots', type: 'number', required: true }
+        ],
         render: ({ formData, lookups, handleChange }) => (
             <>
                 <Row>
@@ -110,6 +117,12 @@ export const COMPONENT_CONFIG = {
     },
     ram: {
         initialState: { ram_type: "", ram_size_gb: "", moduleCount: "", wattage: "" },
+        fields: [
+            { name: 'ram_type', label: 'RAM Type', type: 'select', required: true },
+            { name: 'ram_size_gb', label: 'Total Size (GB)', type: 'number', required: true },
+            { name: 'moduleCount', label: 'Module Count (Sticks)', type: 'number', required: true },
+            { name: 'wattage', label: 'Wattage', type: 'number', required: true }
+        ],
         render: ({ formData, lookups, handleChange }) => (
             <Row>
                 {renderSelect("ram_type", "RAM Type", { options: lookups.ramTypes, md: 4, value: formData.ram_type, onChange: handleChange })}
@@ -121,6 +134,10 @@ export const COMPONENT_CONFIG = {
     },
     gpu: {
         initialState: { wattage: "", length_mm: "" },
+        fields: [
+            { name: 'wattage', label: 'Wattage (TDP)', type: 'number', required: true },
+            { name: 'length_mm', label: 'Length (mm)', type: 'number', required: true }
+        ],
         render: ({ formData, handleChange }) => (
             <Row>
                 {renderField("wattage", "Wattage (TDP)", { type: "number", value: formData.wattage, onChange: handleChange })}
@@ -130,6 +147,10 @@ export const COMPONENT_CONFIG = {
     },
     psu: {
         initialState: { wattage: "", form_factor: "" },
+        fields: [
+            { name: 'wattage', label: 'Wattage', type: 'number', required: true },
+            { name: 'form_factor', label: 'Form Factor', type: 'select', required: true }
+        ],
         render: ({ formData, lookups, handleChange }) => (
             <Row>
                 {renderField("wattage", "Wattage", { type: "number", value: formData.wattage, onChange: handleChange })}
@@ -139,6 +160,11 @@ export const COMPONENT_CONFIG = {
     },
     storage: {
         initialState: { storage_interface: "", capacity_gb: "", form_factor: "" },
+        fields: [
+            { name: 'storage_interface', label: 'Interface', type: 'select', required: true },
+            { name: 'form_factor', label: 'Form Factor', type: 'select', required: true },
+            { name: 'capacity_gb', label: 'Capacity (GB)', type: 'number', required: true }
+        ],
         render: ({ formData, lookups, handleChange }) => (
             <Row>
                 {renderSelect("storage_interface", "Interface", { options: lookups.storageInterfaces, md: 4, value: formData.storage_interface, onChange: handleChange })}
@@ -148,7 +174,13 @@ export const COMPONENT_CONFIG = {
         )
     },
     cooler: {
-        initialState: { socket_support: [], height_mm: "", wattage: "", radiatorSize_mm: "0" },
+        initialState: { socket_support: [], height_mm: "", wattage: "", radiatorSize_mm: "" },
+        fields: [
+            { name: 'socket_support', label: 'Supported Sockets', type: 'tags', required: true },
+            { name: 'wattage', label: 'Wattage (TDP)', type: 'number', required: true },
+            { name: 'height_mm', label: 'Height (mm)', type: 'number', required: false }, // Can be optional
+            { name: 'radiatorSize_mm', label: 'Radiator Size (mm)', type: 'number', required: false } // Can be optional
+        ],
         render: ({ formData, lookups, handleChange, handleTagAdd, handleTagRemove }) => (
              <>
                 <Row className="mb-3">
@@ -163,8 +195,8 @@ export const COMPONENT_CONFIG = {
                     </Col>
                 </Row>
                 <Row>
-                    {renderField("height_mm", "Height (mm) for Air Coolers", { type: "number", md: 4, value: formData.height_mm, onChange: handleChange })}
-                    {renderField("radiatorSize_mm", "Radiator Size (mm) for AIOs (0 for Air)", { type: "number", md: 4, value: formData.radiatorSize_mm, onChange: handleChange })}
+                    {renderField("height_mm", "Height (mm) for Air Coolers (0 for AIO)", { type: "number", md: 4, value: formData.height_mm, onChange: handleChange, required: false })}
+                    {renderField("radiatorSize_mm", "Radiator Size (mm) for AIOs (0 for Air)", { type: "number", md: 4, value: formData.radiatorSize_mm, onChange: handleChange, required: false })}
                     {renderField("wattage", "Wattage (TDP)", { type: "number", md: 4, value: formData.wattage, onChange: handleChange })}
                 </Row>
             </>
@@ -172,6 +204,15 @@ export const COMPONENT_CONFIG = {
     },
     case: {
         initialState: { motherboard_form_factor_support: [], psu_form_factor_support: [], max_gpu_length_mm: "", max_cooler_height_mm: "", bays_2_5_inch: "", bays_3_5_inch: "", supportedRadiatorSizesMm: [] },
+        fields: [
+            { name: 'motherboard_form_factor_support', label: 'Supported MB Form Factors', type: 'tags', required: true },
+            { name: 'psu_form_factor_support', label: 'Supported PSU Form Factors', type: 'tags', required: true },
+            { name: 'max_gpu_length_mm', label: 'Max GPU Length (mm)', type: 'number', required: true },
+            { name: 'max_cooler_height_mm', label: 'Max Cooler Height (mm)', type: 'number', required: true },
+            { name: 'bays_2_5_inch', label: '2.5 Inch Bays', type: 'number', required: true },
+            { name: 'bays_3_5_inch', label: '3.5 Inch Bays', type: 'number', required: true },
+            { name: 'supportedRadiatorSizesMm', label: 'Supported Radiator Sizes (mm)', type: 'tags', required: false } // This can be optional
+        ],
         render: ({ formData, lookups, handleChange, handleTagAdd, handleTagRemove }) => {
             const radiatorOptions = (lookups.radiatorSizes || []).map(s => ({ key: s, value: String(s), label: `${s}mm` }));
             return (

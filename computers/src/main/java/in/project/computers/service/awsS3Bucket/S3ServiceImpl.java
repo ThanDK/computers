@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -55,7 +56,7 @@ public class S3ServiceImpl implements S3Service {
     }
 
     @Override
-    public boolean deleteFile(String filename) {
+    public boolean deleteFileByKey(String filename) {
         if (filename == null || filename.isBlank()) {
             return true;
         }
@@ -72,4 +73,25 @@ public class S3ServiceImpl implements S3Service {
             return false;
         }
     }
+    @Override
+    public String extractKeyFromUrl(String url) { // <-- THIS IS THE UPDATED METHOD
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        try {
+            URI uri = URI.create(url);
+            String path = uri.getPath();
+            if (path != null && path.startsWith("/")) {
+                return path.substring(1);
+            }
+            return path;
+        } catch (IllegalArgumentException e) {
+            log.error("Could not extract key from an invalid URL: {}", url, e);
+            if (url.contains("/")) {
+                return url.substring(url.lastIndexOf('/') + 1);
+            }
+            return null;
+        }
+    }
+
 }

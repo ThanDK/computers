@@ -22,6 +22,10 @@ public class UserEntity {
     private String email;
     private String password;
     private String role;
+    private String profilePictureUrl;
+    @Builder.Default
+    private boolean locked = false;
+
     @Builder.Default
     private List<Address> savedAddresses = new ArrayList<>();
 }

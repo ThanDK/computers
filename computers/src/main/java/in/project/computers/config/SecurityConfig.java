@@ -1,7 +1,6 @@
 package in.project.computers.config;
 
 import in.project.computers.filters.JwtAuthenticationFilter;
-import in.project.computers.service.userAuthenticationService.AppUserDetailsService;
 import in.project.computers.service.userAuthenticationService.CustomOAuth2UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -9,8 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,35 +30,34 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final AppUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomOAuth2UserService customOidcUserService; // This is your OidcUserService
+    private final CustomOAuth2UserService customOidcUserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
-                        // Public endpoints
                         .requestMatchers("/api/register", "/api/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/components/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/orders/capture/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/orders/cancel/**").permitAll()
                         .requestMatchers("/api/lookups/debug/**").permitAll()
-                        // Admin-Only endpoints
+                        // Endpoints ที่ต้องการสิทธิ์ ADMIN
                         .requestMatchers("/api/admin/orders/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/components/**").hasRole("ADMIN")
-                        // Authenticated User endpoints
+                        // Endpoints ที่ต้องการการยืนยันตัวตน (Authenticated User)
                         .requestMatchers("/api/orders/**").authenticated()
                         .requestMatchers("/api/builds/**").authenticated()
-                        // Default Rule
                         .anyRequest().authenticated()
                 )
 
@@ -78,6 +75,7 @@ public class SecurityConfig {
                         )
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -93,16 +91,15 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
+
         return new CorsFilter(source);
     }
 
     @Bean
-    public AuthenticationManager authenticationManager() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return new ProviderManager(authProvider);
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }

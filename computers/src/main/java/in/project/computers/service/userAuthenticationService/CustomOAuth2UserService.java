@@ -43,8 +43,7 @@ public class CustomOAuth2UserService extends OidcUserService {
         Optional<UserEntity> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isPresent()) {
-            UserEntity foundUser = userOptional.get();
-            return foundUser;
+            return userOptional.get();
         } else {
             UserEntity newUser = UserEntity.builder()
                     .email(email)

@@ -1,14 +1,14 @@
 package in.project.computers.config;
 
 import com.paypal.base.rest.APIContext;
-import com.paypal.base.rest.OAuthTokenCredential;
-import com.paypal.base.rest.PayPalRESTException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.HashMap;
-import java.util.Map;
+// No need for these imports anymore as the logic is encapsulated
+// import com.paypal.base.rest.OAuthTokenCredential;
+// import java.util.HashMap;
+// import java.util.Map;
 
 @Configuration
 public class PaypalConfig {
@@ -22,7 +22,12 @@ public class PaypalConfig {
     @Value("${paypal.mode}")
     private String mode;
 
-
+    /*
+     * The following two beans are no longer needed to create the APIContext.
+     * The new APIContext constructor handles this setup internally.
+     * You can remove them unless they are being used by other beans in your application.
+     */
+    /*
     @Bean
     public Map<String, String> paypalSdkConfig() {
         Map<String, String> configMap = new HashMap<>();
@@ -30,18 +35,23 @@ public class PaypalConfig {
         return configMap;
     }
 
-
     @Bean
     public OAuthTokenCredential oAuthTokenCredential() {
         return new OAuthTokenCredential(clientId, clientSecret, paypalSdkConfig());
     }
+    */
 
 
+    /**
+     * This is the updated bean definition for APIContext.
+     * It uses the non-deprecated constructor that takes client ID, secret, and mode directly.
+     * This allows the APIContext object to manage the OAuth token itself,
+     *
+     * @return A configured APIContext object.
+     //* @throws PayPalRESTException
+     */
     @Bean
-    public APIContext apiContext() throws PayPalRESTException {
-
-        APIContext context = new APIContext(oAuthTokenCredential().getAccessToken());
-        context.setConfigurationMap(paypalSdkConfig());
-        return context;
+    public APIContext apiContext() {
+        return new APIContext(clientId, clientSecret, mode);
     }
 }

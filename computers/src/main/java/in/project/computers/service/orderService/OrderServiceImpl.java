@@ -177,7 +177,7 @@ public class OrderServiceImpl implements OrderService {
             try {
                 String oldFilename = oldSlipUrl.substring(oldSlipUrl.lastIndexOf("/") + 1);
                 log.info("Order {} has an existing slip. Attempting to delete file: {} from S3.", orderId, oldFilename);
-                s3Service.deleteFile(oldFilename);
+                s3Service.deleteFileByKey(oldFilename);
             } catch (Exception e) {
                 log.error("Error processing or deleting old slip URL '{}' for order {}: {}", oldSlipUrl, orderId, e.getMessage());
             }

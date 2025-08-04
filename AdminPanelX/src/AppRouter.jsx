@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-// --- THIS IS THE FIX ---
-// The path is changed from "../context/AuthContext" to "./context/AuthContext"
+
 import { useAuth } from './context/AuthContext';
 // ----------------------
 
@@ -17,27 +16,25 @@ import LookupsPage from './pages/Lookups/LookupsPage';
 import OrdersPage from './pages/OrdersPage/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage/OrderDetailPage';
 import ShippingProvidersPage from './pages/ShippingProvidersPage/ShippingProvidersPage';
+import UsersPage from './pages/UsersPage/UsersPage';
 import './styles/common.css'; 
 import './styles/ImagePreview.css';
-const PrivateRoute = () => {
-    const { user, isAdmin, isLoading } = useAuth(); // Get the new isLoading state
 
-    // 1. First, check if we are still loading the auth state
+const PrivateRoute = () => {
+    const { user, isAdmin, isLoading } = useAuth(); 
+
+
     if (isLoading) {
-        // You can render a loading spinner here for a better user experience
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--primary-bg)' }}>
-                {/* Optional: Add a Bootstrap Spinner or any loading component */}
             </div>
         );
     }
 
-    // 2. After loading is finished, check for the user
     if (!user) { 
         return <Navigate to="/login" replace />; 
     }
 
-    // 3. Finally, check for admin role
     if (!isAdmin) {
         return (
             <div style={{ textAlign: 'center', marginTop: '5rem', color: 'white' }}>
@@ -47,7 +44,6 @@ const PrivateRoute = () => {
         );
     }
 
-    // If all checks pass, render the layout
     return <AdminLayout />;
 };
 
@@ -66,6 +62,8 @@ const AppRouter = () => {
         <Route path="orders" element={<OrdersPage />} />
         <Route path="order-details/:orderId" element={<OrderDetailPage />} /> 
         <Route path="shipping-providers" element={<ShippingProvidersPage />} /> 
+        <Route path="users" element={<UsersPage />} /> 
+      
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

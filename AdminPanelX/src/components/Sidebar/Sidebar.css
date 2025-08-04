@@ -1,3 +1,4 @@
+/* Base and Expanded Styles */
 .sidebar {
   background-color: var(--secondary-bg);
   padding: 1.5rem 1rem;
@@ -6,49 +7,92 @@
   height: 100vh;
   position: sticky;
   top: 0;
-  /* Keep the main width animation at a smooth 0.3s */
-  transition: width 0.3s ease-in-out; 
+  transition: width 0.2s ease-in-out;
+  width: var(--sidebar-width, 250px);
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
   min-height: 40px;
+  margin-bottom: 1.5rem; 
 }
 
-.sidebar-header .sidebar-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+.sidebar-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.sidebar-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  color: var(--text-secondary);
+}
+
+.sidebar-user-info {
   white-space: nowrap;
-  opacity: 1;
-  /* --- FASTER ANIMATION --- */
-  /* Fade in faster (0.2s) and start much sooner (delay of 0.1s) */
-  transition: opacity 0.2s ease-in-out 0.1s;
+  overflow: hidden;
+}
+
+.sidebar-user-name-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #22c55e;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+
+.sidebar-user-name {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  color: #22c55e;
+  background-color: rgba(34, 197, 94, 0.2);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 4px;
 }
 
 .sidebar-toggle-btn {
   background: none;
   border: none;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: 1.5rem;
   cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--text-primary);
 }
 
 .sidebar-nav { flex-grow: 1; }
-
-.sidebar-category {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  padding: 0.75rem 1rem;
-  white-space: nowrap;
-  opacity: 1;
-  /* --- FASTER ANIMATION --- */
-  transition: opacity 0.2s ease-in-out 0.1s;
-}
 
 .sidebar-link {
   display: flex;
@@ -64,11 +108,15 @@
   overflow: hidden;
 }
 
-.sidebar-link:hover, .sidebar-link.active {
+.sidebar-link:hover {
   background-color: var(--primary-bg);
   color: var(--text-primary);
 }
-.sidebar-link.active { background-color: var(--accent-color); }
+
+.sidebar-link.active { 
+  background-color: var(--accent-color); 
+  color: var(--text-primary);
+}
 
 .sidebar-link-icon {
   margin-right: 1rem;
@@ -77,15 +125,21 @@
   transition: margin-right 0.3s ease-in-out;
 }
 
+.sidebar-category,
 .sidebar-link-text {
   opacity: 1;
   transition: opacity 0.2s ease-in-out 0.1s;
 }
 
+/* Collapsed Styles */
 .sidebar.collapsed { 
   width: var(--sidebar-width-collapsed, 80px);
 }
-.sidebar.collapsed .sidebar-title,
+
+.sidebar.collapsed .sidebar-profile-header {
+  display: none;
+}
+
 .sidebar.collapsed .sidebar-category,
 .sidebar.collapsed .sidebar-link-text {
   opacity: 0;
@@ -95,7 +149,15 @@
 }
 
 .sidebar.collapsed .sidebar-header { 
-  justify-content: center; 
+  justify-content: center;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+/* === FIX: This makes the button align perfectly with the links === */
+.sidebar.collapsed .sidebar-toggle-btn {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .sidebar.collapsed .sidebar-link { 

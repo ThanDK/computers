@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Card, Form, Button, Alert } from 'react-bootstrap';
+import { Card, Form, Button, Alert, Spinner } from 'react-bootstrap'; // Add Spinner
 import { BsShieldLockFill } from 'react-icons/bs';
-
 
 import { loginUser } from '../../services/AuthService';
 
@@ -13,28 +12,31 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false); // Add loading state for the button
   const { login } = useAuth();
   const navigate = useNavigate();
 
-
+  // ===================================================================
+  // ===== THIS IS THE OTHER CRITICAL FIX ==============================
+  // ===================================================================
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoggingIn(true); // Start loading
 
     try {
-      
       const token = await loginUser(email, password);
+      await login(token); 
       
-      login(token); 
       navigate('/'); 
 
     } catch (err) {
-      
       setError(err.message);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  // The JSX for the form remains exactly the same
   return (
     <div className="login-container">
       <Card className="login-card">
@@ -55,6 +57,7 @@ function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="login-input"
+                disabled={isLoggingIn}
               />
             </Form.Group>
             <Form.Group className="mb-4">
@@ -65,10 +68,15 @@ function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="login-input"
+                disabled={isLoggingIn}
               />
             </Form.Group>
-            <Button className="w-100 login-button" type="submit" variant="primary">
-              Log In
+            <Button className="w-100 login-button" type="submit" variant="primary" disabled={isLoggingIn}>
+              {isLoggingIn ? (
+                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+              ) : (
+                'Log In'
+              )}
             </Button>
           </Form>
         </Card.Body>

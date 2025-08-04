@@ -20,7 +20,6 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
-
     private final UserService userService;
 
     @PostMapping
@@ -30,14 +29,12 @@ public class AdminUserController {
         return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
     }
 
-
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         log.info("Admin request to get all users");
         List<UserResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
-
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable String userId) {
@@ -53,11 +50,24 @@ public class AdminUserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
         log.info("Admin request to delete user by ID: {}", userId);
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/lock/{userId}")
+    public ResponseEntity<UserResponse> lockUser(@PathVariable String userId) {
+        log.info("Admin request to LOCK user account: {}", userId);
+        UserResponse lockedUser = userService.lockUser(userId);
+        return ResponseEntity.ok(lockedUser);
+    }
+
+    @PutMapping("/unlock/{userId}")
+    public ResponseEntity<UserResponse> unlockUser(@PathVariable String userId) {
+        log.info("Admin request to UNLOCK user account: {}", userId);
+        UserResponse unlockedUser = userService.unlockUser(userId);
+        return ResponseEntity.ok(unlockedUser);
     }
 }

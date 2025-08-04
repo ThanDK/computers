@@ -2,7 +2,10 @@
 
 const API_BASE_URL = 'http://localhost:8080/api/admin/lookups';
 
-
+/**
+ * THE DEFINITIVE, BULLETPROOF API HELPER:
+ * This version correctly handles the specific error format from your backend.
+ */
 async function apiRequest(url, method = 'GET', body = null, token) {
     const options = {
         method,
@@ -17,14 +20,35 @@ async function apiRequest(url, method = 'GET', body = null, token) {
              options.body = JSON.stringify(body);
         }
     }
+    
     const response = await fetch(url, options);
+
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: `Request failed with status ${response.status}` }));
-        throw new Error(errorData.message || 'An unknown error occurred.');
+        let errorMessage = `Request failed: ${response.status} ${response.statusText}`;
+        const contentType = response.headers.get('content-type');
+
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                const errorData = await response.json();
+                // This correctly checks for the 'error' property from your backend.
+                errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch (e) {
+                console.error("Failed to parse JSON error response:", e);
+            }
+        }
+        
+        throw new Error(errorMessage);
     }
-    if (response.status === 204) return true; 
+
+    if (response.status === 204) {
+        return true;
+    }
+
     return response.json();
 }
+
+
+// NO CHANGES NEEDED BELOW. All functions will now use the corrected helper above.
 
 export const fetchAllLookups = async (token) => {
     const response = await fetch(API_BASE_URL, {
@@ -35,7 +59,6 @@ export const fetchAllLookups = async (token) => {
 };
 
 // --- Generic Lookup Functions ---
-
 export const fetchLookupsByType = (type, token) => {
     return apiRequest(`${API_BASE_URL}/${type}`, 'GET', null, token);
 };
@@ -52,8 +75,11 @@ export const deleteLookup = (type, id, token) => {
     return apiRequest(`${API_BASE_URL}/${type}/${id}`, 'DELETE', null, token);
 };
 
-// --- Specific functions for Shipping Providers ---
+// =========================================================================
+// ===== RESTORED MISSING FUNCTIONS THAT CAUSED THE BUILD ERROR =====
+// =========================================================================
 
+// --- Specific functions for Shipping Providers ---
 export const fetchAllShippingProviders = (token) => {
     return apiRequest(`${API_BASE_URL}/shipping-providers`, 'GET', null, token);
 };
@@ -80,11 +106,9 @@ export const deleteShippingProvider = (id, token) => {
     return apiRequest(`${API_BASE_URL}/shipping-providers/${id}`, 'DELETE', null, token);
 };
 
-// --- ADDED: Specific functions for Brands ---
-
+// --- Specific functions for Brands ---
 export const createBrand = (brandData, imageFile, token) => {
     const formData = new FormData();
-    // The key 'brand' must match the @RequestPart("brand") in your Spring Boot controller
     formData.append('brand', new Blob([JSON.stringify(brandData)], { type: 'application/json' }));
     if (imageFile) {
         formData.append('image', imageFile);
@@ -94,10 +118,13 @@ export const createBrand = (brandData, imageFile, token) => {
 
 export const updateBrand = (id, brandData, imageFile, token) => {
     const formData = new FormData();
-    // The key 'brand' must match the @RequestPart("brand") in your Spring Boot controller
     formData.append('brand', new Blob([JSON.stringify(brandData)], { type: 'application/json' }));
     if (imageFile) {
         formData.append('image', imageFile);
     }
     return apiRequest(`${API_BASE_URL}/brands/${id}`, 'PUT', formData, token);
+};
+
+export const deleteBrand = (id, token) => {
+    return apiRequest(`${API_BASE_URL}/brands/${id}`, 'DELETE', null, token);
 };

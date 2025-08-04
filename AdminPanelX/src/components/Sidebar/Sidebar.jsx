@@ -1,6 +1,6 @@
-// src/components/Sidebar/Sidebar.js
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   BsGrid1X2Fill,
   BsFillGrid3X3GapFill,
@@ -8,28 +8,51 @@ import {
   BsListCheck,
   BsPeopleFill,
   BsJustify,
-  BsTruck
+  BsTruck,
+  BsPersonCircle
 } from 'react-icons/bs';
 import './Sidebar.css';
 
 function Sidebar({ isCollapsed, toggleSidebar }) {
+  const { user, isAdmin } = useAuth();
+
+  if (!isAdmin || !user) {
+    return null; 
+  }
+
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        {!isCollapsed && <span className="sidebar-title">ADMIN</span>}
+        <div className="sidebar-profile-header">
+          {user.profilePictureUrl ? (
+            <img src={user.profilePictureUrl} alt="Admin" className="sidebar-avatar" />
+          ) : (
+            <BsPersonCircle className="sidebar-avatar" /> 
+          )}
+          
+          {/* User info is always present in the DOM for smooth CSS transitions */}
+          <div className="sidebar-user-info">
+            <div className="sidebar-user-name-container">
+              <span className="sidebar-status-dot"></span>
+              {/* FIX: `title` attribute for hover tooltip on long names */}
+              <span className="sidebar-user-name" title={user.name}>{user.name}</span>
+            </div>
+            <span className="sidebar-user-role-badge">{user.role.replace('ROLE_', '')}</span>
+          </div>
+        </div>
+
         <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
           <BsJustify />
         </button>
       </div>
 
       <nav className="sidebar-nav">
-        {/* --- Top Level Link --- */}
+        {/* Link text is always present for smooth fade animations */}
         <NavLink to="/dashboard" className="sidebar-link" end>
           <BsGrid1X2Fill className='sidebar-link-icon' />
           <span className="sidebar-link-text">Dashboard</span>
         </NavLink>
 
-        {/* --- Component Management Section --- */}
         <div className="sidebar-category">Component Management</div>
         <NavLink to="/components" className="sidebar-link">
           <BsFillGrid3X3GapFill className='sidebar-link-icon' />
@@ -40,7 +63,6 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
           <span className="sidebar-link-text">Lookups</span>
         </NavLink>
         
-        {/* --- Order Management Section --- */}
         <div className="sidebar-category">Order Management</div>
         <NavLink to="/orders" className="sidebar-link">
           <BsListCheck className='sidebar-link-icon' />
@@ -50,7 +72,7 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
           <BsTruck className='sidebar-link-icon' />
           <span className="sidebar-link-text">Shipping Providers</span>
         </NavLink>
-        {/* --- User Management Section --- */}
+
         <div className="sidebar-category">User Management</div>
         <NavLink to="/users" className="sidebar-link">
           <BsPeopleFill className='sidebar-link-icon' />

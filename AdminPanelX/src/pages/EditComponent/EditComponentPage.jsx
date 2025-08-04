@@ -1,13 +1,14 @@
-// src/pages/EditComponentPage/EditComponentPage.js
+// src/pages/EditComponentPage/EditComponentPage.jsx
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom'; // <-- 1. IMPORT useLocation
-import { Form, Button, Row, Col, Spinner, Card, Alert } from 'react-bootstrap';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Form, Button, Row, Col, Spinner, Card } from 'react-bootstrap';
 
 // Import Services and Components
 import { getComponentById, updateComponent } from '../../services/ComponentService';
 import { fetchAllLookups } from '../../services/LookupService';
-import { notifySuccess } from '../../services/NotificationService';
+import { notifySuccess, notifyError } from '../../services/NotificationService';
+import { validateComponentData } from '../../services/ValidationService';
 import { useAuth } from '../../context/AuthContext';
 import MainHeader from '../../components/MainHeader/MainHeader';
 import PageHeader from '../../components/PageHeader/PageHeader';
@@ -24,19 +25,17 @@ import {
 function EditComponentPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const location = useLocation(); // <-- 2. GET THE CURRENT LOCATION
+    const location = useLocation();
     const { token } = useAuth();
 
-    // --- 3. GET THE LOCATION WE CAME FROM ---
     const fromLocation = location.state?.from || { pathname: '/components' };
 
-    // --- State Management (Your correct version) ---
+    // State Management
     const [componentType, setComponentType] = useState('');
     const [formData, setFormData] = useState({});
     const [lookups, setLookups] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState('');
     const [imageFile, setImageFile] = useState(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState('');
     const [originalImageSrc, setOriginalImageSrc] = useState('');
@@ -44,12 +43,11 @@ function EditComponentPage() {
     const [cropModalState, setCropModalState] = useState({ show: false, src: '' });
     const fileInputRef = useRef(null);
 
-    // --- Side Effects (Your correct version) ---
+    // Side Effects
     useEffect(() => {
         const fetchData = async () => {
             if (!token || !id) return;
             setIsLoading(true);
-            setError('');
             try {
                 const [componentData, lookupData] = await Promise.all([
                     getComponentById(id, token),
@@ -64,7 +62,7 @@ function EditComponentPage() {
                 setComponentType(componentData.type);
                 if (componentData.imageUrl) { setImagePreviewUrl(componentData.imageUrl); }
             } catch (err) {
-                setError("Failed to load component data. It may have been deleted or an error occurred.");
+                notifyError("Failed to load component data. It may have been deleted or an error occurred.");
                 console.error(err);
             } finally {
                 setIsLoading(false);
@@ -81,7 +79,7 @@ function EditComponentPage() {
         };
     }, [imagePreviewUrl]);
     
-    // --- Event Handlers (Your correct version) ---
+    // Event Handlers
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
         if (name === 'brandName') {
@@ -139,17 +137,23 @@ function EditComponentPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setIsSubmitting(true);
+
+        const validationErrors = validateComponentData(formData, componentType);
+        if (validationErrors.length > 0) {
+            notifyError(validationErrors.join('\n'));
+            setIsSubmitting(false);
+            return;
+        }
+        
         try {
             const { quantity, isActive, brandName, ...updateData } = formData; 
             
             await updateComponent(id, updateData, imageFile, removeImage, token);
             notifySuccess('Component updated successfully!');
-            // --- 4. NAVIGATE BACK TO THE SAVED LOCATION ---
             navigate(fromLocation);
         } catch (err) {
-            setError(err.message || 'An unexpected error occurred. Please try again.');
+            notifyError(err.message || 'An unexpected error occurred.');
         } finally {
             setIsSubmitting(false);
         }
@@ -168,15 +172,12 @@ function EditComponentPage() {
                 title={`Edit ${typeLabel}`}
                 subtitle={`Editing component with MPN: ${formData.mpn || 'N/A'}`}
                 showBackButton={true}
-                // --- 5. MAKE THE BACK BUTTON ALSO USE THE SAVED LOCATION ---
                 onBack={() => navigate(fromLocation)}
             />
 
             <Card className="form-card">
                 <Card.Body>
-                    {error && <Alert variant="danger">{error}</Alert>}
                     <Form noValidate onSubmit={handleSubmit}>
-                        {/* --- The rest of your form JSX is correct and unchanged --- */}
                         <Row className="mb-4">
                             <Form.Group as={Col} md="6" lg="4">
                                 <Form.Label className="step-label">Component Type</Form.Label>
@@ -218,6 +219,10 @@ function EditComponentPage() {
                         </Row>
                         <hr className="form-divider my-4" />
                         <h5 className="section-header">Specific Details for {typeLabel}</h5>
+                        
+                        {/* ========================================================================= */}
+                        {/* ===== THIS IS THE CRITICAL FIX: handleTagAdd/Remove ARE RESTORED ===== */}
+                        {/* ========================================================================= */}
                         {lookups && COMPONENT_CONFIG[componentType]?.render({
                             formData,
                             lookups,
@@ -225,6 +230,7 @@ function EditComponentPage() {
                             handleTagAdd,
                             handleTagRemove
                         })}
+
                         <Button type="submit" variant="primary" size="lg" disabled={isSubmitting} className="mt-4 w-100">
                             {isSubmitting ? <><Spinner as="span" animation="border" size="sm" /> Saving...</> : 'Save Changes'}
                         </Button>

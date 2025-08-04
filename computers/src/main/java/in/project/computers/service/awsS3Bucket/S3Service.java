@@ -19,5 +19,6 @@ public interface S3Service {
      * @param filename ชื่อของไฟล์ที่ต้องการลบ
      * @return true หากการลบสำเร็จ
      */
-    boolean deleteFile(String filename);
+    boolean deleteFileByKey(String filename);
+    String extractKeyFromUrl(String url);
 }

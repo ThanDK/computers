@@ -1,0 +1,73 @@
+/*
+  Main card container with a dark theme.
+  The background is a dark panel color, slightly lighter than the main page background.
+*/
+.admin-profile-card {
+  background-color: #2d3748; /* Dark panel background */
+  color: #edf2f7; /* Light text for contrast */
+  border: 1px solid #4a5568; /* Subtle border */
+  border-radius: 0.5rem;
+}
+
+/*
+  Avatar styling for dark theme
+*/
+.admin-profile-card .profile-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 1.5rem;
+  border: 3px solid #4a5568; /* A border that works on the dark background */
+}
+
+/*
+  Avatar placeholder for when no image exists.
+  The icon needs to be light to be visible on the dark card.
+*/
+.admin-profile-card .profile-avatar-placeholder {
+  font-size: 70px;
+  color: #a0aec0; /* A medium light-gray for the placeholder icon */
+  margin-right: 1.5rem;
+}
+
+/*
+  Info section styling
+*/
+.admin-profile-card .profile-info {
+  flex-grow: 1;
+}
+
+/* Make the user's name white and bold */
+.admin-profile-card .profile-info h5 {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Style the muted text (email address) with a lighter gray */
+.admin-profile-card .text-muted {
+  color: #a0aec0 !important; /* Important to override Bootstrap's default */
+}
+
+/*
+  Button alignment
+*/
+.admin-profile-card .ms-auto {
+  align-self: center;
+}
+
+
+/* --- Styles for the Edit Modal (No changes needed here, but kept for completeness) --- */
+
+.cropped-preview-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #dee2e6;
+}
+
+.preview-label {
+  color: rgba(255, 255, 255, 0.7); 
+  font-size: 0.9rem;
+}

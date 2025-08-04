@@ -1,45 +1,44 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { fetchCurrentUserProfile } from '../services/ProfileService';
 
-// Create the context
 export const AuthContext = createContext(null);
 
-// Create the provider component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('token')); // Use function for initial read
-  const [isLoading, setIsLoading] = useState(true); // --- 1. ADD IS_LOADING STATE ---
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadUserContext = useCallback(async (currentToken) => {
+    if (!currentToken) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const decodedToken = jwtDecode(currentToken);
+      if (decodedToken.exp * 1000 < Date.now()) throw new Error("Token expired.");
+      const fullUserProfile = await fetchCurrentUserProfile(currentToken);
+      setUser(fullUserProfile);
+    } catch (error) {
+      console.error("AuthContext: Failed to load user.", error.message);
+      localStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
+    loadUserContext(token);
+  }, [token, loadUserContext]);
 
-        if (decodedToken.exp * 1000 > Date.now()) {
-          // IMPORTANT FIX: Also set the user ID
-          setUser({ 
-            id: decodedToken.userId, 
-            email: decodedToken.sub, 
-            roles: decodedToken.roles || [] 
-          });
-        } else {
-          console.warn("AuthContext: Token has expired.");
-          logout();
-        }
-      } catch (error) {
-        console.error("AuthContext: Invalid token.", error);
-        logout();
-      } finally {
-        setIsLoading(false); // --- 2. SET LOADING TO FALSE AFTER CHECKING ---
-      }
-    } else {
-      setIsLoading(false); // --- 2. SET LOADING TO FALSE IF NO TOKEN ---
-    }
-  }, [token]);
 
-  const login = (newToken) => {
+  const login = async (newToken) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
+    await loadUserContext(newToken);
   };
 
   const logout = () => {
@@ -47,14 +46,19 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
   };
+  
+  const updateCurrentUser = (updatedUserData) => {
+    setUser(prevUser => ({ ...prevUser, ...updatedUserData }));
+  };
 
   const authContextValue = {
     user,
     token,
-    isLoading, // --- 3. EXPOSE IS_LOADING IN CONTEXT VALUE ---
+    isLoading,
     login,
     logout,
-    isAdmin: user && Array.isArray(user.roles) && user.roles.includes('ROLE_ADMIN'),
+    updateCurrentUser,
+    isAdmin: user && user.role === 'ROLE_ADMIN',
   };
 
   return (
@@ -64,7 +68,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the auth context
 export const useAuth = () => {
   return useContext(AuthContext);
 };

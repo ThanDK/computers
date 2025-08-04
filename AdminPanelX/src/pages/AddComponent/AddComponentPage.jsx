@@ -1,44 +1,44 @@
+// src/pages/AddComponentPage/AddComponentPage.jsx
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Button, Row, Col, Spinner, Card, Alert } from 'react-bootstrap';
+import { Form, Button, Row, Col, Spinner, Card } from 'react-bootstrap';
 
 // Import Services and Components
 import { createComponent } from '../../services/ComponentService';
 import { fetchAllLookups } from '../../services/LookupService';
-import { notifySuccess } from '../../services/NotificationService';
+import { notifySuccess, notifyError } from '../../services/NotificationService';
+import { validateComponentData } from '../../services/ValidationService';
 import { useAuth } from '../../context/AuthContext';
 import MainHeader from '../../components/MainHeader/MainHeader';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import ImageCropper from '../../components/ImageCropper/ImageCropper';
 import './AddComponentPage.css';
 
-// --- The .jsx extension is correctly in the import path. ---
 import {
     COMPONENT_CONFIG,
     componentTypes,
     renderField
 } from '../../config/ComponentFormConfig.jsx';
 
-
 function AddComponentPage() {
-    // --- State Management ---
+    // State Management
     const [selectedType, setSelectedType] = useState('');
     const [formData, setFormData] = useState({});
     const [lookups, setLookups] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState('');
     const [imageFile, setImageFile] = useState(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState('');
     const [originalImageSrc, setOriginalImageSrc] = useState('');
     const [cropModalState, setCropModalState] = useState({ show: false, src: '' });
 
-    // --- Hooks and Refs ---
+    // Hooks and Refs
     const fileInputRef = useRef(null);
     const { token } = useAuth();
     const navigate = useNavigate();
 
-    // --- Side Effects (useEffect) ---
+    // Side Effects
     useEffect(() => {
         const getLookups = async () => {
             if (!token) {
@@ -49,7 +49,7 @@ function AddComponentPage() {
                 const data = await fetchAllLookups(token);
                 setLookups(data);
             } catch (err) {
-                setError("Could not load form data. Please try again later.");
+                notifyError("Could not load form data. Please try again later.");
                 console.error(err);
             } finally {
                 setIsLoading(false);
@@ -66,15 +66,13 @@ function AddComponentPage() {
         };
     }, [imagePreviewUrl]);
 
-    // --- Event Handlers ---
+    // Event Handlers
     const handleTypeChange = (e) => {
         const type = e.target.value;
         setSelectedType(type);
-        // MODIFIED: Added brandId to the base state.
         const baseState = { name: "", mpn: "", description: "", price: "", quantity: "", brandId: "" };
         const specificState = COMPONENT_CONFIG[type]?.initialState || {};
         setFormData({ ...baseState, ...specificState });
-        setError('');
     };
     
     const handleChange = useCallback((e) => {
@@ -133,20 +131,27 @@ function AddComponentPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setIsSubmitting(true);
+
+        const validationErrors = validateComponentData(formData, selectedType);
+        if (validationErrors.length > 0) {
+            notifyError(validationErrors.join('\n'));
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             await createComponent({ type: selectedType, ...formData }, imageFile, token);
             notifySuccess('Component created successfully!');
             navigate('/components');
         } catch (err) {
-            setError(err.message || 'An unexpected error occurred. Please try again.');
+            notifyError(err.message || 'An unexpected error occurred.');
         } finally {
             setIsSubmitting(false);
         }
     };
     
-    // --- Render ---
+    // Render
     if (isLoading) {
         return <div className="text-center p-5"><Spinner animation="border" variant="light" /></div>;
     }
@@ -163,12 +168,11 @@ function AddComponentPage() {
 
             <Card className="form-card">
                 <Card.Body>
-                    {error && <Alert variant="danger">{error}</Alert>}
                     <Form noValidate onSubmit={handleSubmit}>
                         <Row className="mb-4">
                             <Form.Group as={Col} md="6" lg="4">
                                 <Form.Label className="step-label">1. Select Component Type</Form.Label>
-                                <Form.Select value={selectedType} onChange={handleTypeChange} disabled={isSubmitting}>
+                                <Form.Select value={selectedType} onChange={handleTypeChange} disabled={isSubmitting} required>
                                     <option value="">-- Choose Type --</option>
                                     {componentTypes.map(type => (
                                         <option key={type.value} value={type.value}>{type.label}</option>
@@ -235,6 +239,10 @@ function AddComponentPage() {
                                 <hr className="form-divider my-4" />
 
                                 <h5 className="section-header">3. Specific Details for {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}</h5>
+                                
+                                {/* ========================================================================= */}
+                                {/* ===== THIS IS THE CRITICAL FIX: handleTagAdd/Remove ARE RESTORED ===== */}
+                                {/* ========================================================================= */}
                                 {lookups && COMPONENT_CONFIG[selectedType]?.render({
                                     formData,
                                     lookups,
