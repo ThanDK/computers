@@ -64,13 +64,22 @@ const AdminProfileCard = () => {
     event.preventDefault();
     setIsSubmitting(true);
 
+    const form = event.currentTarget;
+    const password = form.password.value;
+    const confirmPassword = form.confirmPassword.value;
+
+    if (password !== confirmPassword) {
+      notifyError("Passwords do not match.");
+      setIsSubmitting(false);
+      return;
+    }
+
     const formData = new FormData();
     const profileData = {
-      name: event.currentTarget.name.value,
-      email: event.currentTarget.email.value,
+      name: form.name.value,
+      email: form.email.value,
     };
     
-    const password = event.currentTarget.password.value;
     if (password) {
       profileData.password = password;
     }
@@ -153,6 +162,12 @@ const AdminProfileCard = () => {
               <Form.Label>New Password</Form.Label>
               <Form.Control type="password" name="password" placeholder="Leave blank to keep current password" />
             </Form.Group>
+            {/* --- ADDED CONFIRM PASSWORD FIELD --- */}
+            <Form.Group className="mb-3">
+              <Form.Label>Confirm New Password</Form.Label>
+              <Form.Control type="password" name="confirmPassword" placeholder="Confirm your new password" />
+            </Form.Group>
+            {/* --- END OF CHANGE --- */}
             <Form.Group className="mb-3">
               <Form.Label>Profile Picture</Form.Label>
               <div className="d-flex gap-2">

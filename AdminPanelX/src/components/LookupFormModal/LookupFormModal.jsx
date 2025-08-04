@@ -1,11 +1,8 @@
-// src/components/LookupFormModal/LookupFormModal.js
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Form, Button, Row, Col, Image, Spinner } from 'react-bootstrap';
 import ImageCropper from '../ImageCropper/ImageCropper';
 
 function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, activeTab, lookupConfig, formFactorTypes }) {
-  // All image-related state now lives inside the modal component
   const [imageFile, setImageFile] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
   const [originalImageSrc, setOriginalImageSrc] = useState('');
@@ -65,7 +62,7 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
   const handleInternalSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    onSubmit(formData, imageFile); // Pass form data and the component's imageFile state
+    onSubmit(formData, imageFile); 
   };
 
   const renderModalFormBody = () => {

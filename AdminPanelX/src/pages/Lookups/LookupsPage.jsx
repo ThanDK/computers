@@ -19,7 +19,7 @@ import ReusableTable from '../../components/ReusableTable/ReusableTable';
 import ImageModal from '../../components/ImageModal/ImageModal';
 import TableControls from '../../components/TableControls/TableControls';
 import LookupFormModal from '../../components/LookupFormModal/LookupFormModal';
-import { Tabs, Tab, Button, Form, InputGroup, Image } from 'react-bootstrap'; // <-- Form is back
+import { Tabs, Tab, Button, Form, InputGroup, Image } from 'react-bootstrap'; 
 import { BsPlusCircleFill, BsSearch, BsArrowCounterclockwise } from 'react-icons/bs';
 import './LookupsPage.css';
 import '../../components/ImageModal/ImageModal.css';
@@ -160,7 +160,7 @@ function LookupsPage() {
     const baseColumns = config.columns.map((key) => {
       if (key === 'logoUrl') {
         return {
-          accessorKey: 'logoUrl', header: 'Logo', enableSorting: false, meta: { width: '20%' },
+          accessorKey: 'logoUrl', header: 'Logo', enableSorting: false, meta: { width: '45%' },
           cell: ({ row }) => {
             const imageUrl = row.original.logoUrl;
             return imageUrl ? (
