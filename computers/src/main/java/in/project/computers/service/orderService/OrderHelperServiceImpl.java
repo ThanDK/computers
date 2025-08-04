@@ -11,7 +11,7 @@ import in.project.computers.DTO.order.orderResponse.OrderResponse;
 import in.project.computers.DTO.order.orderResponse.PaymentDetailsResponse;
 import in.project.computers.entity.component.*;
 import in.project.computers.entity.order.*;
-import in.project.computers.entity.user.Address; // <<--- IMPORT the Address entity
+import in.project.computers.entity.user.Address;
 import in.project.computers.entity.user.UserEntity;
 import in.project.computers.repository.componentRepository.ComponentRepository;
 import in.project.computers.repository.componentRepository.InventoryRepository;
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 // คลาส Helper สำหรับจัดการ Logic ย่อยที่ซับซ้อนของ OrderService
 @org.springframework.stereotype.Component
@@ -143,15 +144,25 @@ public class OrderHelperServiceImpl implements OrderHelperService {
         }
 
         // === [CREATE-3.2.2] ตรวจสอบสต็อกคงเหลือในคลังกับจำนวนที่ต้องการ ===
+        if (requiredStock.isEmpty()) {
+            return;
+        }
+
+        List<String> componentIds = new ArrayList<>(requiredStock.keySet());
+
+        Map<String, Integer> availableStockMap = inventoryRepository.findByComponentIdIn(componentIds).stream()
+                .collect(Collectors.toMap(Inventory::getComponentId, Inventory::getQuantity));
+
+        Map<String, String> componentNameMap = componentRepository.findAllById(componentIds).stream()
+                .collect(Collectors.toMap(Component::getId, Component::getName));
+
         for (Map.Entry<String, Integer> entry : requiredStock.entrySet()) {
             String componentId = entry.getKey();
             int required = entry.getValue();
-            int availableStock = inventoryRepository.findByComponentId(componentId)
-                    .map(Inventory::getQuantity)
-                    .orElse(0);
+            int availableStock = availableStockMap.getOrDefault(componentId, 0);
 
             if (availableStock < required) {
-                String componentName = componentRepository.findById(componentId).map(Component::getName).orElse(componentId);
+                String componentName = componentNameMap.getOrDefault(componentId, componentId);
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Insufficient stock for: " + componentName + ". Please remove it from your cart or reduce the quantity.");
             }
         }
@@ -159,66 +170,49 @@ public class OrderHelperServiceImpl implements OrderHelperService {
 
     @Override
     public void decrementStockForOrder(Order order) {
-        // === [PPC-4.1] / [APPROVE-SLIP-3.1] วนลูปรายการสินค้าในออเดอร์เพื่อตัดสต็อก ===
+        // === [PPC-4.1] / [APPROVE-SLIP-3.1] รวบรวมจำนวนสต็อกที่จะตัดทั้งหมด ===
+        Map<String, Integer> stockChanges = new HashMap<>();
         for (OrderLineItem lineItem : order.getLineItems()) {
             if (lineItem.getItemType() == LineItemType.COMPONENT) {
-                // กรณีเป็นชิ้นส่วน, ตัดสต็อกตามจำนวนที่สั่ง
-                updateStock(lineItem.getComponentId(), -lineItem.getQuantity());
+                stockChanges.merge(lineItem.getComponentId(), -lineItem.getQuantity(), Integer::sum);
+
             } else if (lineItem.getItemType() == LineItemType.BUILD) {
-                // กรณีเป็นชุดจัดสเปค, วนลูปตัดสต็อกของส่วนประกอบภายใน
                 for (OrderItemSnapshot part : lineItem.getContainedItems()) {
                     int totalQuantityToRemove = part.getQuantity() * lineItem.getQuantity();
-                    updateStock(part.getComponentId(), -totalQuantityToRemove);
+                    stockChanges.merge(part.getComponentId(), -totalQuantityToRemove, Integer::sum);
                 }
             }
         }
-        log.info("Stock successfully decremented for order ID: {}", order.getId());
+
+        // === [PPC-4.2] / [APPROVE-SLIP-3.2] ส่งคำสั่งตัดสต็อกทั้งหมดในครั้งเดียว ===
+        if (!stockChanges.isEmpty()) {
+            inventoryRepository.bulkAtomicUpdateQuantities(stockChanges);
+            log.info("Stock successfully decremented for order ID: {}", order.getId());
+        }
     }
+
+
 
     @Override
     public void incrementStockForOrder(Order order) {
-        // === [PROCESS-REFUND-3.1] / [REVERT-2.1] วนลูปรายการสินค้าในออเดอร์เพื่อคืนสต็อก ===
+        // === [PROCESS-REFUND-3.1] / [REVERT-2.1] รวบรวมจำนวนสต็อกที่จะคืนทั้งหมด ===
+        Map<String, Integer> stockChanges = new HashMap<>();
         for (OrderLineItem lineItem : order.getLineItems()) {
             if (lineItem.getItemType() == LineItemType.COMPONENT) {
-                // กรณีเป็นชิ้นส่วน, คืนสต็อกตามจำนวนที่สั่ง
-                updateStock(lineItem.getComponentId(), lineItem.getQuantity());
+                stockChanges.merge(lineItem.getComponentId(), lineItem.getQuantity(), Integer::sum);
             } else if (lineItem.getItemType() == LineItemType.BUILD) {
-                // กรณีเป็นชุดจัดสเปค, วนลูปคืนสต็อกของส่วนประกอบภายใน
                 for (OrderItemSnapshot part : lineItem.getContainedItems()) {
                     int totalQuantityToAdd = part.getQuantity() * lineItem.getQuantity();
-                    updateStock(part.getComponentId(), totalQuantityToAdd);
+                    stockChanges.merge(part.getComponentId(), totalQuantityToAdd, Integer::sum);
                 }
             }
         }
-        log.info("Stock successfully incremented for order ID: {}", order.getId());
-    }
 
-    /**
-     * เมธอดภายในสำหรับอัปเดตสต็อกใน Inventory และสถานะ Active ของ Component
-     */
-    private void updateStock(String componentId, int quantityChange) {
-        // === [STOCK-OP-1] ค้นหา Inventory ของชิ้นส่วน ===
-        Inventory inventory = inventoryRepository.findByComponentId(componentId)
-                .orElseThrow(() -> new IllegalStateException("Data Inconsistency: Inventory not found for component ID " + componentId));
-
-        // === [STOCK-OP-2] คำนวณสต็อกใหม่และตรวจสอบว่าไม่ติดลบ ===
-        int newQuantity = inventory.getQuantity() + quantityChange;
-        if (newQuantity < 0) {
-            // กรณีนี้ไม่ควรเกิดขึ้นหาก validateOverallStockFromCart ทำงานถูกต้อง
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Stock for component ID " + componentId + " was depleted.");
+        // === [PROCESS-REFUND-3.2] / [REVERT-2.2] ส่งคำสั่งคืนสต็อกทั้งหมดในครั้งเดียว ===
+        if (!stockChanges.isEmpty()) {
+            inventoryRepository.bulkAtomicUpdateQuantities(stockChanges);
+            log.info("Stock successfully incremented for order ID: {}", order.getId());
         }
-        inventory.setQuantity(newQuantity);
-        inventoryRepository.save(inventory);
-
-        // === [STOCK-OP-3] อัปเดตสถานะ Active ของ Component ตามจำนวนสต็อก ===
-        // หากสต็อกเป็น 0 ให้ตั้งค่าเป็น Inactive และหากมีสต็อกให้เป็น Active
-        componentRepository.findById(componentId).ifPresent(component -> {
-            boolean shouldBeActive = newQuantity > 0;
-            if (component.isActive() != shouldBeActive) {
-                component.setActive(shouldBeActive);
-                componentRepository.save(component);
-            }
-        });
     }
 
     @Override
@@ -312,5 +306,4 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                 .updatedAt(order.getUpdatedAt())
                 .build();
     }
-
 }

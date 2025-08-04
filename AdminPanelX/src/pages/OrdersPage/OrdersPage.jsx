@@ -1,4 +1,3 @@
-// src/pages/OrdersPage/OrdersPage.js
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';

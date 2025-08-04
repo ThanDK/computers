@@ -20,10 +20,8 @@ function ContainedItems({ items, currency }) {
             <td colSpan="4" className="p-0">
                 <div className="build-contents-wrapper">
                     <h6 className="build-contents-header">CONTAINS:</h6>
-                    {/* SIMPLIFIED: Replaced <ul> and <li> with a simpler div structure. */}
                     <div className="build-contents-list">
                         {items.map((part) => (
-                            // IMPROVED: Using a more stable key and removed the `<li>` wrapper.
                             <div key={part.mpn} className="build-part-item">
                                 {part.imageUrl && (
                                     <Image src={part.imageUrl} className="build-part-image" alt={part.name} />
@@ -52,8 +50,6 @@ function ContainedItems({ items, currency }) {
 }
 
 
-// --- The rest of the file with minor cleanups ---
-// NO LOGIC CHANGE: This component was already well-structured.
 function BuildItemRow({ item, currency }) {
     return (
         <>

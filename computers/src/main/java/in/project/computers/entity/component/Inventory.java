@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 
 @Data
 @Builder
-@Document(collection = "inventories")
+@Document(collection = "inventory")
 @AllArgsConstructor
 @NoArgsConstructor
 public class Inventory {

@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface InventoryRepository extends MongoRepository<Inventory, String> {
+public interface InventoryRepository extends MongoRepository<Inventory, String>, InventoryRepositoryCustom {
     Optional<Inventory> findByComponentId(String componentId);
-    List<Inventory> findAllByComponentIdIn(List<String> componentIds);
+    List<Inventory> findByComponentIdIn(List<String> componentIds);
+    //List<Inventory> findAllByComponentIdIn(List<String> componentIds);
 }
