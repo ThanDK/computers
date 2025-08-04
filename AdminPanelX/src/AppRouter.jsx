@@ -17,12 +17,15 @@ import OrdersPage from './pages/OrdersPage/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage/OrderDetailPage';
 import ShippingProvidersPage from './pages/ShippingProvidersPage/ShippingProvidersPage';
 import UsersPage from './pages/UsersPage/UsersPage';
+
+import AccessDeniedRedirect from './components/AccessDeniedRedirect/AccessDeniedRedirect';
+
 import './styles/common.css'; 
 import './styles/ImagePreview.css';
 
+
 const PrivateRoute = () => {
     const { user, isAdmin, isLoading } = useAuth(); 
-
 
     if (isLoading) {
         return (
@@ -36,12 +39,7 @@ const PrivateRoute = () => {
     }
 
     if (!isAdmin) {
-        return (
-            <div style={{ textAlign: 'center', marginTop: '5rem', color: 'white' }}>
-                <h1>Access Denied</h1>
-                <p>You do not have permission to view this page.</p>
-            </div>
-        );
+        return <AccessDeniedRedirect />;
     }
 
     return <AdminLayout />;
@@ -63,7 +61,6 @@ const AppRouter = () => {
         <Route path="order-details/:orderId" element={<OrderDetailPage />} /> 
         <Route path="shipping-providers" element={<ShippingProvidersPage />} /> 
         <Route path="users" element={<UsersPage />} /> 
-      
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

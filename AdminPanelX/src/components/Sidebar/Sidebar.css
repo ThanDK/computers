@@ -16,7 +16,7 @@
   justify-content: space-between;
   align-items: center;
   min-height: 40px;
-  margin-bottom: 1.5rem; 
+  margin-bottom: 0.75rem; 
 }
 
 .sidebar-profile-header {
@@ -125,11 +125,33 @@
   transition: margin-right 0.3s ease-in-out;
 }
 
-.sidebar-category,
 .sidebar-link-text {
   opacity: 1;
   transition: opacity 0.2s ease-in-out 0.1s;
 }
+
+/* FIX: Let the new divider handle spacing by removing the top margin */
+.sidebar-category {
+  padding: 0 1rem;
+  margin-top: 0; /* Let divider handle top spacing */
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out 0.1s;
+}
+
+/* FIX: Style for the new separator line */
+.sidebar-divider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  /* Vertical margin creates space, horizontal margin makes it a "centerline" */
+  margin: 1.25rem 1rem;
+  transition: opacity 0.2s ease-in-out 0.1s;
+}
+
 
 /* Collapsed Styles */
 .sidebar.collapsed { 
@@ -140,12 +162,15 @@
   display: none;
 }
 
+/* FIX: Hide the divider when collapsed */
+.sidebar.collapsed .sidebar-divider,
 .sidebar.collapsed .sidebar-category,
 .sidebar.collapsed .sidebar-link-text {
   opacity: 0;
   transition-delay: 0s; 
   width: 0;
   overflow: hidden;
+  margin: 0; /* Reset margin on collapse */
 }
 
 .sidebar.collapsed .sidebar-header { 
@@ -154,7 +179,6 @@
   padding: 0;
 }
 
-/* === FIX: This makes the button align perfectly with the links === */
 .sidebar.collapsed .sidebar-toggle-btn {
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;

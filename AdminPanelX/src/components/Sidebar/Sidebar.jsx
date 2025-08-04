@@ -30,11 +30,9 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
             <BsPersonCircle className="sidebar-avatar" /> 
           )}
           
-          {/* User info is always present in the DOM for smooth CSS transitions */}
           <div className="sidebar-user-info">
             <div className="sidebar-user-name-container">
               <span className="sidebar-status-dot"></span>
-              {/* FIX: `title` attribute for hover tooltip on long names */}
               <span className="sidebar-user-name" title={user.name}>{user.name}</span>
             </div>
             <span className="sidebar-user-role-badge">{user.role.replace('ROLE_', '')}</span>
@@ -47,12 +45,15 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
       </div>
 
       <nav className="sidebar-nav">
-        {/* Link text is always present for smooth fade animations */}
+        <div className="sidebar-divider" />
+        <div className="sidebar-category">General</div>
         <NavLink to="/dashboard" className="sidebar-link" end>
           <BsGrid1X2Fill className='sidebar-link-icon' />
           <span className="sidebar-link-text">Dashboard</span>
         </NavLink>
 
+
+        <div className="sidebar-divider" />
         <div className="sidebar-category">Component Management</div>
         <NavLink to="/components" className="sidebar-link">
           <BsFillGrid3X3GapFill className='sidebar-link-icon' />
@@ -63,6 +64,7 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
           <span className="sidebar-link-text">Lookups</span>
         </NavLink>
         
+        <div className="sidebar-divider" />
         <div className="sidebar-category">Order Management</div>
         <NavLink to="/orders" className="sidebar-link">
           <BsListCheck className='sidebar-link-icon' />
@@ -73,6 +75,7 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
           <span className="sidebar-link-text">Shipping Providers</span>
         </NavLink>
 
+        <div className="sidebar-divider" />
         <div className="sidebar-category">User Management</div>
         <NavLink to="/users" className="sidebar-link">
           <BsPeopleFill className='sidebar-link-icon' />
