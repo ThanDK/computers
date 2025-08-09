@@ -25,9 +25,9 @@ public class MotherboardRequest extends ComponentRequest {
     @Min(0)
     private int m2_slot_count;
     @Min(1)
-    private int ram_slot_count;    // <-- ADD THIS
+    private int ram_slot_count;
     @Min(0)
-    private int sata_port_count;   // <-- ADD THIS
+    private int sata_port_count;
     @Min(0)
     private int wattage;
 }

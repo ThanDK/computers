@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper=true)
 public class PsuRequest extends ComponentRequest {
         private int wattage;
-        private String form_factor; // ADDED
+        private String form_factor;
 }

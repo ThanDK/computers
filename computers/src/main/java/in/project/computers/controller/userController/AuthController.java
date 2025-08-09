@@ -14,19 +14,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * <h3>Authentication Controller</h3>
+ * Controller สำหรับการยืนยันตัวตน (Authentication) ผ่าน Email/Password
  * <p>
- * Controller สำหรับจัดการกระบวนการยืนยันตัวตน (Authentication) ของระบบ
- * รับผิดชอบ Endpoint สำหรับการล็อกอิน (Login) โดยเฉพาะ
- * เมื่อผู้ใช้ส่ง Email และ Password ที่ถูกต้อง, ระบบจะตรวจสอบและออก JSON Web Token (JWT)
- * เพื่อใช้ในการยืนยันตัวตนในคำขอ (Request) ต่อๆ ไป
- * </p>
+ * <b>คำเตือน:</b> {@code @CrossOrigin("*")} ไม่ปลอดภัยสำหรับ Production ควรระบุ Origin ของ Frontend ให้ชัดเจน
  */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin("*")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -34,23 +29,22 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     /**
-     * <h4>[POST] /api/login</h4>
-     * <p>Endpoint สำหรับการล็อกอินเข้าสู่ระบบ</p>
-     * @param request DTO ที่มี email และ password ของผู้ใช้
-     * @return AuthenticationResponse ที่มี JWT token สำหรับการใช้งานต่อไป
-     * @throws BadCredentialsException หาก email หรือ password ไม่ถูกต้อง
+     * ล็อกอินเข้าสู่ระบบด้วย Email และ Password เพื่อขอรับ JWT
+     * @param request ข้อมูลสำหรับล็อกอิน (email, password)
+     * @return AuthenticationResponse ที่มี JWT token
+     * @throws BadCredentialsException หากข้อมูลล็อกอินไม่ถูกต้อง
      */
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
         log.info("Authentication attempt for user: {}", request.getEmail());
         try {
-            // ขั้นตอนการตรวจสอบ Credential
+            // ตรวจสอบ Credential กับ Spring Security
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
             log.warn("Failed authentication attempt for user: {}", request.getEmail());
-            throw e;
+            throw e; // ส่ง 401 Unauthorized กลับไปโดยอัตโนมัติ
         }
 
         // ถ้า authenticate ผ่าน, ดำเนินการสร้าง Token

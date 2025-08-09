@@ -16,7 +16,7 @@ public class Socket {
     private String id;
 
     @Indexed(unique = true)
-    private String name; // e.g., "AM5", "LGA1700"
+    private String name;
 
-    private String brand; // e.g., "AMD", "Intel"
+    private String brand;
 }

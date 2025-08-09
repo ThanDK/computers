@@ -54,8 +54,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(email) && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
-
-            // FIX: Call the corrected validation method `isTokenValid` instead of `validateToken`.
             if (jwtUtil.isTokenValid(token, userDetails)) {
 
                 log.info("User '{}' authenticated successfully. Authorities: {}",

@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class StorageInterface {
     @Id
     private String id;
+
     @Indexed(unique = true)
-    private String name; // e.g., "SATA III", "M.2", "PCIe 5.0 x4"
+    private String name;
 }

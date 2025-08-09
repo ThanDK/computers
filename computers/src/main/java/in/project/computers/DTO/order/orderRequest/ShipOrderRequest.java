@@ -3,9 +3,6 @@ package in.project.computers.DTO.order.orderRequest;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-/**
- * DTO สำหรับรับข้อมูลการจัดส่งจาก Admin
- */
 @Data
 public class ShipOrderRequest {
 

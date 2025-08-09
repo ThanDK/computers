@@ -38,7 +38,7 @@ public class AddressDTO {
     @NotBlank(message = "Zip code is required")
     private String zipCode;
 
-    private String country; // Keep it optional for flexibility, service will default it.
+    private String country;
 
     private boolean isDefault;
 }

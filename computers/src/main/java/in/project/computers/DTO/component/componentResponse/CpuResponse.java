@@ -12,6 +12,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CpuResponse extends ComponentResponse {
-    private String socket; // Human-readable name
+    private String socket;
     private int wattage;
 }

@@ -1,5 +1,3 @@
-// package in.project.computers.controller.userController;
-
 package in.project.computers.controller.userController;
 
 import in.project.computers.DTO.address.AddressDTO;
@@ -16,11 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * <h3>User Address Controller</h3>
+ * Controller สำหรับจัดการที่อยู่สำหรับจัดส่งของผู้ใช้
  * <p>
- * Controller for handling all user-facing actions related to managing shipping addresses.
- * All endpoints require an authenticated user.
- * </p>
+ * ทุก Endpoint ในคลาสนี้ต้องการการยืนยันตัวตน (Authentication)
  */
 @RestController
 @RequestMapping("/api/user/addresses")
@@ -32,6 +28,10 @@ public class UserAddressController {
     private final AddressService addressService;
     private final UserService userService;
 
+    /**
+     * ดึงที่อยู่สำหรับจัดส่งทั้งหมดของผู้ใช้
+     * @return List ของที่อยู่ทั้งหมด
+     */
     @GetMapping
     public ResponseEntity<List<AddressDTO>> getUserAddresses() {
         String userId = userService.findByUserId();
@@ -40,6 +40,11 @@ public class UserAddressController {
         return ResponseEntity.ok(addresses);
     }
 
+    /**
+     * เพิ่มที่อยู่สำหรับจัดส่งใหม่
+     * @param request ข้อมูลที่อยู่ใหม่
+     * @return ที่อยู่ที่สร้างสำเร็จ (HttpStatus 201)
+     */
     @PostMapping
     public ResponseEntity<AddressDTO> addAddress(@Valid @RequestBody AddressDTO request) {
         String userId = userService.findByUserId();
@@ -48,6 +53,12 @@ public class UserAddressController {
         return new ResponseEntity<>(newAddress, HttpStatus.CREATED);
     }
 
+    /**
+     * อัปเดตที่อยู่ที่มีอยู่แล้ว
+     * @param addressId ID ของที่อยู่ที่จะอัปเดต
+     * @param request ข้อมูลที่อยู่ใหม่
+     * @return ที่อยู่ที่อัปเดตแล้ว
+     */
     @PutMapping("/{addressId}")
     public ResponseEntity<AddressDTO> updateAddress(@PathVariable String addressId, @Valid @RequestBody AddressDTO request) {
         String userId = userService.findByUserId();
@@ -56,6 +67,10 @@ public class UserAddressController {
         return ResponseEntity.ok(updatedAddress);
     }
 
+    /**
+     * ลบที่อยู่ (คืนค่า 204 No Content)
+     * @param addressId ID ของที่อยู่ที่จะลบ
+     */
     @DeleteMapping("/{addressId}")
     public ResponseEntity<Void> deleteAddress(@PathVariable String addressId) {
         String userId = userService.findByUserId();
@@ -64,6 +79,10 @@ public class UserAddressController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * ตั้งค่าที่อยู่ให้เป็นที่อยู่หลัก
+     * @param addressId ID ของที่อยู่ที่จะตั้งเป็นหลัก
+     */
     @PostMapping("/set-default/{addressId}")
     public ResponseEntity<Void> setDefaultAddress(@PathVariable String addressId) {
         String userId = userService.findByUserId();

@@ -8,8 +8,12 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
+/**
+ * รวมการตั้งค่าสำหรับ S3Client
+ */
 @Configuration
 public class AWSconfig {
+
     @Value("${aws.access.key}")
     private String accessKey;
     @Value("${aws.secret.key}")
@@ -17,11 +21,19 @@ public class AWSconfig {
     @Value("${aws.region}")
     private String region;
 
+    /**
+     * สร้าง S3Client bean
+     * {@link StaticCredentialsProvider} เหมาะสำหรับ local dev
+     */
     @Bean
     public S3Client s3Client() {
         return S3Client.builder()
                 .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
+                .credentialsProvider(
+                        StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(accessKey, secretKey)
+                        )
+                )
                 .build();
     }
 }

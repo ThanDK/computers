@@ -25,6 +25,5 @@ public class ComputerBuildDetailResponse {
     private List<BuildPartDetail<RamKitResponse>> ramKits;
     private List<BuildPartDetail<GpuResponse>> gpus;
     private List<BuildPartDetail<StorageDriveResponse>> storageDrives;
-
     private BigDecimal totalPrice;
 }

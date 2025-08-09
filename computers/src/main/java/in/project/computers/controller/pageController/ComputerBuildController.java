@@ -10,30 +10,25 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 /**
- * Controller สำหรับจัดการ API ที่เกี่ยวกับชุดคอมพิวเตอร์ (PC Build) ของผู้ใช้
- * รวมถึงการบันทึก, เรียกดูข้อมูลฉบับเต็ม, ลบ, และตรวจสอบความเข้ากันได้ของฮาร์ดแวร์
- * ทุก Endpoint ใน Controller นี้ต้องการการยืนยันตัวตน (Authentication)
+ * Controller สำหรับจัดการชุดคอมพิวเตอร์ (PC Build) ของผู้ใช้
+ * <p>
+ * <b>คำเตือน:</b> {@code @CrossOrigin("*")} ไม่ปลอดภัยสำหรับ Production ควรระบุ Origin ของ Frontend ให้ชัดเจน
  */
 @RestController
 @RequestMapping("/api/builds")
 @RequiredArgsConstructor
-@CrossOrigin("*") // อนุญาตการเข้าถึงจากทุก Origin (ควรปรับแก้ใน Production)
 public class ComputerBuildController {
 
     private final UserBuildService userBuildService;
     private final ComponentCompatibilityService compatibilityService;
 
     /**
-     * [POST] /api/builds
-     * Endpoint สำหรับบันทึกการจัดสเปคคอมพิวเตอร์ใหม่ของผู้ใช้
-     * หลังจากบันทึกสำเร็จ จะคืนข้อมูลรายละเอียดทั้งหมดของ Build ที่เพิ่งสร้าง
-     *
-     * @param request DTO ที่มีชื่อบิลด์และรายการ ID ของส่วนประกอบต่างๆ
-     * @return ResponseEntity ที่มีข้อมูลรายละเอียดทั้งหมดของบิลด์ (ComputerBuildDetailResponse) พร้อมสถานะ 201 CREATED
+     * บันทึกการจัดสเปคคอมพิวเตอร์ใหม่ของผู้ใช้
+     * @param request ข้อมูลการจัดสเปค (ชื่อและ ID ชิ้นส่วน)
+     * @return ข้อมูลรายละเอียดของบิลด์ที่สร้างสำเร็จ (HttpStatus 201)
      */
     @PostMapping
     public ResponseEntity<ComputerBuildDetailResponse> saveBuild(@Valid @RequestBody ComputerBuildRequest request) {
@@ -42,10 +37,8 @@ public class ComputerBuildController {
     }
 
     /**
-     * [GET] /api/builds
-     * Endpoint สำหรับดึงรายการบิลด์ทั้งหมดที่ผู้ใช้ปัจจุบันได้บันทึกไว้
-     *
-     * @return รายการบิลด์ทั้งหมดของผู้ใช้ในรูปแบบข้อมูลฉบับเต็ม (List of ComputerBuildDetailResponse)
+     * ดึงรายการบิลด์ทั้งหมดของผู้ใช้ปัจจุบัน
+     * @return List ของบิลด์ทั้งหมดของผู้ใช้
      */
     @GetMapping
     public ResponseEntity<List<ComputerBuildDetailResponse>> getUserBuilds() {
@@ -54,12 +47,9 @@ public class ComputerBuildController {
     }
 
     /**
-     * [GET] /api/builds/{buildId}
-     * Endpoint สำหรับดึงข้อมูลบิลด์เฉพาะเจาะจงตาม ID พร้อมรายละเอียดชิ้นส่วนทั้งหมด
-     * Service Layer จะทำการตรวจสอบเพื่อให้แน่ใจว่าผู้ใช้ที่ร้องขอเป็นเจ้าของบิลด์นั้น
-     *
+     * ดึงข้อมูลบิลด์เฉพาะเจาะจงตาม ID
      * @param buildId ID ของบิลด์ที่ต้องการดูข้อมูล
-     * @return ข้อมูลโดยละเอียดทั้งหมดของบิลด์ที่ร้องขอ (ComputerBuildDetailResponse)
+     * @return ข้อมูลโดยละเอียดของบิลด์ที่ร้องขอ
      */
     @GetMapping("/{buildId}")
     public ResponseEntity<ComputerBuildDetailResponse> getBuildDetails(@PathVariable String buildId) {
@@ -68,11 +58,9 @@ public class ComputerBuildController {
     }
 
     /**
-     * [GET] /api/builds/check/{buildId}
-     * Endpoint สำหรับตรวจสอบความเข้ากันได้ของฮาร์ดแวร์ในบิลด์ที่บันทึกไว้แล้ว
-     *
+     * ตรวจสอบความเข้ากันได้ของฮาร์ดแวร์ในบิลด์ที่บันทึกไว้
      * @param buildId ID ของบิลด์ที่ต้องการตรวจสอบ
-     * @return ผลลัพธ์การตรวจสอบโดยละเอียด, รวมถึงข้อผิดพลาดและคำเตือนต่างๆ
+     * @return ผลลัพธ์การตรวจสอบความเข้ากันได้
      */
     @GetMapping("/check/{buildId}")
     public ResponseEntity<CompatibilityResult> checkBuildCompatibility(@PathVariable String buildId) {
@@ -81,12 +69,8 @@ public class ComputerBuildController {
     }
 
     /**
-     * [DELETE] /api/builds/{buildId}
-     * Endpoint สำหรับลบบิลด์ที่บันทึกไว้
-     * Service Layer จะตรวจสอบสิทธิ์ความเป็นเจ้าของก่อนทำการลบ
-     *
+     * ลบบิลด์ที่บันทึกไว้ (คืนค่า 204 No Content)
      * @param buildId ID ของบิลด์ที่ต้องการลบ
-     * return สถานะ 204 NO CONTENT เมื่อลบสำเร็จ
      */
     @DeleteMapping("/{buildId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

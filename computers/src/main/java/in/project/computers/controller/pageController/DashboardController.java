@@ -18,6 +18,9 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
+/**
+ * Controller สำหรับดึงข้อมูลสรุปสำหรับหน้า Dashboard ของ Admin
+ */
 @RestController
 @RequestMapping("/api/admin/dashboard")
 @RequiredArgsConstructor
@@ -27,6 +30,12 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
+    /**
+     * ดึงข้อมูลสรุปสำหรับ Dashboard ตามช่วงวันที่กำหนด
+     * @param startDate วันที่เริ่มต้น (รูปแบบ YYYY-MM-DD)
+     * @param endDate วันที่สิ้นสุด (รูปแบบ YYYY-MM-DD)
+     * @return ข้อมูลสรุป DashboardResponse (เช่น ยอดขาย, ผู้ใช้ใหม่)
+     */
     @GetMapping
     public ResponseEntity<DashboardResponse> getDashboardData(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -39,6 +48,12 @@ public class DashboardController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * ดึงรายการ Order ทั้งหมดในช่วงวันที่กำหนด สำหรับการ Export
+     * @param startDate วันที่เริ่มต้น (รูปแบบ YYYY-MM-DD)
+     * @param endDate วันที่สิ้นสุด (รูปแบบ YYYY-MM-DD)
+     * @return List ของ Order สำหรับนำไป Export
+     */
     @GetMapping("/export")
     public ResponseEntity<List<DashboardResponse.RecentOrder>> exportOrders(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,

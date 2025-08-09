@@ -10,15 +10,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller สำหรับจัดการ Endpoint ที่ผู้ใช้ทั่วไปสามารถเข้าถึงได้ เช่น การลงทะเบียน
+ */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin("*")
 public class UserController {
 
     private final UserService userService;
 
+    /**
+     * ลงทะเบียนผู้ใช้ใหม่
+     * @param request ข้อมูลสำหรับลงทะเบียน (email, password, name)
+     * @return ข้อมูลผู้ใช้ที่ลงทะเบียนสำเร็จ (HttpStatus 201)
+     */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {
         log.info("New user registration attempt for email: {}", request.getEmail());

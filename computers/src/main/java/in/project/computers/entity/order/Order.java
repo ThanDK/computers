@@ -12,18 +12,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * <h3>Order Entity (ฉบับสมบูรณ์)</h3>
- * <p>
- * อ็อบเจกต์หลักที่ใช้แทนคำสั่งซื้อหนึ่งรายการในระบบ ถูกจัดเก็บใน Collection ชื่อ "orders"
- * </p>
- * <p>
- * <b>การเปลี่ยนแปลงล่าสุด:</b>
- * <ul>
- *   <li>เพิ่ม Field ใหม่: <code>shippingDetails</code> โดยอ้างอิงจากคลาส {@link ShippingDetails} ที่แยกไฟล์ออกไป</li>
- * </ul>
- * </p>
- */
 @Document(collection = "orders")
 @Data
 @Builder
@@ -52,7 +40,7 @@ public class Order {
     // --- ส่วนรายละเอียดการชำระเงิน ---
     private PaymentDetails paymentDetails;
 
-    // --- [ปรับปรุง] ส่วนรายละเอียดการจัดส่ง ---
+    // --- ส่วนรายละเอียดการจัดส่ง ---
     private ShippingDetails shippingDetails;
 
     // --- ส่วนเวลา ---

@@ -8,9 +8,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * DTO สำหรับแสดงรายละเอียดของ Order ทั้งหมด
- */
 @Data
 @Builder
 public class OrderResponse {

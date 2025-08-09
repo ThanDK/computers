@@ -1,4 +1,3 @@
-// in/project/computers/entity/lookup/FormFactor.java
 package in.project.computers.entity.lookup;
 
 import lombok.AllArgsConstructor;

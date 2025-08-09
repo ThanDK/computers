@@ -13,6 +13,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Cpu extends Component {
-    private Socket socket; // CHANGED
+    private Socket socket;
     private int wattage;
 }

@@ -21,10 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * <h3>Admin Order Controller (Final Version)</h3>
- * <p>
- * Controller สำหรับจัดการ API Endpoints ทั้งหมดที่เกี่ยวกับการจัดการ Order ซึ่งต้องใช้สิทธิ์ของผู้ดูแลระบบ (Admin)
- * </p>
+ * Controller สำหรับจัดการ Order ซึ่งต้องใช้สิทธิ์ Admin เท่านั้น
  */
 @RestController
 @RequestMapping("/api/admin/orders")
@@ -36,10 +33,8 @@ public class AdminOrderController {
     private final OrderService orderService;
 
     /**
-     * <h4>[GET] /api/admin/orders</h4>
-     * <p>Endpoint สำหรับ Admin เพื่อดึงรายการ Order ทั้งหมดในระบบ</p>
-     * <p><b>การทำงาน:</b> จะดึง Order ทั้งหมดจากฐานข้อมูลและส่งกลับไปเป็น JSON Array</p>
-     * @return ResponseEntity ที่มี List ของ OrderResponse
+     * ดึงรายการ Order ทั้งหมดในระบบ
+     * @return List ของ Order ทั้งหมด
      */
     @GetMapping
     public ResponseEntity<List<OrderResponse>> getAllOrders() {
@@ -49,10 +44,9 @@ public class AdminOrderController {
     }
 
     /**
-     * <h4>[GET] /api/admin/orders/{orderId}</h4>
-     * <p>Endpoint สำหรับ Admin เพื่อดูรายละเอียด Order ใดๆ ก็ได้ในระบบ</p>
-     * @param orderId ID ของ Order ที่ต้องการดูรายละเอียด
-     * @return ResponseEntity ที่มีรายละเอียดทั้งหมดของ Order
+     * ดูรายละเอียด Order ใดๆ ก็ได้ในระบบ
+     * @param orderId ID ของ Order ที่ต้องการ
+     * @return Order ที่มีรายละเอียดครบถ้วน
      */
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getAnyOrderById(@PathVariable String orderId) {
@@ -62,10 +56,9 @@ public class AdminOrderController {
     }
 
     /**
-     * <h4>[POST] /api/admin/orders/approve-slip/{orderId}</h4>
-     * <p>Endpoint สำหรับ Admin เพื่ออนุมัติสลิปโอนเงินที่ผู้ใช้ส่งมา</p>
-     * @param orderId ID ของ Order ที่จะอนุมัติสลิป
-     * @return ResponseEntity ที่มี OrderResponse พร้อมสถานะอัปเดตเป็น PROCESSING
+     * อนุมัติสลิปโอนเงินที่ผู้ใช้ส่งมา และเปลี่ยนสถานะเป็น PROCESSING
+     * @param orderId ID ของ Order ที่จะอนุมัติ
+     * @return Order ที่อัปเดตสถานะแล้ว
      */
     @PostMapping("/approve-slip/{orderId}")
     public ResponseEntity<OrderResponse> approvePaymentSlip(@PathVariable String orderId) {
@@ -75,11 +68,10 @@ public class AdminOrderController {
     }
 
     /**
-     * <h4>[POST] /api/admin/orders/ship/{orderId}</h4>
-     * <p>Endpoint สำหรับ Admin เพื่ออัปเดตข้อมูลการจัดส่ง</p>
+     * อัปเดตข้อมูลการจัดส่งของ Order และเปลี่ยนสถานะเป็น SHIPPED
      * @param orderId ID ของ Order ที่จะจัดส่ง
-     * @param request DTO ที่มีข้อมูล shippingProvider และ trackingNumber
-     * @return ResponseEntity ที่มี OrderResponse พร้อมสถานะอัปเดตเป็น SHIPPED
+     * @param request ข้อมูลการจัดส่ง เช่น บริษัทขนส่งและ Tracking Number
+     * @return Order ที่อัปเดตข้อมูลแล้ว
      */
     @PostMapping("/ship/{orderId}")
     public ResponseEntity<OrderResponse> shipOrder(@PathVariable String orderId, @Valid @RequestBody ShipOrderRequest request) {
@@ -89,10 +81,9 @@ public class AdminOrderController {
     }
 
     /**
-     * <h4>[POST] /api/admin/orders/approve-refund/{orderId}</h4>
-     * <p>Endpoint สำหรับ Admin เพื่ออนุมัติคำขอคืนเงิน</p>
-     * @param orderId ID ของ Order ที่จะอนุมัติการคืนเงิน
-     * @return ResponseEntity ที่มี OrderResponse พร้อมสถานะอัปเดตเป็น REFUNDED
+     * อนุมัติคำขอคืนเงิน (Trigger การคืนเงินผ่าน PayPal) และเปลี่ยนสถานะเป็น REFUNDED
+     * @param orderId ID ของ Order ที่จะคืนเงิน
+     * @return Order ที่อัปเดตสถานะแล้ว
      */
     @PostMapping("/approve-refund/{orderId}")
     public ResponseEntity<OrderResponse> approveRefund(@PathVariable String orderId) {
@@ -106,6 +97,12 @@ public class AdminOrderController {
                     "Error processing PayPal refund: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * บังคับคืนเงิน (Force Refund) โดยไม่สนเงื่อนไข และเปลี่ยนสถานะเป็น REFUNDED
+     * @param orderId ID ของ Order ที่จะคืนเงิน
+     * @return Order ที่อัปเดตสถานะแล้ว
+     */
     @PostMapping("/force-refund/{orderId}")
     public ResponseEntity<OrderResponse> forceRefundByAdmin(@PathVariable String orderId) {
         try {
@@ -118,11 +115,11 @@ public class AdminOrderController {
                     "Error processing forced PayPal refund: " + e.getMessage(), e);
         }
     }
+
     /**
-     * <h4>[POST] /api/admin/orders/reject-refund/{orderId}</h4>
-     * <p>Endpoint สำหรับ Admin เพื่อปฏิเสธคำขอคืนเงิน</p>
-     * @param orderId ID ของ Order ที่จะปฏิเสธการคืนเงิน
-     * @return ResponseEntity ที่มี OrderResponse พร้อมสถานะอัปเดตเป็น REFUND_REJECTED
+     * ปฏิเสธคำขอคืนเงิน และเปลี่ยนสถานะเป็น REFUND_REJECTED
+     * @param orderId ID ของ Order ที่จะปฏิเสธ
+     * @return Order ที่อัปเดตสถานะแล้ว
      */
     @PostMapping("/reject-refund/{orderId}")
     public ResponseEntity<OrderResponse> rejectRefund(@PathVariable String orderId) {
@@ -130,12 +127,12 @@ public class AdminOrderController {
         OrderResponse response = orderService.rejectRefund(orderId);
         return ResponseEntity.ok(response);
     }
+
     /**
-     * [POST] /api/admin/orders/reject-slip/{orderId}
-     * Endpoint for Admin to reject a payment slip, requiring a reason.
-     * @param orderId ID of the order.
-     * @param payload A JSON object containing a "reason" key. e.g., {"reason": "Image is blurry"}
-     * @return The updated order response.
+     * ปฏิเสธสลิปโอนเงิน และเปลี่ยนสถานะเป็น PAYMENT_REJECTED
+     * @param orderId ID ของ Order
+     * @param payload JSON object ที่มี key "reason" สำหรับบอกเหตุผล
+     * @return Order ที่อัปเดตสถานะแล้ว
      */
     @PostMapping("/reject-slip/{orderId}")
     public ResponseEntity<OrderResponse> rejectPaymentSlip(@PathVariable String orderId, @RequestBody Map<String, String> payload) {
@@ -149,11 +146,10 @@ public class AdminOrderController {
     }
 
     /**
-     * [POST] /api/admin/orders/revert-approval/{orderId}
-     * Endpoint for Admin to revert a previously approved bank transfer.
-     * @param orderId ID of the order.
-     * @param payload A JSON object containing a "reason" key. e.g., {"reason": "Approved by mistake"}
-     * @return The updated order response.
+     * ย้อนกลับการอนุมัติสลิปที่เคยอนุมัติไปแล้ว และเปลี่ยนสถานะกลับเป็น PENDING_APPROVAL
+     * @param orderId ID ของ Order
+     * @param payload JSON object ที่มี key "reason" สำหรับบอกเหตุผล
+     * @return Order ที่อัปเดตสถานะแล้ว
      */
     @PostMapping("/revert-approval/{orderId}")
     public ResponseEntity<OrderResponse> revertSlipApproval(@PathVariable String orderId, @RequestBody Map<String, String> payload) {
@@ -167,12 +163,10 @@ public class AdminOrderController {
     }
 
     /**
-     * <h4>[PUT] /api/admin/orders/update-shipping/{orderId}</h4>
-     * <p>Endpoint สำหรับ Admin เพื่อแก้ไขข้อมูลการจัดส่งของ Order ที่จัดส่งไปแล้ว</p>
-     * <p><b>การทำงาน:</b> ใช้ในกรณีที่ต้องการแก้ไขชื่อบริษัทขนส่งหรือหมายเลขพัสดุ หลังจากที่ได้บันทึกไปครั้งแรกแล้ว</p>
-     * @param orderId ID ของ Order ที่ต้องการแก้ไขข้อมูลการจัดส่ง
-     * @param request DTO ที่มีข้อมูล shippingProvider และ trackingNumber ที่อัปเดตแล้ว
-     * @return ResponseEntity ที่มี OrderResponse พร้อมข้อมูลการจัดส่งที่อัปเดตแล้ว
+     * แก้ไขข้อมูลการจัดส่งของ Order ที่จัดส่งไปแล้ว
+     * @param orderId ID ของ Order ที่ต้องการแก้ไข
+     * @param request ข้อมูลการจัดส่งใหม่
+     * @return Order ที่อัปเดตข้อมูลแล้ว
      */
     @PutMapping("/update-shipping/{orderId}")
     public ResponseEntity<OrderResponse> updateShippingDetails(@PathVariable String orderId, @Valid @RequestBody ShipOrderRequest request) {
@@ -182,12 +176,10 @@ public class AdminOrderController {
     }
 
     /**
-     * <h4>[POST] /api/admin/orders/status/{orderId}</h4>
-     * <p>Endpoint สำหรับ Admin เพื่อเปลี่ยนสถานะของ Order ด้วยตนเอง (Manual Update)</p>
-     * <p><b>การทำงาน:</b> ระบบจะตรวจสอบก่อนว่าการเปลี่ยนจากสถานะปัจจุบันไปยังสถานะใหม่นั้นได้รับอนุญาตหรือไม่ (ตาม Logic ใน Service)</p>
-     * @param orderId ID ของ Order ที่ต้องการเปลี่ยนสถานะ
-     * @param request DTO ที่มีสถานะใหม่ (`newStatus`)
-     * @return ResponseEntity ที่มี OrderResponse พร้อมสถานะที่อัปเดตแล้ว
+     * เปลี่ยนสถานะของ Order ด้วยตนเอง (Manual Update)
+     * @param orderId ID ของ Order
+     * @param request ข้อมูลสถานะใหม่
+     * @return Order ที่อัปเดตสถานะแล้ว
      */
     @PostMapping("/status/{orderId}")
     public ResponseEntity<OrderResponse> updateOrderStatus(@PathVariable String orderId, @Valid @RequestBody UpdateOrderStatusRequest request) {
@@ -197,11 +189,9 @@ public class AdminOrderController {
     }
 
     /**
-     * <h4>[GET] /api/admin/orders/next-statuses/{orderId}</h4>
-     * <p>Endpoint สำหรับดึงรายการสถานะถัดไปที่ Order สามารถเปลี่ยนไปได้</p>
-     * <p><b>การทำงาน:</b> เป็น Helper endpoint สำหรับ Frontend เพื่อใช้สร้าง Dropdown หรือตัวเลือกให้ Admin สามารถเปลี่ยนสถานะ Order ได้อย่างถูกต้อง</p>
-     * @param orderId ID ของ Order ที่ต้องการตรวจสอบ
-     * @return ResponseEntity ที่มี List ของ OrderStatus ที่เป็นไปได้
+     * ดึงรายการสถานะถัดไปที่ Order สามารถเปลี่ยนไปได้ (สำหรับใช้ใน UI)
+     * @param orderId ID ของ Order
+     * @return List ของสถานะที่เป็นไปได้
      */
     @GetMapping("/next-statuses/{orderId}")
     public ResponseEntity<List<OrderStatus>> getValidNextStatuses(@PathVariable String orderId) {
@@ -210,10 +200,8 @@ public class AdminOrderController {
     }
 
     /**
-     * <h4>[GET] /api/admin/orders/statuses</h4>
-     * <p>Endpoint สำหรับดึงรายการสถานะ Order ทั้งหมดที่มีในระบบ</p>
-     * <p><b>การทำงาน:</b> เป็น Helper endpoint สำหรับ Frontend เพื่อใช้สร้างตัวเลือกในการกรอง (Filter) รายการ Order ตามสถานะ</p>
-     * @return ResponseEntity ที่มี List ของชื่อสถานะทั้งหมด (String)
+     * ดึงรายการสถานะ Order ทั้งหมดที่มีในระบบ (สำหรับใช้ใน UI filter)
+     * @return List ของชื่อสถานะทั้งหมด
      */
     @GetMapping("/statuses")
     public ResponseEntity<List<String>> getAllOrderStatuses() {

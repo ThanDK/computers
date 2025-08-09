@@ -16,5 +16,5 @@ public class RamType {
     private String id;
 
     @Indexed(unique = true)
-    private String name; // e.g., "DDR4", "DDR5"
+    private String name;
 }

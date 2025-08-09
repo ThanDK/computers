@@ -13,7 +13,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class RamKit extends Component {
-    private RamType ramType; // CHANGED
+    private RamType ramType;
     private int ram_size_gb;
     private int moduleCount;
     private int wattage;

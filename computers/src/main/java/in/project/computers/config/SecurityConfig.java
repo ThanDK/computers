@@ -1,5 +1,6 @@
 package in.project.computers.config;
 
+// ... other imports
 import in.project.computers.filters.JwtAuthenticationFilter;
 import in.project.computers.service.userAuthenticationService.CustomOAuth2UserService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,8 +20,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource; // <-- IMPORTANT: Use this interface
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
+
 import java.util.List;
 
 @Configuration
@@ -34,68 +35,77 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOidcUserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(Customizer.withDefaults())
+                // 1. THIS IS THE KEY FIX: Integrate CORS using a CorsConfigurationSource bean.
+                // This tells Spring Security to apply CORS rules early in the filter chain.
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/register", "/api/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/components/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/orders/capture/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/orders/cancel/**").permitAll()
                         .requestMatchers("/api/lookups/debug/**").permitAll()
-                        // Endpoints ที่ต้องการสิทธิ์ ADMIN
+
+                        // Admin-only endpoints
                         .requestMatchers("/api/admin/orders/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/components/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/components/**").hasRole("ADMIN")
-                        // Endpoints ที่ต้องการการยืนยันตัวตน (Authenticated User)
+
+                        // Authenticated user endpoints
                         .requestMatchers("/api/orders/**").authenticated()
                         .requestMatchers("/api/builds/**").authenticated()
+                        // The endpoint /api/profile/me is covered by this rule
                         .anyRequest().authenticated()
                 )
-
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage()))
                         .accessDeniedHandler((request, response, accessDeniedException) ->
                                 response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage()))
                 )
-
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2LoginSuccessHandler)
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(this.customOidcUserService)
-                        )
+                        .userInfoEndpoint(userInfo -> userInfo.oidcUserService(this.customOidcUserService))
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // 2. DEFINE THE CORS CONFIGURATION SOURCE BEAN
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        // Be specific about your origins
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        // Allow common headers
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        // This is crucial for sending cookies or auth headers
+        config.setAllowCredentials(true);
+        // How long the browser can cache the preflight response
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Apply this configuration to all paths
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
 
     @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsFilter(source);
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean

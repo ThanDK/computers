@@ -13,6 +13,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class StorageDriveResponse extends ComponentResponse {
     private String storage_interface;
-    private int capacity_gb; // ADDED
-    private String form_factor; // ADDED
+    private int capacity_gb;
+    private String form_factor;
 }

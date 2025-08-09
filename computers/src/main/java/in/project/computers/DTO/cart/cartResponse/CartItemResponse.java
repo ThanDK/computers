@@ -18,6 +18,5 @@ public class CartItemResponse {
     private BigDecimal unitPrice;
     private String imageUrl;
     private BigDecimal lineTotal;
-
     private List<OrderItemSnapshot> containedItemsSnapshot;
 }

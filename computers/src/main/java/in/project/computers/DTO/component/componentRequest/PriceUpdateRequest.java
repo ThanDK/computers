@@ -12,9 +12,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PriceUpdateRequest {
-    /**
-     * ราคาใหม่ของสินค้า
-     */
     @NotNull(message = "New price cannot be null")
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be positive")
     private BigDecimal price;

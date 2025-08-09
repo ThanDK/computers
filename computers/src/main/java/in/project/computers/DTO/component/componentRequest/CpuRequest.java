@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class CpuRequest extends ComponentRequest {
-
     private String socket;
     private int wattage;
 }

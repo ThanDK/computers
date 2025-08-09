@@ -20,14 +20,7 @@ import org.springframework.web.server.ResponseStatusException; // <-- IMPORTED
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * REFACTORING NOTE:
- * This service class has been refactored to use Spring's `ResponseStatusException`.
- * - `IllegalStateException` for duplicate emails has been replaced to throw a 409 CONFLICT.
- * - `UsernameNotFoundException` has been replaced to throw a 404 NOT_FOUND.
- * This ensures that the REST API returns appropriate and clear HTTP status codes to the client
- * without needing a separate global exception handler.
- */
+
 @Service
 @RequiredArgsConstructor
 @Slf4j

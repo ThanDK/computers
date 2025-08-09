@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StockAdjustmentRequest {
-
     @NotNull(message = "Quantity change cannot be null")
     private int quantity;
 }

@@ -12,6 +12,12 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 
+/**
+ * จัดการ Flow หลังจาก User ล็อกอินผ่าน OAuth2 (เช่น Google, Facebook) สำเร็จ
+ * <p>
+ * หน้าที่หลักคือแปลง session จาก OAuth2 ให้เป็น JWT ของแอปเราเอง
+ * แล้วส่ง User กลับไปที่ Frontend พร้อมกับ JWT Token นั้น
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -19,6 +25,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
 
+    // URL ของฝั่ง Frontend สำหรับ redirect กลับไป
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
@@ -29,13 +36,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         try {
             OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
 
-            log.info("Generating JWT for user: {}", oidcUser.getEmail());
-
+            // สร้าง JWT ของระบบเราเอง โดยใช้ข้อมูล user จาก OAuth2
             final String jwtToken = jwtUtil.generateToken(authentication);
-            log.info("Successfully generated JWT with roles: {}", authentication.getAuthorities());
+            log.info("Successfully generated JWT for user: {}", oidcUser.getEmail());
 
+            // เตรียม URL สำหรับ redirect กลับไปที่หน้า frontend พร้อมแนบ token ไปใน query string
             String redirectUrl = frontendUrl + "/login-success?token=" + jwtToken;
-            log.info("Redirecting to frontend: {}", redirectUrl);
+            log.info("Redirecting to: {}", redirectUrl);
 
             response.sendRedirect(redirectUrl);
 
