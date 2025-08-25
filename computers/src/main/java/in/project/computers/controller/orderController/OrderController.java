@@ -19,12 +19,6 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.List;
 
-/**
- * Controller สำหรับจัดการคำสั่งซื้อ (Order)
- * <p>
- * จัดการกระบวนการตั้งแต่การสร้างคำสั่งซื้อ, การชำระเงิน, การตรวจสอบสถานะ, และการจัดการคำสั่งซื้อ
- * Endpoint ส่วนใหญ่ในคลาสนี้ต้องการการยืนยันตัวตน (Authentication)
- */
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -39,10 +33,12 @@ public class OrderController {
     /**
      * สร้างคำสั่งซื้อใหม่จากตะกร้าสินค้าของผู้ใช้
      * <p>
-     * หากเลือกชำระเงินผ่าน PayPal จะสร้างลิงก์สำหรับชำระเงินและส่งกลับไปใน Response
-     * หากเลือกโอนเงิน จะสร้างคำสั่งซื้อในสถานะรอการชำระเงิน
-     * @param request ข้อมูลสำหรับสร้างคำสั่งซื้อ เช่น ที่อยู่และวิธีการชำระเงิน
-     * @return Response ที่มีข้อมูลคำสั่งซื้อที่สร้างขึ้น และลิงก์ชำระเงิน (หากเป็น PayPal)
+     * Endpoint นี้เป็นจุดเริ่มต้นของกระบวนการสั่งซื้อทั้งหมด หากผู้ใช้เลือกชำระเงินผ่าน PayPal,
+     * ระบบจะสร้างลิงก์สำหรับชำระเงินและส่งกลับไปใน Response หากเลือกการโอนเงิน,
+     * ระบบจะสร้างคำสั่งซื้อในสถานะ "รอการชำระเงิน"
+     * </p>
+     * @param request อ็อบเจกต์ {@link CreateOrderRequest} ที่มีข้อมูลสำหรับสร้างคำสั่งซื้อ เช่น ที่อยู่และวิธีการชำระเงิน
+     * @return ResponseEntity ที่มีข้อมูล {@link CreateOrderResponse} และลิงก์ชำระเงิน (หากเป็น PayPal)
      * @throws ResponseStatusException หากเกิดข้อผิดพลาดในการสื่อสารกับ PayPal
      */
     @PostMapping
@@ -59,10 +55,13 @@ public class OrderController {
     }
 
     /**
-     * อัปโหลดสลิปการโอนเงินสำหรับคำสั่งซื้อ
-     * @param orderId ID ของคำสั่งซื้อ
-     * @param slipImage ไฟล์รูปภาพสลิป
-     * @return ข้อมูลคำสั่งซื้อที่อัปเดตแล้ว
+     * อัปโหลดหลักฐานการชำระเงิน (สลิป)
+     * <p>
+     * Endpoint นี้ใช้สำหรับคำสั่งซื้อที่เลือกชำระเงินโดยการโอนเงิน ผู้ใช้จะส่งไฟล์รูปภาพสลิปมาเพื่อยืนยันการชำระเงิน
+     * </p>
+     * @param orderId ID ของคำสั่งซื้อ (จาก Path Variable)
+     * @param slipImage ไฟล์รูปภาพสลิป (จาก Multipart Form Data)
+     * @return ResponseEntity ที่มีข้อมูล {@link OrderResponse} ที่อัปเดตสถานะเป็น "รอการตรวจสอบ"
      */
     @PostMapping(value = "/submit-slip/{orderId}", consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
@@ -75,13 +74,15 @@ public class OrderController {
     }
 
     /**
-     * Callback Endpoint สำหรับยืนยันการชำระเงินผ่าน PayPal สำเร็จ
+     * Endpoint สำหรับยืนยันการชำระเงินผ่าน PayPal สำเร็จ (Callback)
      * <p>
-     * PayPal จะเรียกมาที่ Endpoint นี้หลังจากผู้ใช้ชำระเงินเรียบร้อย และจะทำการ Redirect กลับไปหน้า Frontend
-     * @param orderId ID ของคำสั่งซื้อ
-     * @param paymentId ID การชำระเงินจาก PayPal
-     * @param payerId ID ของผู้ชำระเงินจาก PayPal
-     * @return RedirectView ไปยังหน้า 'payment-successful' หรือ 'payment-failed' ของ Frontend
+     * URL นี้จะถูกเรียกโดย PayPal หลังจากผู้ใช้ชำระเงินเรียบร้อยแล้ว ระบบจะทำการยืนยันการชำระเงิน,
+     * ตัดสต็อก, และอัปเดตสถานะคำสั่งซื้อ จากนั้นจะ Redirect ผู้ใช้กลับไปยังหน้า Frontend
+     * </p>
+     * @param orderId ID ของคำสั่งซื้อ (จาก Path Variable)
+     * @param paymentId ID การชำระเงินจาก PayPal (จาก Query Parameter)
+     * @param payerId ID ของผู้ชำระเงินจาก PayPal (จาก Query Parameter)
+     * @return {@link RedirectView} ไปยังหน้า 'payment-successful' หรือ 'payment-failed' ของ Frontend
      */
     @GetMapping("/capture/{orderId}")
     public RedirectView captureOrder(
@@ -103,9 +104,12 @@ public class OrderController {
     }
 
     /**
-     * Callback Endpoint เมื่อผู้ใช้ยกเลิกการชำระเงินบนหน้า PayPal
-     * @param orderId ID ของคำสั่งซื้อที่ถูกยกเลิก
-     * @return RedirectView ไปยังหน้า 'payment-cancelled' ของ Frontend
+     * Endpoint เมื่อผู้ใช้ยกเลิกการชำระเงินบนหน้า PayPal (Callback)
+     * <p>
+     * URL นี้จะถูกเรียกโดย PayPal หากผู้ใช้กดยกเลิกบนหน้าชำระเงิน ระบบจะ Redirect ผู้ใช้กลับไปยังหน้า Frontend
+     * </p>
+     * @param orderId ID ของคำสั่งซื้อที่ถูกยกเลิก (จาก Path Variable)
+     * @return {@link RedirectView} ไปยังหน้า 'payment-cancelled' ของ Frontend
      */
     @GetMapping("/cancel/{orderId}")
     public RedirectView paymentCancelled(@PathVariable String orderId) {
@@ -117,7 +121,10 @@ public class OrderController {
 
     /**
      * ดึงข้อมูลคำสั่งซื้อทั้งหมดของผู้ใช้ที่ล็อกอินอยู่
-     * @return รายการคำสั่งซื้อทั้งหมดของผู้ใช้
+     * <p>
+     * Endpoint นี้สำหรับให้ผู้ใช้ดูประวัติการสั่งซื้อของตนเอง
+     * </p>
+     * @return ResponseEntity ที่มี List ของ {@link OrderResponse}
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -128,8 +135,11 @@ public class OrderController {
 
     /**
      * ดึงข้อมูลคำสั่งซื้อตาม ID ที่ระบุ
-     * @param orderId ID ของคำสั่งซื้อที่ต้องการ
-     * @return ข้อมูลรายละเอียดของคำสั่งซื้อ
+     * <p>
+     * Endpoint นี้สำหรับให้ผู้ใช้ดูรายละเอียดของคำสั่งซื้อรายการใดรายการหนึ่ง โดยระบบจะตรวจสอบความเป็นเจ้าของ
+     * </p>
+     * @param orderId ID ของคำสั่งซื้อที่ต้องการ (จาก Path Variable)
+     * @return ResponseEntity ที่มีข้อมูล {@link OrderResponse} ของคำสั่งซื้อ
      */
     @GetMapping("/{orderId}")
     @PreAuthorize("isAuthenticated()")
@@ -139,9 +149,12 @@ public class OrderController {
     }
 
     /**
-     * ให้ผู้ใช้สามารถยกเลิกคำสั่งซื้อของตนเองได้
-     * @param orderId ID ของคำสั่งซื้อที่ต้องการยกเลิก
-     * @return ข้อมูลคำสั่งซื้อที่อัปเดตสถานะเป็น CANCELLED
+     * ยกเลิกคำสั่งซื้อโดยผู้ใช้
+     * <p>
+     * Endpoint นี้อนุญาตให้ผู้ใช้ยกเลิกคำสั่งซื้อของตนเองได้ หากคำสั่งซื้อนั้นยังอยู่ในสถานะที่สามารถยกเลิกได้ (เช่น ยังไม่ได้ชำระเงิน)
+     * </p>
+     * @param orderId ID ของคำสั่งซื้อที่ต้องการยกเลิก (จาก Path Variable)
+     * @return ResponseEntity ที่มีข้อมูล {@link OrderResponse} ที่อัปเดตสถานะเป็น CANCELLED
      */
     @PostMapping("/cancel-by-user/{orderId}")
     @PreAuthorize("isAuthenticated()")
@@ -152,9 +165,12 @@ public class OrderController {
     }
 
     /**
-     * สร้างลิงก์ชำระเงิน PayPal ใหม่สำหรับคำสั่งซื้อที่การชำระเงินครั้งก่อนล้มเหลว
-     * @param orderId ID ของคำสั่งซื้อที่ต้องการลองชำระเงินใหม่
-     * @return Response ที่มีข้อมูลคำสั่งซื้อและลิงก์ชำระเงิน PayPal ใหม่
+     * สร้างลิงก์ชำระเงิน PayPal ใหม่อีกครั้ง
+     * <p>
+     * Endpoint นี้ใช้สำหรับคำสั่งซื้อที่การชำระเงินครั้งก่อนล้มเหลว หรือผู้ใช้ปิดหน้าต่างไปก่อนชำระเงินสำเร็จ
+     * </p>
+     * @param orderId ID ของคำสั่งซื้อที่ต้องการลองชำระเงินใหม่ (จาก Path Variable)
+     * @return ResponseEntity ที่มีข้อมูล {@link CreateOrderResponse} และลิงก์ชำระเงิน PayPal ใหม่
      * @throws ResponseStatusException หากเกิดข้อผิดพลาดในการสร้างลิงก์ใหม่กับ PayPal
      */
     @PostMapping("/retry-paypal/{orderId}")
@@ -173,9 +189,10 @@ public class OrderController {
     /**
      * ส่งคำร้องขอคืนเงินสำหรับคำสั่งซื้อ
      * <p>
-     * จะเปลี่ยนสถานะของคำสั่งซื้อเป็น PENDING_REFUND เพื่อให้ผู้ดูแลระบบตรวจสอบต่อไป
-     * @param orderId ID ของคำสั่งซื้อที่ต้องการขอคืนเงิน
-     * @return ข้อมูลคำสั่งซื้อที่อัปเดตสถานะแล้ว
+     * Endpoint นี้จะเปลี่ยนสถานะของคำสั่งซื้อเป็น "รอการอนุมัติคืนเงิน" (REFUND_REQUESTED) เพื่อให้ผู้ดูแลระบบตรวจสอบต่อไป
+     * </p>
+     * @param orderId ID ของคำสั่งซื้อที่ต้องการขอคืนเงิน (จาก Path Variable)
+     * @return ResponseEntity ที่มีข้อมูล {@link OrderResponse} ที่อัปเดตสถานะแล้ว
      */
     @PostMapping("/request-refund/{orderId}")
     @PreAuthorize("isAuthenticated()")

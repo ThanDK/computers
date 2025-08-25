@@ -14,9 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
-/**
- * Controller สำหรับจัดการข้อมูลชิ้นส่วนคอมพิวเตอร์
- */
 @RestController
 @RequestMapping("/api/components")
 @RequiredArgsConstructor
@@ -26,8 +23,11 @@ public class AdminComponentController {
     private final ComponentService componentService;
 
     /**
-     * ดึงข้อมูลชิ้นส่วนคอมพิวเตอร์ทั้งหมด (Public)
-     * @return List ของชิ้นส่วนทั้งหมด
+     * ดึงรายการชิ้นส่วนคอมพิวเตอร์ทั้งหมด
+     * <p>
+     * Endpoint นี้เปิดให้เข้าถึงได้ทั่วไปเพื่อแสดงรายการสินค้าทั้งหมดในระบบ
+     * </p>
+     * @return ResponseEntity ที่มี List ของ {@link ComponentResponse} และสถานะ 200 OK
      */
     @GetMapping
     public ResponseEntity<List<ComponentResponse>> getAllComponents() {
@@ -37,9 +37,12 @@ public class AdminComponentController {
     }
 
     /**
-     * ดึงข้อมูลชิ้นส่วนคอมพิวเตอร์ตาม ID
-     * @param id ID ของชิ้นส่วนที่ต้องการ
-     * @return ข้อมูลชิ้นส่วนที่ค้นพบ
+     * ดึงข้อมูลชิ้นส่วนคอมพิวเตอร์ตาม ID ที่ระบุ
+     * <p>
+     * Endpoint นี้ต้องการการยืนยันตัวตน (Authenticated User) เพื่อเข้าถึงข้อมูล
+     * </p>
+     * @param id ID ของชิ้นส่วนที่ต้องการดึงข้อมูล (จาก Path Variable)
+     * @return ResponseEntity ที่มีข้อมูล {@link ComponentResponse} ของชิ้นส่วนและสถานะ 200 OK
      */
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
@@ -50,10 +53,14 @@ public class AdminComponentController {
     }
 
     /**
-     * สร้างชิ้นส่วนคอมพิวเตอร์ใหม่ (Admin - รับข้อมูลแบบ multipart/form-data)
-     * @param request ข้อมูลชิ้นส่วน (part: "request")
-     * @param imageFile ไฟล์รูปภาพ (optional, part: "image")
-     * @return ข้อมูลชิ้นส่วนที่สร้างใหม่ (HttpStatus 201)
+     * สร้างชิ้นส่วนคอมพิวเตอร์ใหม่
+     * <p>
+     * Endpoint นี้รับข้อมูลแบบ multipart/form-data เพื่อสร้างชิ้นส่วนใหม่พร้อมกับอัปโหลดรูปภาพ
+     * การเข้าถึงถูกจำกัดไว้สำหรับผู้ใช้ที่มี Role 'ADMIN' เท่านั้น
+     * </p>
+     * @param request อ็อบเจกต์ {@link ComponentRequest} ที่มีข้อมูลของชิ้นส่วน (ส่งมาใน part ชื่อ "request")
+     * @param imageFile ไฟล์รูปภาพของชิ้นส่วน (เป็นทางเลือก, ส่งมาใน part ชื่อ "image")
+     * @return ResponseEntity ที่มีข้อมูล {@link ComponentResponse} ของชิ้นส่วนที่สร้างใหม่และสถานะ 201 Created
      */
     @PostMapping("/")
     @PreAuthorize("hasRole('ADMIN')")
@@ -66,12 +73,16 @@ public class AdminComponentController {
     }
 
     /**
-     * อัปเดตข้อมูลชิ้นส่วนคอมพิวเตอร์ (Admin - รับข้อมูลแบบ multipart/form-data)
-     * @param id ID ของชิ้นส่วนที่จะอัปเดต
-     * @param request ข้อมูลชิ้นส่วนใหม่ (part: "request")
-     * @param imageFile ไฟล์รูปภาพใหม่ (optional, part: "image")
-     * @param removeImage ตั้งเป็น true เพื่อลบรูปภาพเดิม
-     * @return ข้อมูลชิ้นส่วนหลังอัปเดต
+     * อัปเดตข้อมูลชิ้นส่วนคอมพิวเตอร์
+     * <p>
+     * Endpoint นี้ใช้สำหรับแก้ไขข้อมูลของชิ้นส่วนที่มีอยู่แล้ว สามารถอัปเดตข้อมูล, เปลี่ยนรูปภาพ, หรือลบรูปภาพเดิมได้
+     * การเข้าถึงถูกจำกัดไว้สำหรับผู้ใช้ที่มี Role 'ADMIN' เท่านั้น
+     * </p>
+     * @param id ID ของชิ้นส่วนที่ต้องการอัปเดต (จาก Path Variable)
+     * @param request อ็อบเจกต์ {@link ComponentRequest} ที่มีข้อมูลใหม่ (ส่งมาใน part ชื่อ "request")
+     * @param imageFile ไฟล์รูปภาพใหม่ที่ต้องการเปลี่ยน (เป็นทางเลือก, ส่งมาใน part ชื่อ "image")
+     * @param removeImage ตั้งค่าเป็น true หากต้องการลบรูปภาพเดิม (จาก Query Parameter)
+     * @return ResponseEntity ที่มีข้อมูล {@link ComponentResponse} ที่อัปเดตแล้วและสถานะ 200 OK
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -86,10 +97,14 @@ public class AdminComponentController {
     }
 
     /**
-     * ปรับปรุงจำนวนสต็อกสินค้า (Admin - ใช้ PATCH สำหรับ partial update)
-     * @param id ID ของชิ้นส่วน
-     * @param request ข้อมูลจำนวนที่ต้องการปรับ (+/-)
-     * @return ข้อมูลชิ้นส่วนหลังปรับสต็อก
+     * ปรับปรุงจำนวนสต็อกของชิ้นส่วน
+     * <p>
+     * Endpoint นี้ใช้สำหรับเพิ่มหรือลดจำนวนสต็อกของสินค้า รับข้อมูลเป็น JSON
+     * การเข้าถึงถูกจำกัดไว้สำหรับผู้ใช้ที่มี Role 'ADMIN' เท่านั้น
+     * </p>
+     * @param id ID ของชิ้นส่วนที่ต้องการปรับสต็อก (จาก Path Variable)
+     * @param request อ็อบเจกต์ {@link StockAdjustmentRequest} ที่มีจำนวนที่ต้องการปรับ (ค่าบวกสำหรับเพิ่ม, ค่าลบสำหรับลด)
+     * @return ResponseEntity ที่มีข้อมูล {@link ComponentResponse} พร้อมจำนวนสต็อกล่าสุดและสถานะ 200 OK
      */
     @PatchMapping("/stock/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -102,8 +117,12 @@ public class AdminComponentController {
     }
 
     /**
-     * ลบชิ้นส่วนคอมพิวเตอร์ (Admin - คืนค่า 204 No Content)
-     * @param id ID ของชิ้นส่วนที่จะลบ
+     * ลบชิ้นส่วนคอมพิวเตอร์
+     * <p>
+     * Endpoint นี้ใช้สำหรับลบชิ้นส่วนออกจากระบบอย่างถาวร เมื่อดำเนินการสำเร็จจะคืนสถานะ 204 No Content
+     * การเข้าถึงถูกจำกัดไว้สำหรับผู้ใช้ที่มี Role 'ADMIN' เท่านั้น
+     * </p>
+     * @param id ID ของชิ้นส่วนที่ต้องการลบ (จาก Path Variable)
      */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

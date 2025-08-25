@@ -40,25 +40,20 @@ public class ComponentCompatibilityServiceImpl implements ComponentCompatibility
     @PostConstruct
     public void initialize() {
         log.info("Caching IDs for compatibility checker...");
-        // === [INIT-1] แคช ID ของ Storage Interface ที่ใช้บ่อย (NVMe, SATA) เพื่อประสิทธิภาพ ===
-
-        // === [INIT-2] ค้นหาและจัดการ NVMe ID: ===
+        // === [INIT-1] ค้นหาและจัดการ NVMe ID ===
         List<StorageInterface> nvmeInterfaces = storageInterfaceRepository.findAllByName("NVMe");
         if (nvmeInterfaces.size() > 1) {
-            // กรณีมีข้อมูล "NVMe" ซ้ำซ้อน: บันทึก Log เตือนระดับสูงและใช้ตัวแรกที่เจอ
             log.error("CRITICAL DATABASE INCONSISTENCY: Found {} entries for 'NVMe' in storage_interfaces. Using the first one found (ID: {}). Please clean up the duplicates.", nvmeInterfaces.size(), nvmeInterfaces.getFirst().getId());
             this.nvmeInterfaceId = nvmeInterfaces.getFirst().getId();
         } else if (nvmeInterfaces.size() == 1) {
-            // กรณีปกติ: พบ "NVMe" 1 รายการ
             this.nvmeInterfaceId = nvmeInterfaces.getFirst().getId();
             log.info("Successfully cached 'NVMe' interface ID: {}", this.nvmeInterfaceId);
         } else {
-            // กรณีไม่พบ "NVMe": การตรวจสอบ NVMe จะถูกข้ามไป
             this.nvmeInterfaceId = null;
             log.warn("Could not find 'NVMe' in StorageInterface lookup. NVMe compatibility checks will be skipped.");
         }
 
-        // === [INIT-3] ค้นหาและแคช SATA ID ทั้งหมด ===
+        // === [INIT-2] ค้นหาและแคช SATA ID ทั้งหมด ===
         this.sataInterfaceIds = storageInterfaceRepository.findAll().stream()
                 .filter(si -> si.getName() != null && si.getName().toUpperCase().contains("SATA"))
                 .map(StorageInterface::getId)
@@ -100,7 +95,6 @@ public class ComponentCompatibilityServiceImpl implements ComponentCompatibility
     public CompatibilityResult checkCompatibility(CompatibilityCheckRequest request) {
         log.info("Starting compatibility check for transient request.");
 
-
         Cpu cpu = componentFetcher.fetchComponentEntity(request.getCpuId(), Cpu.class);
         Motherboard motherboard = componentFetcher.fetchComponentEntity(request.getMotherboardId(), Motherboard.class);
         Psu psu = componentFetcher.fetchComponentEntity(request.getPsuId(), Psu.class);
@@ -110,7 +104,6 @@ public class ComponentCompatibilityServiceImpl implements ComponentCompatibility
         List<BuildPart<RamKit>> ramKits = componentFetcher.fetchBuildParts(request.getRamKits(), RamKit.class);
         List<BuildPart<Gpu>> gpus = componentFetcher.fetchBuildParts(request.getGpus(), Gpu.class);
         List<BuildPart<StorageDrive>> storageDrives = componentFetcher.fetchBuildParts(request.getStorageDrives(), StorageDrive.class);
-
 
         return performCompatibilityChecks(cpu, motherboard, psu, computerCase, cooler, ramKits, gpus, storageDrives);
     }
@@ -123,7 +116,7 @@ public class ComponentCompatibilityServiceImpl implements ComponentCompatibility
         List<String> errors = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
 
-        // === [CHECK-4] ตรวจสอบชิ้นส่วนที่จำเป็น (Critical Parts) หากยังไม่ได้เลือก ให้จบการทำงานและแจ้งข้อผิดพลาดทันที ===
+        // === [CHECK-3] ตรวจสอบชิ้นส่วนที่จำเป็น (Critical Parts) หากยังไม่ได้เลือก ให้จบการทำงานและแจ้งข้อผิดพลาดทันที ===
         if (cpu == null) errors.add("ข้อผิดพลาดร้ายแรง: ยังไม่ได้เลือก CPU");
         if (motherboard == null) errors.add("ข้อผิดพลาดร้ายแรง: ยังไม่ได้เลือกเมนบอร์ด");
         if (psu == null) errors.add("ข้อผิดพลาดร้ายแรง: ยังไม่ได้เลือก Power Supply");
@@ -136,7 +129,7 @@ public class ComponentCompatibilityServiceImpl implements ComponentCompatibility
             return CompatibilityResult.builder().isCompatible(false).errors(errors).warnings(warnings).totalWattage(0).build();
         }
 
-        // === [CHECK-5] เรียกใช้ Helper เพื่อตรวจสอบความเข้ากันได้ในแต่ละส่วนอย่างละเอียด ===
+        // === [CHECK-4] เรียกใช้ Helper เพื่อตรวจสอบความเข้ากันได้ในแต่ละส่วนอย่างละเอียด ===
         compatibilityHelper.checkCpuAndMotherboard(cpu, motherboard, errors);
         compatibilityHelper.checkRamCompatibility(ramKits, motherboard, errors);
         compatibilityHelper.checkFormFactorCompatibility(motherboard, computerCase, errors);
@@ -146,11 +139,11 @@ public class ComponentCompatibilityServiceImpl implements ComponentCompatibility
         compatibilityHelper.checkStorageCompatibility(storageDrives, motherboard, this.nvmeInterfaceId, this.sataInterfaceIds, warnings, errors);
         compatibilityHelper.checkStorageAndCaseBays(storageDrives, computerCase, errors);
 
-        // === [CHECK-6] คำนวณและตรวจสอบการใช้พลังงาน (Wattage) ===
+        // === [CHECK-5] คำนวณและตรวจสอบการใช้พลังงาน (Wattage) ===
         int totalWattage = compatibilityHelper.calculateTotalWattage(cpu, motherboard, ramKits, gpus, cooler);
         compatibilityHelper.checkPsuWattage(psu, totalWattage, errors, warnings);
 
-        // === [CHECK-7] สร้างและส่งคืนผลลัพธ์การตรวจสอบทั้งหมด ===
+        // === [CHECK-6] สร้างและส่งคืนผลลัพธ์การตรวจสอบทั้งหมด ===
         return CompatibilityResult.builder()
                 .isCompatible(errors.isEmpty())
                 .errors(errors)

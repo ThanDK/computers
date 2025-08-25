@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-// คลาส Helper ที่รวบรวมตรรกะการตรวจสอบความเข้ากันได้ของชิ้นส่วนแต่ละคู่
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -21,7 +20,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkCpuAndMotherboard(Cpu cpu, Motherboard motherboard, List<String> errors) {
-        // === [CHECK-5.1] ตรวจสอบ Socket ของ CPU และ Motherboard ว่าตรงกันหรือไม่ ===
+        // === [CHECK-4.1] ตรวจสอบ Socket ของ CPU และ Motherboard ว่าตรงกันหรือไม่ ===
         if (!Objects.equals(cpu.getSocket().getId(), motherboard.getSocket().getId())) {
             errors.add(String.format("CPU และ Motherboard ไม่เข้ากัน: CPU '%s' (Socket %s) ไม่สามารถใช้กับ Motherboard '%s' (Socket %s) ได้",
                     cpu.getName(), cpu.getSocket().getName(), motherboard.getName(), motherboard.getSocket().getName()));
@@ -30,8 +29,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkRamCompatibility(List<BuildPart<RamKit>> ramKitParts, Motherboard motherboard, List<String> errors) {
-        // === [CHECK-5.2] ตรวจสอบ RAM: จำนวนแถว, ขนาดรวม, และประเภท ===
-        // === [CHECK-5.2.1] ตรวจสอบจำนวนแถว RAM ทั้งหมดเทียบกับช่องบนเมนบอร์ด ===
+        // === [CHECK-4.2.1] ตรวจสอบจำนวนแถว RAM ทั้งหมดเทียบกับช่องบนเมนบอร์ด ===
         int totalSticksRequired = ramKitParts.stream()
                 .mapToInt(part -> part.getQuantity() * part.getComponent().getModuleCount())
                 .sum();
@@ -39,7 +37,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
             errors.add(String.format("ช่อง RAM ไม่เพียงพอ: Motherboard มี %d ช่อง แต่ต้องการติดตั้ง RAM ทั้งหมด %d แถว",
                     motherboard.getRam_slot_count(), totalSticksRequired));
         }
-        // === [CHECK-5.2.2] ตรวจสอบขนาด RAM รวม (GB) เทียบกับขนาดสูงสุดที่เมนบอร์ดรองรับ ===
+        // === [CHECK-4.2.2] ตรวจสอบขนาด RAM รวม (GB) เทียบกับขนาดสูงสุดที่เมนบอร์ดรองรับ ===
         int totalRamGb = ramKitParts.stream()
                 .mapToInt(part -> part.getQuantity() * part.getComponent().getRam_size_gb())
                 .sum();
@@ -47,7 +45,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
             errors.add(String.format("ความจุ RAM เกินกำหนด: Motherboard รองรับสูงสุด %dGB แต่เลือกติดตั้งทั้งหมด %dGB",
                     motherboard.getMax_ram_gb(), totalRamGb));
         }
-        // === [CHECK-5.2.3] ตรวจสอบประเภทของ RAM (เช่น DDR4, DDR5) ว่าตรงกับที่เมนบอร์ดรองรับหรือไม่ ===
+        // === [CHECK-4.2.3] ตรวจสอบประเภทของ RAM (เช่น DDR4, DDR5) ว่าตรงกับที่เมนบอร์ดรองรับหรือไม่ ===
         ramKitParts.stream()
                 .map(BuildPart::getComponent)
                 .filter(ram -> !Objects.equals(ram.getRamType().getId(), motherboard.getRamType().getId()))
@@ -59,7 +57,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkFormFactorCompatibility(Motherboard motherboard, Case computerCase, List<String> errors) {
-        // === [CHECK-5.3] ตรวจสอบขนาด Motherboard (Form Factor) ว่าเข้ากับเคสได้หรือไม่ ===
+        // === [CHECK-4.3] ตรวจสอบขนาด Motherboard (Form Factor) ว่าเข้ากับเคสได้หรือไม่ ===
         List<String> supportedIds = computerCase.getSupportedFormFactors().stream()
                 .map(FormFactor::getId)
                 .toList();
@@ -72,7 +70,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkPsuFormFactor(Psu psu, Case computerCase, List<String> errors) {
-        // === [CHECK-5.4] ตรวจสอบขนาด PSU (Form Factor) ว่าเข้ากับเคสได้หรือไม่ ===
+        // === [CHECK-4.4] ตรวจสอบขนาด PSU (Form Factor) ว่าเข้ากับเคสได้หรือไม่ ===
         if (psu.getFormFactor() == null) {
             log.warn("PSU '{}' is missing form factor data. Skipping compatibility check.", psu.getName());
             return;
@@ -92,16 +90,15 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkGpuCompatibility(List<BuildPart<Gpu>> gpuParts, Motherboard motherboard, Case computerCase, List<String> errors) {
-        // === [CHECK-5.5] ตรวจสอบ GPU: จำนวนการ์ดจอ และความยาว ===
         if (gpuParts == null || gpuParts.isEmpty()) return;
 
-        // === [CHECK-5.5.1] ตรวจสอบจำนวนการ์ดจอทั้งหมดเทียบกับช่อง PCIe x16 บนเมนบอร์ด ===
+        // === [CHECK-4.5.1] ตรวจสอบจำนวนการ์ดจอทั้งหมดเทียบกับช่อง PCIe x16 บนเมนบอร์ด ===
         int totalGpuCount = gpuParts.stream().mapToInt(BuildPart::getQuantity).sum();
         if (totalGpuCount > motherboard.getPcie_x16_slot_count()) {
             errors.add(String.format("ช่องติดตั้ง GPU ไม่พอ: Motherboard มีช่อง PCIe x16 เพียง %d ช่อง แต่เลือกติดตั้ง GPU %d ตัว",
                     motherboard.getPcie_x16_slot_count(), totalGpuCount));
         }
-        // === [CHECK-5.5.2] ตรวจสอบความยาวของการ์ดจอแต่ละตัวเทียบกับพื้นที่ในเคส ===
+        // === [CHECK-4.5.2] ตรวจสอบความยาวของการ์ดจอแต่ละตัวเทียบกับพื้นที่ในเคส ===
         for (BuildPart<Gpu> part : gpuParts) {
             Gpu gpu = part.getComponent();
             if (gpu.getLength_mm() > computerCase.getMax_gpu_length_mm()) {
@@ -113,16 +110,15 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkCoolerCompatibility(Cooler cooler, Motherboard motherboard, Case computerCase, List<String> warnings, List<String> errors) {
-        // === [CHECK-5.6] ตรวจสอบชุดระบายความร้อน CPU ===
         if (cooler != null) {
-            // === [CHECK-5.6.1] ตรวจสอบ Socket ว่าเข้ากับเมนบอร์ดได้หรือไม่ (สำหรับ Cooler ทุกประเภท) ===
+            // === [CHECK-4.6.1] ตรวจสอบ Socket ว่าเข้ากับเมนบอร์ดได้หรือไม่ (สำหรับ Cooler ทุกประเภท) ===
             List<String> supportedSocketIds = cooler.getSupportedSockets().stream().map(Socket::getId).toList();
             if (!supportedSocketIds.contains(motherboard.getSocket().getId())) {
                 errors.add(String.format("Cooler ไม่รองรับ Socket: Cooler '%s' ไม่สามารถติดตั้งบน Motherboard (Socket %s) ได้",
                         cooler.getName(), motherboard.getSocket().getName()));
             }
 
-            // === [CHECK-5.6.2] ตรวจสอบสำหรับชุดระบายความร้อนด้วยน้ำ (AIO) ===
+            // === [CHECK-4.6.2] ตรวจสอบสำหรับชุดระบายความร้อนด้วยน้ำ (AIO) ===
             boolean isAioCooler = cooler.getRadiatorSize_mm() >= 120;
             if (isAioCooler) {
                 List<Integer> supportedSizes = Optional.ofNullable(computerCase.getSupportedRadiatorSizesMm()).orElse(Collections.emptyList());
@@ -132,14 +128,14 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
                 }
                 warnings.add("ข้อควรระวัง (AIO Cooler): การติดตั้งชุดระบายความร้อนด้วยน้ำอาจมีปัญหากับ RAM ที่มีฮีทซิงค์สูง กรุณาตรวจสอบระยะห่างอีกครั้ง");
             } else {
-                // === [CHECK-5.6.3] ตรวจสอบสำหรับชุดระบายความร้อนด้วยลม (Air Cooler) ===
+                // === [CHECK-4.6.3] ตรวจสอบสำหรับชุดระบายความร้อนด้วยลม (Air Cooler) ===
                 if (cooler.getHeight_mm() > computerCase.getMax_cooler_height_mm()) {
                     errors.add(String.format("Cooler สูงเกินไป: Cooler '%s' (สูง %dmm) สูงเกินกว่าที่เคสรองรับ (สูงสุด %dmm)",
                             cooler.getName(), cooler.getHeight_mm(), computerCase.getMax_cooler_height_mm()));
                 }
             }
         } else {
-            // === [CHECK-5.6.4] กรณีที่ผู้ใช้ไม่ได้เลือก Cooler ===
+            // === [CHECK-4.6.4] กรณีที่ผู้ใช้ไม่ได้เลือก Cooler ===
             warnings.add("ไม่ได้เลือก CPU Cooler: กรุณาตรวจสอบว่า CPU ของคุณมีชุดระบายความร้อนแถมมาด้วย หรือเลือกซื้อ Cooler เพิ่มเติม");
         }
     }
@@ -147,13 +143,12 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkStorageCompatibility(List<BuildPart<StorageDrive>> storageDriveParts, Motherboard motherboard, String nvmeInterfaceId, List<String> sataInterfaceIds, List<String> warnings, List<String> errors) {
-        // === [CHECK-5.7] ตรวจสอบไดรฟ์เก็บข้อมูล (Storage) กับช่องบนเมนบอร์ด ===
         if (storageDriveParts == null || storageDriveParts.isEmpty()) {
             warnings.add("ไม่ได้เลือก Storage Drive: ระบบปฏิบัติการและโปรแกรมต่างๆ ต้องถูกติดตั้งบน Storage Drive");
             return;
         }
 
-        // === [CHECK-5.7.1] นับจำนวนไดรฟ์ NVMe และ SATA ที่ต้องการ ===
+        // === [CHECK-4.7.1] นับจำนวนไดรฟ์ NVMe และ SATA ที่ต้องการ ===
         int nvmeCount = 0;
         int sataCount = 0;
         for (BuildPart<StorageDrive> part : storageDriveParts) {
@@ -164,7 +159,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
                 sataCount += part.getQuantity();
             }
         }
-        // === [CHECK-5.7.2] ตรวจสอบเทียบกับจำนวนช่องบนเมนบอร์ด ===
+        // === [CHECK-4.7.2] ตรวจสอบเทียบกับจำนวนช่องบนเมนบอร์ด ===
         if (nvmeCount > motherboard.getM2_slot_count()) {
             errors.add(String.format("ช่อง M.2 ไม่พอ: Motherboard มี %d ช่อง แต่ต้องการไดรฟ์ NVMe %d ตัว",
                     motherboard.getM2_slot_count(), nvmeCount));
@@ -173,7 +168,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
             errors.add(String.format("พอร์ต SATA ไม่พอ: Motherboard มี %d พอร์ต แต่ต้องการไดรฟ์ SATA %d ตัว",
                     motherboard.getSata_port_count(), sataCount));
         }
-        // === [CHECK-5.7.3] เพิ่มคำเตือนเกี่ยวกับ M.2 และ SATA ที่อาจใช้ช่องทางร่วมกัน ===
+        // === [CHECK-4.7.3] เพิ่มคำเตือนเกี่ยวกับ M.2 และ SATA ที่อาจใช้ช่องทางร่วมกัน ===
         if (nvmeCount > 0 && motherboard.getSata_port_count() > 0) {
             warnings.add("ข้อควรระวัง (M.2/SATA): การใช้งานช่อง M.2 บางครั้งอาจปิดการทำงานของพอร์ต SATA บางพอร์ต กรุณาตรวจสอบคู่มือของ Motherboard");
         }
@@ -181,12 +176,11 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkStorageAndCaseBays(List<BuildPart<StorageDrive>> storageDriveParts, Case computerCase, List<String> errors) {
-        // === [CHECK-5.8] ตรวจสอบไดรฟ์เก็บข้อมูล (Storage) กับช่องในเคส (Bays) ===
         if (storageDriveParts == null || storageDriveParts.isEmpty()) {
             return;
         }
 
-        // === [CHECK-5.8.1] นับจำนวนไดรฟ์ขนาด 3.5" และ 2.5" ที่ต้องการ ===
+        // === [CHECK-4.8.1] นับจำนวนไดรฟ์ขนาด 3.5" และ 2.5" ที่ต้องการ ===
         long required_3_5_inch_bays = 0;
         long required_2_5_inch_bays = 0;
         for (BuildPart<StorageDrive> part : storageDriveParts) {
@@ -200,7 +194,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
             }
         }
 
-        // === [CHECK-5.8.2] ตรวจสอบเทียบกับจำนวนช่องในเคส ===
+        // === [CHECK-4.8.2] ตรวจสอบเทียบกับจำนวนช่องในเคส ===
         if (required_3_5_inch_bays > computerCase.getBays_3_5_inch()) {
             errors.add(String.format("ช่อง 3.5\" ไม่พอ: Case มี %d ช่อง แต่ต้องการติดตั้งไดรฟ์ 3.5\" ทั้งหมด %d ตัว",
                     computerCase.getBays_3_5_inch(), required_3_5_inch_bays));
@@ -213,7 +207,7 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public int calculateTotalWattage(Cpu cpu, Motherboard motherboard, List<BuildPart<RamKit>> ramKitParts, List<BuildPart<Gpu>> gpuParts, Cooler cooler) {
-        // === [CHECK-6.1] คำนวณการใช้พลังงานรวมของระบบ ===
+        // === [CHECK-5.1] คำนวณการใช้พลังงานรวมของระบบ ===
         int wattage = 0;
         wattage += cpu.getWattage();
         wattage += motherboard.getWattage();
@@ -230,13 +224,11 @@ public class CompatibilityHelperImpl implements CompatibilityHelper {
 
     @Override
     public void checkPsuWattage(Psu psu, int totalWattage, List<String> errors, List<String> warnings) {
-        // === [CHECK-6.2] ตรวจสอบกำลังไฟของ PSU เทียบกับที่ระบบต้องการ ===
+        // === [CHECK-5.2] ตรวจสอบกำลังไฟของ PSU เทียบกับที่ระบบต้องการ ===
         if (psu.getWattage() < totalWattage) {
-            // กรณีไฟไม่พอ (Error)
             errors.add(String.format("กำลังไฟไม่เพียงพอ: ระบบต้องการไฟประมาณ %dW แต่ PSU '%s' จ่ายไฟได้เพียง %dW",
                     totalWattage, psu.getName(), psu.getWattage()));
         } else if (psu.getWattage() < totalWattage * 1.25) {
-            // กรณีไฟพอดีเกินไป (Warning) - ควรมี Headroom อย่างน้อย 25%
             warnings.add(String.format("คำเตือนกำลังไฟ: PSU '%s' (%dW) อาจไม่เพียงพอสำหรับระบบที่ต้องการ %dW เมื่อใช้งานหนักหรือเพื่อการอัปเกรดในอนาคต (แนะนำให้มีกำลังไฟสำรองอย่างน้อย 25%%)",
                     psu.getName(), psu.getWattage(), totalWattage));
         }

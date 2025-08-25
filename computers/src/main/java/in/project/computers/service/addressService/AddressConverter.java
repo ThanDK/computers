@@ -1,6 +1,3 @@
-// package in.project.computers.service.addressService;
-// (Or a common 'converter' or 'mapper' package)
-
 package in.project.computers.service.addressService;
 
 import in.project.computers.DTO.address.AddressDTO;

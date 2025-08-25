@@ -1,4 +1,5 @@
 package in.project.computers.entity.component;
+
 import in.project.computers.entity.lookup.FormFactor;
 import lombok.*;
 import lombok.experimental.Accessors;

@@ -8,7 +8,6 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.List;
 
-
 @Data
 @SuperBuilder
 @Accessors(chain = true)

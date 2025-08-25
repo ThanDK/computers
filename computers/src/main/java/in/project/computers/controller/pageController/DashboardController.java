@@ -18,11 +18,6 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
-/**
- * Controller สำหรับดึงข้อมูลสรุปสำหรับหน้า Dashboard ของ Admin
- * <p>
- * ทุก Endpoint ในคลาสนี้ต้องมีการยืนยันตัวตนและมีสิทธิ์เป็น 'ADMIN' เท่านั้น
- */
 @RestController
 @RequestMapping("/api/admin/dashboard")
 @RequiredArgsConstructor

@@ -13,12 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * Controller สำหรับจัดการโปรไฟล์ส่วนตัวของผู้ใช้ที่ล็อกอินอยู่
- * <p>
- * ให้ผู้ใช้สามารถดู, อัปเดตข้อมูลส่วนตัว, และจัดการรูปโปรไฟล์ได้
- * ทุก Endpoint ในคลาสนี้ต้องการการยืนยันตัวตน (Authentication)
- */
 @RestController
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor
@@ -29,9 +23,12 @@ public class UserProfileController {
     private final UserService userService;
 
     /**
-     * ดึงข้อมูลโปรไฟล์ของผู้ใช้ที่ล็อกอินอยู่ปัจจุบัน
-     * @param authentication ข้อมูลการยืนยันตัวตนที่ถูก inject โดย Spring Security
-     * @return ข้อมูลโปรไฟล์ของผู้ใช้ (UserResponse)
+     * ดึงข้อมูลโปรไฟล์ของผู้ใช้ที่ล็อกอินอยู่
+     * <p>
+     * Endpoint นี้สำหรับให้ผู้ใช้ที่ล็อกอินแล้ว ดึงข้อมูลโปรไฟล์ล่าสุดของตนเอง
+     * </p>
+     * @param authentication ข้อมูลการยืนยันตัวตนที่ถูก inject โดย Spring Security เพื่อระบุตัวตนผู้ใช้
+     * @return ResponseEntity ที่มีข้อมูล {@link UserResponse} ของผู้ใช้และสถานะ 200 OK
      */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUserProfile(Authentication authentication) {
@@ -41,12 +38,14 @@ public class UserProfileController {
     }
 
     /**
-     * อัปเดตข้อมูลโปรไฟล์ (เช่น ชื่อ) และ/หรือรูปภาพของผู้ใช้
+     * อัปเดตข้อมูลและ/หรือรูปภาพโปรไฟล์
      * <p>
-     * รับข้อมูลแบบ multipart/form-data เพื่อให้สามารถส่งข้อมูล JSON และไฟล์รูปภาพได้พร้อมกัน
+     * Endpoint นี้รับข้อมูลแบบ multipart/form-data เพื่อให้ผู้ใช้สามารถอัปเดตข้อมูลโปรไฟล์ (เช่น ชื่อ)
+     * และ/หรืออัปโหลดรูปภาพโปรไฟล์ใหม่ได้ในคำขอเดียว
+     * </p>
      * @param request ข้อมูลโปรไฟล์ที่ต้องการอัปเดต (JSON ใน part ที่ชื่อ "profileData")
      * @param file รูปภาพโปรไฟล์ใหม่ (เป็นทางเลือก, ใน part ที่ชื่อ "file")
-     * @return ข้อมูลโปรไฟล์ของผู้ใช้หลังการอัปเดต
+     * @return ResponseEntity ที่มีข้อมูล {@link UserResponse} ที่อัปเดตแล้วและสถานะ 200 OK
      */
     @PutMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<UserResponse> updateUserProfile(
@@ -59,8 +58,11 @@ public class UserProfileController {
     }
 
     /**
-     * ลบรูปภาพโปรไฟล์ของผู้ใช้ที่ล็อกอินอยู่
-     * @return ข้อมูลโปรไฟล์ของผู้ใช้หลังการอัปเดต (ซึ่งจะไม่มี URL ของรูปภาพ)
+     * ลบรูปภาพโปรไฟล์ของผู้ใช้
+     * <p>
+     * Endpoint นี้สำหรับให้ผู้ใช้ลบรูปภาพโปรไฟล์ปัจจุบันของตนเองออก
+     * </p>
+     * @return ResponseEntity ที่มีข้อมูล {@link UserResponse} ที่อัปเดตแล้ว (ซึ่งจะไม่มี URL ของรูปภาพ) และสถานะ 200 OK
      */
     @DeleteMapping("/picture")
     public ResponseEntity<UserResponse> removeUserProfilePicture() {

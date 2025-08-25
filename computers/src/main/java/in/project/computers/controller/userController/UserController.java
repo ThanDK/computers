@@ -10,11 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Controller สำหรับจัดการ Endpoint ที่ผู้ใช้ทั่วไปสามารถเข้าถึงได้โดยไม่ต้องยืนยันตัวตน
- * <p>
- * หน้าที่หลักคือการลงทะเบียนผู้ใช้ใหม่ (Register)
- */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -25,8 +20,12 @@ public class UserController {
 
     /**
      * ลงทะเบียนผู้ใช้ใหม่เข้าสู่ระบบ
-     * @param request ข้อมูลที่จำเป็นสำหรับการลงทะเบียน ประกอบด้วย email, password, และชื่อ
-     * @return ข้อมูลของผู้ใช้ที่ลงทะเบียนสำเร็จ (ไม่รวมรหัสผ่าน) พร้อม HttpStatus 201 CREATED
+     * <p>
+     * Endpoint นี้เป็นสาธารณะสำหรับให้ผู้ใช้ใหม่สามารถสร้างบัญชีได้ โดยรับข้อมูลที่จำเป็นสำหรับการลงทะเบียน
+     * และจะส่งคืนข้อมูลโปรไฟล์ของผู้ใช้ที่สร้างสำเร็จ (ไม่รวมรหัสผ่าน)
+     * </p>
+     * @param request อ็อบเจกต์ {@link UserRequest} ที่มีข้อมูล email, password, และชื่อ
+     * @return ResponseEntity ที่มีข้อมูล {@link UserResponse} ของผู้ใช้ที่ลงทะเบียนสำเร็จและสถานะ 201 Created
      */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {

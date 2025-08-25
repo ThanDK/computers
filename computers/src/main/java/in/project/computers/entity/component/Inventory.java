@@ -1,4 +1,3 @@
-// in/project/computers/entity/Inventory.java
 package in.project.computers.entity.component;
 
 import jakarta.validation.constraints.Min;

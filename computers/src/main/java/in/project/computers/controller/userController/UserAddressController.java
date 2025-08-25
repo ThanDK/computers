@@ -13,12 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controller สำหรับจัดการที่อยู่สำหรับจัดส่งของผู้ใช้
- * <p>
- * ให้ผู้ใช้สามารถ เพิ่ม, แก้ไข, ลบ, และตั้งค่าที่อยู่หลักของตนเองได้
- * ทุก Endpoint ในคลาสนี้ต้องการการยืนยันตัวตน (Authentication)
- */
 @RestController
 @RequestMapping("/api/user/addresses")
 @RequiredArgsConstructor
@@ -30,8 +24,11 @@ public class UserAddressController {
     private final UserService userService;
 
     /**
-     * ดึงที่อยู่สำหรับจัดส่งทั้งหมดของผู้ใช้ที่ล็อกอินอยู่
-     * @return List ของที่อยู่ทั้งหมดของผู้ใช้
+     * ดึงที่อยู่สำหรับจัดส่งทั้งหมดของผู้ใช้
+     * <p>
+     * Endpoint นี้สำหรับให้ผู้ใช้ที่ล็อกอินแล้ว ดึงข้อมูลที่อยู่สำหรับจัดส่งทั้งหมดที่เคยบันทึกไว้ในบัญชีของตนเอง
+     * </p>
+     * @return ResponseEntity ที่มี List ของ {@link AddressDTO} และสถานะ 200 OK
      */
     @GetMapping
     public ResponseEntity<List<AddressDTO>> getUserAddresses() {
@@ -42,9 +39,12 @@ public class UserAddressController {
     }
 
     /**
-     * เพิ่มที่อยู่สำหรับจัดส่งใหม่ให้กับผู้ใช้ปัจจุบัน
-     * @param request ข้อมูลที่อยู่ใหม่ที่ต้องการเพิ่ม
-     * @return ที่อยู่ที่สร้างสำเร็จ พร้อม HttpStatus 201 CREATED
+     * เพิ่มที่อยู่สำหรับจัดส่งใหม่
+     * <p>
+     * Endpoint นี้อนุญาตให้ผู้ใช้ที่ล็อกอินแล้ว เพิ่มที่อยู่สำหรับจัดส่งใหม่เข้าไปในบัญชีของตนเอง
+     * </p>
+     * @param request อ็อบเจกต์ {@link AddressDTO} ที่มีข้อมูลที่อยู่ใหม่ที่ต้องการเพิ่ม
+     * @return ResponseEntity ที่มีข้อมูล {@link AddressDTO} ของที่อยู่ที่สร้างใหม่และสถานะ 201 Created
      */
     @PostMapping
     public ResponseEntity<AddressDTO> addAddress(@Valid @RequestBody AddressDTO request) {
@@ -56,9 +56,12 @@ public class UserAddressController {
 
     /**
      * อัปเดตข้อมูลที่อยู่ที่มีอยู่แล้ว
-     * @param addressId ID ของที่อยู่ที่จะอัปเดต
-     * @param request ข้อมูลที่อยู่ใหม่
-     * @return ที่อยู่ที่อัปเดตแล้ว
+     * <p>
+     * Endpoint นี้ใช้สำหรับแก้ไขข้อมูลที่อยู่สำหรับจัดส่งที่ผู้ใช้เคยบันทึกไว้แล้ว ระบบจะตรวจสอบความเป็นเจ้าของก่อนทำการอัปเดต
+     * </p>
+     * @param addressId ID ของที่อยู่ที่จะอัปเดต (จาก Path Variable)
+     * @param request อ็อบเจกต์ {@link AddressDTO} ที่มีข้อมูลที่อยู่ใหม่
+     * @return ResponseEntity ที่มีข้อมูล {@link AddressDTO} ที่อัปเดตแล้วและสถานะ 200 OK
      */
     @PutMapping("/{addressId}")
     public ResponseEntity<AddressDTO> updateAddress(@PathVariable String addressId, @Valid @RequestBody AddressDTO request) {
@@ -69,9 +72,13 @@ public class UserAddressController {
     }
 
     /**
-     * ลบที่อยู่สำหรับจัดส่งของผู้ใช้
-     * @param addressId ID ของที่อยู่ที่จะลบ
-     * @return HttpStatus 204 NO_CONTENT หากลบสำเร็จ
+     * ลบที่อยู่สำหรับจัดส่ง
+     * <p>
+     * Endpoint นี้สำหรับให้ผู้ใช้ลบที่อยู่สำหรับจัดส่งที่ไม่ต้องการแล้วออกจากบัญชี ระบบจะตรวจสอบความเป็นเจ้าของก่อนทำการลบ
+     * เมื่อดำเนินการสำเร็จจะคืนสถานะ 204 No Content
+     * </p>
+     * @param addressId ID ของที่อยู่ที่จะลบ (จาก Path Variable)
+     * @return ResponseEntity ที่มีสถานะ 204 No Content
      */
     @DeleteMapping("/{addressId}")
     public ResponseEntity<Void> deleteAddress(@PathVariable String addressId) {
@@ -82,9 +89,13 @@ public class UserAddressController {
     }
 
     /**
-     * ตั้งค่าที่อยู่ให้เป็นที่อยู่หลัก (Default) สำหรับการจัดส่ง
-     * @param addressId ID ของที่อยู่ที่จะตั้งเป็นหลัก
-     * @return ResponseEntity ว่างๆ พร้อม HttpStatus 200 OK เพื่อยืนยันการทำงานสำเร็จ
+     * ตั้งค่าที่อยู่ให้เป็นที่อยู่หลัก
+     * <p>
+     * Endpoint นี้ใช้สำหรับกำหนดให้ที่อยู่รายการใดรายการหนึ่งเป็นที่อยู่เริ่มต้น (Default)
+     * สำหรับการจัดส่งสินค้าในครั้งต่อไป
+     * </p>
+     * @param addressId ID ของที่อยู่ที่จะตั้งเป็นหลัก (จาก Path Variable)
+     * @return ResponseEntity ที่มีสถานะ 200 OK เพื่อยืนยันการทำงานสำเร็จ
      */
     @PostMapping("/set-default/{addressId}")
     public ResponseEntity<Void> setDefaultAddress(@PathVariable String addressId) {

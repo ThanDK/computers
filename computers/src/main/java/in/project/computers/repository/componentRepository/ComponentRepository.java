@@ -12,7 +12,6 @@ public interface ComponentRepository extends MongoRepository<Component, String> 
 
     Optional<Component> findByMpn(String mpn);
 
-
     @Query(value = "{ $or: [ { 'socket._id': ObjectId(?0) }, { 'supportedSockets._id': ObjectId(?0) } ] }", exists = true)
     boolean existsBySocketId(String socketId);
 

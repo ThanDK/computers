@@ -152,11 +152,10 @@ public class ComponentServiceImpl implements ComponentService {
                 .collect(Collectors.toList());
     }
 
+    // จัดการการอัปเดตรูปภาพ: อัปโหลดใหม่, ลบ, หรือไม่ทำอะไร
     private void handleImageUpdate(Component component, MultipartFile imageFile, boolean removeImage) {
-        // === [UPDATE-3.1] ดึง URL รูปภาพเก่าจาก Entity ===
         String oldImageUrl = component.getImageUrl();
 
-        // === [UPDATE-3.2] กรณีมีไฟล์ใหม่: ลบไฟล์เก่า (ถ้ามี) และอัปโหลดไฟล์ใหม่ ===
         if (imageFile != null && !imageFile.isEmpty()) {
             log.info("... new image provided. Replacing old image if it exists.");
             if (oldImageUrl != null && !oldImageUrl.isBlank()) {
@@ -167,7 +166,6 @@ public class ComponentServiceImpl implements ComponentService {
             return;
         }
 
-        // === [UPDATE-3.3] กรณีต้องการลบรูปภาพ: ลบไฟล์เก่า (ถ้ามี) และตั้งค่า URL เป็น null ===
         if (removeImage && oldImageUrl != null && !oldImageUrl.isBlank()) {
             log.info("... removing existing image for component ID: {}", component.getId());
             deleteS3File(oldImageUrl);
@@ -175,22 +173,19 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    // สร้าง Entity ของ Component และ Inventory พร้อมจัดการรูปภาพ
     private Component createNewComponentAndInventory(ComponentRequest request, MultipartFile imageFile) {
-        // === [CREATE-3.1] อัปโหลดรูปภาพไปที่ S3 (ถ้ามี) ===
         String imageUrl = null;
         if (imageFile != null && !imageFile.isEmpty()) {
             imageUrl = s3Service.uploadFile(imageFile);
         }
 
-        // === [CREATE-3.2] เรียกใช้ Converter เพื่อสร้าง Entity ของ Component ===
         Component componentEntity = componentConverter.convertRequestToEntity(request);
         componentEntity.setImageUrl(imageUrl);
         componentEntity.setActive(request.getQuantity() > 0);
 
-        // === [CREATE-3.3] บันทึก Component ลง DB เพื่อให้ได้ ID ===
         Component savedComponent = componentRepository.save(componentEntity);
 
-        // === [CREATE-3.4] สร้างและบันทึก Inventory ที่เชื่อมโยงกับ Component ID ===
         Inventory inventory = Inventory.builder()
                 .componentId(savedComponent.getId())
                 .quantity(request.getQuantity())
@@ -200,26 +195,23 @@ public class ComponentServiceImpl implements ComponentService {
         return savedComponent;
     }
 
+    // คำนวณสต็อกใหม่และอัปเดตสถานะของ Component
     private void performStockAdjustment(Component component, Inventory inventory, int quantityChange) {
-        // === [ADJUST-STOCK-3.1] คำนวณสต็อกใหม่และตรวจสอบว่าไม่ติดลบ ===
         int currentQuantity = inventory.getQuantity();
         int newQuantity = currentQuantity + quantityChange;
         if (newQuantity < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot remove " + Math.abs(quantityChange) + " items. Only " + currentQuantity + " are in stock.");
         }
 
-        // === [ADJUST-STOCK-3.2] อัปเดตจำนวนใน Inventory และสถานะ Active ใน Component ===
         inventory.setQuantity(newQuantity);
         component.setActive(newQuantity > 0);
     }
 
-
+    // ลบไฟล์ออกจาก S3 โดยใช้ URL และจัดการข้อผิดพลาด
     private void deleteS3File(String imageUrl) {
         try {
-            // === [DELETE-3.1] ดึง File Key จาก URL ===
             String fileKey = s3Service.extractKeyFromUrl(imageUrl);
             if (fileKey != null) {
-                // === [DELETE-3.2] เรียก S3 Service เพื่อลบไฟล์ ===
                 boolean isFileDeleted = s3Service.deleteFileByKey(fileKey);
                 if (isFileDeleted) {
                     log.info("... Associated file '{}' was successfully deleted from S3.", fileKey);

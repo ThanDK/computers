@@ -1,15 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="99936fda-3310-4483-bd5c-d447aa600799" name="Changes" comment="" />
+    <list default="true" id="99936fda-3310-4483-bd5c-d447aa600799" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/DTO/address/AddressDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/DTO/address/AddressDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/adminController/AdminComponentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/adminController/AdminComponentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/adminController/AdminOrderController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/adminController/AdminOrderController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/adminController/AdminUserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/adminController/AdminUserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/cartController/CartController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/cartController/CartController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/orderController/OrderController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/orderController/OrderController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/pageController/DashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/pageController/DashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/pageController/LookupController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/pageController/LookupController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/userController/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/userController/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/userController/UserAddressController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/userController/UserAddressController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/userController/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/userController/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/userController/UserProfileController.java" beforeDir="false" afterPath="$PROJECT_DIR$/computers/src/main/java/in/project/computers/controller/userController/UserProfileController.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "ThanDK"
+  }
 }]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/ThanDK/computers.git",
+    "accountId": "58c24cfe-d6d6-4e9f-a678-70870cce2fcc"
+  }
+}]]></component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="30qVEmEXmv4PfJVJZqb0B2sgAW3" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -19,7 +54,13 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "Master",
     "last_opened_file_path": "E:/Java Project Computer System",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
@@ -40,6 +81,7 @@
       <option name="presentableId" value="Default" />
       <updated>1754354980541</updated>
       <workItem from="1754354981618" duration="36000" />
+      <workItem from="1756103547302" duration="417000" />
     </task>
     <servers />
   </component>

@@ -99,10 +99,10 @@ public class ComponentConverterImpl implements ComponentConverter {
     @Override
     public void updateEntityFromRequest(Component entityToUpdate, ComponentRequest request) {
         log.debug("Updating entity of type {} from request of type {}", entityToUpdate.getClass().getSimpleName(), request.getClass().getSimpleName());
-        // === [UPDATE-3.1] อัปเดตคุณสมบัติพื้นฐาน (Common Properties) ที่มีในทุก Component ===
+        // === [UPDATE-4.1] อัปเดตคุณสมบัติพื้นฐาน (Common Properties) ที่มีในทุก Component ===
         updateCommonProperties(entityToUpdate, request);
 
-        // === [UPDATE-3.2] ใช้ switch-case เพื่อเรียกเมธอดอัปเดตเฉพาะสำหรับแต่ละประเภทของ Component ===
+        // === [UPDATE-4.2] ใช้ switch-case เพื่อเรียกเมธอดอัปเดตเฉพาะสำหรับแต่ละประเภทของ Component ===
         switch (entityToUpdate) {
             case Cpu cpu -> updateCpuEntity(cpu, (CpuRequest) request);
             case Motherboard motherboard -> updateMotherboardEntity(motherboard, (MotherboardRequest) request);
@@ -120,10 +120,6 @@ public class ComponentConverterImpl implements ComponentConverter {
     }
 
     // --- Private Helper Methods: Common Property Setters ---
-
-    /**
-     * เมธอดสำหรับตั้งค่าคุณสมบัติพื้นฐานที่เหมือนกันในทุก Entity (ตอนสร้างใหม่)
-     */
     private <B extends Component.ComponentBuilder<?, ?>> B setCommonEntityProperties(B builder, ComponentRequest request) {
         builder.mpn(request.getMpn())
                 .type(request.getType())
@@ -133,9 +129,6 @@ public class ComponentConverterImpl implements ComponentConverter {
         return builder;
     }
 
-    /**
-     * เมธอดสำหรับตั้งค่าคุณสมบัติพื้นฐานที่เหมือนกันในทุก Response DTO
-     */
     private <B extends ComponentResponse.ComponentResponseBuilder<?, ?>> B setCommonResponseProperties(B builder, Component entity) {
         Optional<Inventory> inventoryOpt = inventoryRepository.findByComponentId(entity.getId());
         builder.id(entity.getId())
@@ -151,23 +144,17 @@ public class ComponentConverterImpl implements ComponentConverter {
         return builder;
     }
 
-    /**
-     * เมธอดสำหรับอัปเดตคุณสมบัติพื้นฐานที่เหมือนกันในทุก Entity
-     */
     private void updateCommonProperties(Component entity, ComponentRequest request) {
-        // === [UPDATE-3.1.1] อัปเดตค่าพื้นฐาน เช่น ชื่อ, MPN, และคำอธิบาย ===
         entity.setName(request.getName())
                 .setMpn(request.getMpn())
                 .setDescription(request.getDescription());
 
-        // === [UPDATE-3.1.2] อัปเดต Brand เฉพาะเมื่อมีการเปลี่ยนแปลง ID ===
         if (entity.getBrand() == null || !entity.getBrand().getId().equals(request.getBrandId())) {
             entity.setBrand(findBrandById(request.getBrandId()));
         }
     }
 
     // --- Private Helper Methods: Build Entity ---
-    // แต่ละเมธอดคือขั้นตอน [CREATE-3.2.3] สำหรับ Component แต่ละประเภท
     private Case buildCaseEntity(CaseRequest request) {
         return setCommonEntityProperties(Case.builder()
                 .supportedFormFactors(findFormFactorsByNames(request.getMotherboard_form_factor_support(), FormFactorType.MOTHERBOARD))
@@ -242,7 +229,6 @@ public class ComponentConverterImpl implements ComponentConverter {
     }
 
     // --- Private Helper Methods: Build Response DTO (per type) ---
-    // แต่ละเมธอดคือขั้นตอน [RESPONSE-CONV-3] สำหรับ Component แต่ละประเภท
     private CaseResponse buildCaseResponse(Case entity) {
         return setCommonResponseProperties(CaseResponse.builder()
                 .motherboard_form_factor_support(getOptionalNames(entity.getSupportedFormFactors(), FormFactor::getName))
@@ -317,7 +303,6 @@ public class ComponentConverterImpl implements ComponentConverter {
     }
 
     // --- Private Helper Methods: Update Entity (per type) ---
-    // แต่ละเมธอดคือขั้นตอน [UPDATE-3.2.x] สำหรับ Component แต่ละประเภท
     private void updateCpuEntity(Cpu entity, CpuRequest request) {
         entity.setWattage(request.getWattage())
                 .setSocket(findSocketByName(request.getSocket()));
@@ -376,10 +361,6 @@ public class ComponentConverterImpl implements ComponentConverter {
     }
 
     // --- Private Helper Methods: Lookup Finders ---
-
-    /**
-     * เมธอดสำหรับค้นหา Lookup Entity จาก Repository หรือโยน Exception หากไม่พบ
-     */
     private Brand findBrandById(String id) {
         return brandRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Brand ID: " + id));
@@ -393,8 +374,7 @@ public class ComponentConverterImpl implements ComponentConverter {
     private List<Socket> findSocketsByNames(List<String> names) {
         if (names == null) return Collections.emptyList();
         return names.stream()
-                .map(name -> socketRepository.findByName(name)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid socket in list: " + name)))
+                .map(this::findSocketByName)
                 .collect(Collectors.toList());
     }
 
@@ -411,8 +391,7 @@ public class ComponentConverterImpl implements ComponentConverter {
     private List<FormFactor> findFormFactorsByNames(List<String> names, FormFactorType type) {
         if (names == null) return Collections.emptyList();
         return names.stream()
-                .map(name -> formFactorRepository.findByNameAndType(name, type)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + type.name() + " form factor in list: " + name)))
+                .map(name -> findFormFactorByNameAndType(name, type))
                 .collect(Collectors.toList());
     }
 
@@ -422,17 +401,10 @@ public class ComponentConverterImpl implements ComponentConverter {
     }
 
     // --- Private Helper Methods: Utility ---
-
-    /**
-     * เมธอด Utility สำหรับดึงชื่อจาก Entity ที่อาจเป็น null ได้อย่างปลอดภัย
-     */
     private <T> String getOptionalName(T entity, Function<T, String> nameExtractor) {
         return Optional.ofNullable(entity).map(nameExtractor).orElse(null);
     }
 
-    /**
-     * เมธอด Utility สำหรับดึง List ของชื่อจาก List ของ Entity ที่อาจเป็น null หรือว่างเปล่า
-     */
     private <T> List<String> getOptionalNames(List<T> entities, Function<T, String> nameExtractor) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();

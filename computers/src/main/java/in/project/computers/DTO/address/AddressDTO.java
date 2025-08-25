@@ -1,5 +1,3 @@
-// package in.project.computers.DTO.address;
-
 package in.project.computers.DTO.address;
 
 import jakarta.validation.constraints.NotBlank;
