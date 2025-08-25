@@ -1,4 +1,3 @@
-/* Base and Expanded Styles */
 .sidebar {
   background-color: var(--secondary-bg);
   padding: 1.5rem 1rem;
@@ -130,10 +129,9 @@
   transition: opacity 0.2s ease-in-out 0.1s;
 }
 
-/* FIX: Let the new divider handle spacing by removing the top margin */
 .sidebar-category {
   padding: 0 1rem;
-  margin-top: 0; /* Let divider handle top spacing */
+  margin-top: 0;
   margin-bottom: 0.5rem;
   color: var(--text-primary);
   font-size: 0.9rem;
@@ -143,17 +141,13 @@
   transition: opacity 0.2s ease-in-out 0.1s;
 }
 
-/* FIX: Style for the new separator line */
 .sidebar-divider {
   height: 1px;
   background-color: rgba(255, 255, 255, 0.1);
-  /* Vertical margin creates space, horizontal margin makes it a "centerline" */
   margin: 1.25rem 1rem;
   transition: opacity 0.2s ease-in-out 0.1s;
 }
 
-
-/* Collapsed Styles */
 .sidebar.collapsed { 
   width: var(--sidebar-width-collapsed, 80px);
 }
@@ -162,7 +156,6 @@
   display: none;
 }
 
-/* FIX: Hide the divider when collapsed */
 .sidebar.collapsed .sidebar-divider,
 .sidebar.collapsed .sidebar-category,
 .sidebar.collapsed .sidebar-link-text {
@@ -170,7 +163,7 @@
   transition-delay: 0s; 
   width: 0;
   overflow: hidden;
-  margin: 0; /* Reset margin on collapse */
+  margin: 0;
 }
 
 .sidebar.collapsed .sidebar-header { 

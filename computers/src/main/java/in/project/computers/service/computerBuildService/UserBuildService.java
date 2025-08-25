@@ -36,4 +36,6 @@ public interface UserBuildService {
      * @param buildId ID ของ Build ที่ต้องการลบ
      */
     void deleteBuild(String buildId);
+
+    ComputerBuildDetailResponse updateBuild(String buildId, ComputerBuildRequest request);
 }

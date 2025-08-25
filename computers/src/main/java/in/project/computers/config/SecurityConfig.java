@@ -1,6 +1,5 @@
 package in.project.computers.config;
 
-// ... other imports
 import in.project.computers.filters.JwtAuthenticationFilter;
 import in.project.computers.service.userAuthenticationService.CustomOAuth2UserService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,8 +38,6 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // 1. THIS IS THE KEY FIX: Integrate CORS using a CorsConfigurationSource bean.
-                // This tells Spring Security to apply CORS rules early in the filter chain.
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .csrf(AbstractHttpConfigurer::disable)

@@ -1,5 +1,3 @@
-// src/components/ShippingProviderFormModal/ShippingProviderFormModal.js
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Form, Button, Row, Col, Image, Spinner } from 'react-bootstrap';
 import ImageCropper from '../ImageCropper/ImageCropper';

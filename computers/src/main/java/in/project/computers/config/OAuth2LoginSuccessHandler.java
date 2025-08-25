@@ -12,12 +12,6 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 
-/**
- * จัดการ Flow หลังจาก User ล็อกอินผ่าน OAuth2 (เช่น Google, Facebook) สำเร็จ
- * <p>
- * หน้าที่หลักคือแปลง session จาก OAuth2 ให้เป็น JWT ของแอปเราเอง
- * แล้วส่ง User กลับไปที่ Frontend พร้อมกับ JWT Token นั้น
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j

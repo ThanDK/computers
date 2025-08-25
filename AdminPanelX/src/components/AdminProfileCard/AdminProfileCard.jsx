@@ -13,12 +13,14 @@ const AdminProfileCard = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // State ชุดนี้สำหรับจัดการขั้นตอนการครอปรูปทั้งหมด
   const [cropModalState, setCropModalState] = useState({ show: false, src: '' });
   const [croppedImageFile, setCroppedImageFile] = useState(null);
   const [croppedPreviewUrl, setCroppedPreviewUrl] = useState('');
 
   const fileInputRef = useRef(null);
 
+  // จัดการ cleanup URL ชั่วคราวของรูปกัน memory leak
   useEffect(() => {
     return () => {
         if (croppedPreviewUrl) {
@@ -36,9 +38,10 @@ const AdminProfileCard = () => {
     setCroppedPreviewUrl('');
   };
   
+  // เมื่อ user เลือกไฟล์, อ่านไฟล์แล้วเปิดหน้าต่างครอปรูป
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) return; 
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -49,6 +52,7 @@ const AdminProfileCard = () => {
     if(fileInputRef.current) fileInputRef.current.value = "";
   };
   
+  // รับข้อมูลรูปที่ครอปเสร็จแล้วจาก component ImageCropper
   const handleCropComplete = (croppedFile) => {
     if (croppedFile) {
       setCroppedImageFile(croppedFile);
@@ -74,6 +78,8 @@ const AdminProfileCard = () => {
       return;
     }
 
+    // ตอน submit, ต้องใช้ FormData เพราะเราส่งไฟล์ไปด้วย
+    // ส่วนข้อมูล text จะถูกแปลงเป็น JSON blob แล้วส่งไปพร้อมกัน
     const formData = new FormData();
     const profileData = {
       name: form.name.value,
@@ -120,6 +126,7 @@ const AdminProfileCard = () => {
     }
   };
   
+  // ถ้ามีรูป preview ใหม่ให้ใช้รูปนั้น, ถ้าไม่มีก็ใช้รูปโปรไฟล์ปัจจุบัน
   const previewSource = croppedPreviewUrl || user.profilePictureUrl;
 
   return (
@@ -162,12 +169,10 @@ const AdminProfileCard = () => {
               <Form.Label>New Password</Form.Label>
               <Form.Control type="password" name="password" placeholder="Leave blank to keep current password" />
             </Form.Group>
-            {/* --- ADDED CONFIRM PASSWORD FIELD --- */}
             <Form.Group className="mb-3">
               <Form.Label>Confirm New Password</Form.Label>
               <Form.Control type="password" name="confirmPassword" placeholder="Confirm your new password" />
             </Form.Group>
-            {/* --- END OF CHANGE --- */}
             <Form.Group className="mb-3">
               <Form.Label>Profile Picture</Form.Label>
               <div className="d-flex gap-2">
@@ -206,7 +211,7 @@ const AdminProfileCard = () => {
         imageSrc={cropModalState.src}
         onHide={() => setCropModalState({ show: false, src: '' })}
         onCropComplete={handleCropComplete}
-        aspect={1}
+        aspect={1} // กำหนด aspect ratio เป็น 1:1 (สี่เหลี่ยมจัตุรัส)
       />
     </>
   );

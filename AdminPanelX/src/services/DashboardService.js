@@ -1,11 +1,14 @@
-// src/services/DashboardService.js
 import { handlePromise } from './NotificationService';
 import { format } from 'date-fns';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
 /**
- * Fetches all data for the main dashboard display.
+ * ดึงข้อมูลทั้งหมดสำหรับแสดงผลบนหน้า Dashboard หลัก
+ * @param {string} token - JWT token
+ * @param {Date} startDate - วันที่เริ่มต้นของช่วงข้อมูล
+ * @param {Date} endDate - วันที่สิ้นสุดของช่วงข้อมูล
+ * @returns {Promise<object>} Promise ที่จะ resolve เป็น object ที่มีข้อมูล dashboard ทั้งหมด
  */
 export async function fetchDashboardData(token, startDate, endDate) {
     
@@ -24,6 +27,7 @@ export async function fetchDashboardData(token, startDate, endDate) {
         }
         return response.json();
     }).then(data => {
+        // จัดรูปแบบข้อมูลที่ได้รับจาก API ให้พร้อมใช้งานใน frontend
         return {
             stats: data.stats,
             revenueChartData: data.revenueChartData.map(item => ({
@@ -49,7 +53,11 @@ export async function fetchDashboardData(token, startDate, endDate) {
 };
 
 /**
- * Fetches ONLY the order data for a given date range by calling the new dedicated export endpoint.
+ * ดึงข้อมูล "เฉพาะ" ออเดอร์สำหรับ Export ตามช่วงวันที่ที่กำหนด
+ * @param {string} token - JWT token
+ * @param {Date} startDate - วันที่เริ่มต้น
+ * @param {Date} endDate - วันที่สิ้นสุด
+ * @returns {Promise<Array>} Promise ที่จะ resolve เป็น Array ของข้อมูลออเดอร์สำหรับ export
  */
 export async function fetchOrdersForExport(token, startDate, endDate) {
     const startQuery = format(startDate, 'yyyy-MM-dd');

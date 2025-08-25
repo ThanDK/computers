@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Card, ListGroup } from 'react-bootstrap';
 import './OrderTotals.css';
 
+// ฟังก์ชัน helper สำหรับจัดรูปแบบตัวเลขเป็นสกุลเงิน พร้อมเช็คว่าเป็น number จริงๆ
 const formatCurrency = (amount, currency) => {
     const numericAmount = typeof amount === 'number' ? amount : 0;
     const numberPart = new Intl.NumberFormat('en-US', {
@@ -13,6 +14,9 @@ const formatCurrency = (amount, currency) => {
 
 function OrderTotals({ order }) {
     const { lineItems = [], totalAmount = 0, taxAmount = 0, currency = '' } = order || {};
+    
+    // ใช้ useMemo ในการคำนวณ 'Subtotal' (ยอดรวมก่อนภาษี)
+    // เพื่อให้แน่ใจว่าการคำนวณนี้จะเกิดขึ้นก็ต่อเมื่อ lineItems เปลี่ยนแปลงเท่านั้น
     const subtotal = useMemo(() => {
         return lineItems.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
     }, [lineItems]);

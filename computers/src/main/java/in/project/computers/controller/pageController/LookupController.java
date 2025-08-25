@@ -15,8 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controller สำหรับจัดการข้อมูลอ้างอิง (Lookup Data) ทั้งหมดในระบบ
- * เช่น Sockets, RAM Types, Brands ซึ่งต้องใช้สิทธิ์ Admin เท่านั้น
+ * Controller สำหรับจัดการข้อมูลอ้างอิง (Lookup Data) ของระบบ เช่น Sockets, RAM Types, Brands.
+ * <p>
+ * ทุก Endpoint ในคลาสนี้ต้องมีการยืนยันตัวตนและมีสิทธิ์เป็น 'ADMIN' เท่านั้น
  */
 @RestController
 @RequestMapping("/api/admin/lookups")
@@ -27,8 +28,10 @@ public class LookupController {
     private final LookupService lookupService;
 
     /**
-     * ดึงข้อมูล Lookup ทั้งหมดสำหรับใช้ในฟอร์มสร้าง/แก้ไขชิ้นส่วน
-     * @return Map ที่มี key เป็นชื่อของ lookup และ value เป็น List ของข้อมูลนั้นๆ
+     * ดึงข้อมูล Lookup ทั้งหมดที่จำเป็นสำหรับใช้ในหน้าฟอร์มสร้าง/แก้ไขชิ้นส่วนคอมพิวเตอร์
+     * <p>
+     * เพื่อลดจำนวนการเรียก API จาก Frontend โดยจะรวมข้อมูลทั้งหมดไว้ใน Response เดียว
+     * @return Map ที่มี key เป็นชื่อของ lookup (เช่น 'sockets', 'ramTypes') และ value เป็น List ของข้อมูลนั้นๆ
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllLookupsForFormComponent() {
@@ -47,8 +50,8 @@ public class LookupController {
 
     /**
      * สร้าง Socket ใหม่
-     * @param request ข้อมูล Socket ที่จะสร้าง
-     * @return Socket ที่สร้างสำเร็จ (HttpStatus 201)
+     * @param request ข้อมูล Socket ที่ต้องการสร้าง
+     * @return Socket ที่สร้างสำเร็จ พร้อม HttpStatus 201 CREATED
      */
     @PostMapping("/sockets")
     public ResponseEntity<Socket> createSocket(@Valid @RequestBody SocketRequest request) {
@@ -57,9 +60,9 @@ public class LookupController {
     }
 
     /**
-     * อัปเดต Socket
-     * @param id ID ของ Socket ที่จะอัปเดต
-     * @param request ข้อมูลใหม่
+     * อัปเดตข้อมูล Socket ที่มีอยู่
+     * @param id ID ของ Socket ที่ต้องการอัปเดต
+     * @param request ข้อมูลใหม่สำหรับ Socket
      * @return Socket ที่อัปเดตแล้ว
      */
     @PutMapping("/sockets/{id}")
@@ -69,8 +72,9 @@ public class LookupController {
     }
 
     /**
-     * ลบ Socket (คืนค่า 204 No Content)
-     * @param id ID ของ Socket ที่จะลบ
+     * ลบ Socket ออกจากระบบ
+     * @param id ID ของ Socket ที่ต้องการลบ
+     * @return HttpStatus 204 NO_CONTENT หากลบสำเร็จ
      */
     @DeleteMapping("/sockets/{id}")
     public ResponseEntity<Void> deleteSocket(@PathVariable String id) {
@@ -91,7 +95,7 @@ public class LookupController {
     /**
      * สร้าง Ram Type ใหม่
      * @param request ข้อมูล Ram Type ที่จะสร้าง
-     * @return Ram Type ที่สร้างสำเร็จ (HttpStatus 201)
+     * @return Ram Type ที่สร้างสำเร็จ พร้อม HttpStatus 201 CREATED
      */
     @PostMapping("/ram-types")
     public ResponseEntity<RamType> createRamType(@Valid @RequestBody RamTypeRequest request) {
@@ -112,8 +116,9 @@ public class LookupController {
     }
 
     /**
-     * ลบ Ram Type (คืนค่า 204 No Content)
+     * ลบ Ram Type
      * @param id ID ของ Ram Type ที่จะลบ
+     * @return HttpStatus 204 NO_CONTENT หากลบสำเร็จ
      */
     @DeleteMapping("/ram-types/{id}")
     public ResponseEntity<Void> deleteRamType(@PathVariable String id) {
@@ -134,7 +139,7 @@ public class LookupController {
     /**
      * สร้าง Form Factor ใหม่
      * @param request ข้อมูล Form Factor ที่จะสร้าง
-     * @return Form Factor ที่สร้างสำเร็จ (HttpStatus 201)
+     * @return Form Factor ที่สร้างสำเร็จ พร้อม HttpStatus 201 CREATED
      */
     @PostMapping("/form-factors")
     public ResponseEntity<FormFactor> createFormFactor(@Valid @RequestBody FormFactorRequest request) {
@@ -155,8 +160,9 @@ public class LookupController {
     }
 
     /**
-     * ลบ Form Factor (คืนค่า 204 No Content)
+     * ลบ Form Factor
      * @param id ID ของ Form Factor ที่จะลบ
+     * @return HttpStatus 204 NO_CONTENT หากลบสำเร็จ
      */
     @DeleteMapping("/form-factors/{id}")
     public ResponseEntity<Void> deleteFormFactor(@PathVariable String id) {
@@ -177,7 +183,7 @@ public class LookupController {
     /**
      * สร้าง Storage Interface ใหม่
      * @param request ข้อมูล Storage Interface ที่จะสร้าง
-     * @return Storage Interface ที่สร้างสำเร็จ (HttpStatus 201)
+     * @return Storage Interface ที่สร้างสำเร็จ พร้อม HttpStatus 201 CREATED
      */
     @PostMapping("/storage-interfaces")
     public ResponseEntity<StorageInterface> createStorageInterface(@Valid @RequestBody StorageInterfaceRequest request) {
@@ -198,8 +204,9 @@ public class LookupController {
     }
 
     /**
-     * ลบ Storage Interface (คืนค่า 204 No Content)
+     * ลบ Storage Interface
      * @param id ID ของ Storage Interface ที่จะลบ
+     * @return HttpStatus 204 NO_CONTENT หากลบสำเร็จ
      */
     @DeleteMapping("/storage-interfaces/{id}")
     public ResponseEntity<Void> deleteStorageInterface(@PathVariable String id) {
@@ -209,7 +216,7 @@ public class LookupController {
 
     // --- Shipping Providers Management ---
     /**
-     * ดึงรายการ Shipping Providers ทั้งหมด
+     * ดึงรายการผู้ให้บริการจัดส่ง (Shipping Providers) ทั้งหมด
      * @return List ของ Shipping Providers
      */
     @GetMapping("/shipping-providers")
@@ -218,10 +225,12 @@ public class LookupController {
     }
 
     /**
-     * สร้าง Shipping Provider ใหม่ (รับข้อมูลแบบ multipart/form-data)
-     * @param request ข้อมูล Provider (part: "provider")
-     * @param image รูปภาพโลโก้ (optional, part: "image")
-     * @return Provider ที่สร้างสำเร็จ (HttpStatus 201)
+     * สร้าง Shipping Provider ใหม่ พร้อมอัปโหลดโลโก้ (ถ้ามี)
+     * <p>
+     * รับข้อมูลแบบ multipart/form-data
+     * @param request ข้อมูลของ Provider (JSON ใน part ที่ชื่อ "provider")
+     * @param image ไฟล์รูปภาพโลโก้ (เป็นทางเลือก, ใน part ที่ชื่อ "image")
+     * @return Provider ที่สร้างสำเร็จ พร้อม HttpStatus 201 CREATED
      */
     @PostMapping(value = "/shipping-providers", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ShippingProvider> createShippingProvider(
@@ -232,10 +241,12 @@ public class LookupController {
     }
 
     /**
-     * อัปเดต Shipping Provider (รับข้อมูลแบบ multipart/form-data)
+     * อัปเดตข้อมูล Shipping Provider และโลโก้ (ถ้ามีการส่งไฟล์ใหม่มา)
+     * <p>
+     * รับข้อมูลแบบ multipart/form-data
      * @param id ID ของ Provider ที่จะอัปเดต
-     * @param request ข้อมูลใหม่ (part: "provider")
-     * @param image รูปภาพโลโก้ใหม่ (optional, part: "image")
+     * @param request ข้อมูลใหม่ (JSON ใน part ที่ชื่อ "provider")
+     * @param image รูปภาพโลโก้ใหม่ (เป็นทางเลือก, ใน part ที่ชื่อ "image")
      * @return Provider ที่อัปเดตแล้ว
      */
     @PutMapping(value = "/shipping-providers/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -248,8 +259,9 @@ public class LookupController {
     }
 
     /**
-     * ลบ Shipping Provider (คืนค่า 204 No Content)
-     * @param id ID ของ Provider ที่จะลบ
+     * ลบ Shipping Provider ออกจากระบบ
+     * @param id ID ของ Provider ที่ต้องการลบ
+     * @return HttpStatus 204 NO_CONTENT หากลบสำเร็จ
      */
     @DeleteMapping("/shipping-providers/{id}")
     public ResponseEntity<Void> deleteShippingProvider(@PathVariable String id) {
@@ -268,10 +280,12 @@ public class LookupController {
     }
 
     /**
-     * สร้าง Brand ใหม่ (รับข้อมูลแบบ multipart/form-data)
-     * @param request ข้อมูล Brand (part: "brand")
-     * @param image รูปภาพโลโก้ (optional, part: "image")
-     * @return Brand ที่สร้างสำเร็จ (HttpStatus 201)
+     * สร้าง Brand ใหม่ พร้อมอัปโหลดโลโก้ (ถ้ามี)
+     * <p>
+     * รับข้อมูลแบบ multipart/form-data
+     * @param request ข้อมูล Brand (JSON ใน part ที่ชื่อ "brand")
+     * @param image ไฟล์รูปภาพโลโก้ (เป็นทางเลือก, ใน part ที่ชื่อ "image")
+     * @return Brand ที่สร้างสำเร็จ พร้อม HttpStatus 201 CREATED
      */
     @PostMapping(value = "/brands", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Brand> createBrand(
@@ -282,10 +296,12 @@ public class LookupController {
     }
 
     /**
-     * อัปเดต Brand (รับข้อมูลแบบ multipart/form-data)
+     * อัปเดตข้อมูล Brand และโลโก้ (ถ้ามีการส่งไฟล์ใหม่มา)
+     * <p>
+     * รับข้อมูลแบบ multipart/form-data
      * @param id ID ของ Brand ที่จะอัปเดต
-     * @param request ข้อมูลใหม่ (part: "brand")
-     * @param image รูปภาพโลโก้ใหม่ (optional, part: "image")
+     * @param request ข้อมูลใหม่ (JSON ใน part ที่ชื่อ "brand")
+     * @param image รูปภาพโลโก้ใหม่ (เป็นทางเลือก, ใน part ที่ชื่อ "image")
      * @return Brand ที่อัปเดตแล้ว
      */
     @PutMapping(value = "/brands/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -298,8 +314,9 @@ public class LookupController {
     }
 
     /**
-     * ลบ Brand (คืนค่า 204 No Content)
+     * ลบ Brand ออกจากระบบ
      * @param id ID ของ Brand ที่จะลบ
+     * @return HttpStatus 204 NO_CONTENT หากลบสำเร็จ
      */
     @DeleteMapping("/brands/{id}")
     public ResponseEntity<Void> deleteBrand(@PathVariable String id) {

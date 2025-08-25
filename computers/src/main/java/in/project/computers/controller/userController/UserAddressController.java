@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * Controller สำหรับจัดการที่อยู่สำหรับจัดส่งของผู้ใช้
  * <p>
+ * ให้ผู้ใช้สามารถ เพิ่ม, แก้ไข, ลบ, และตั้งค่าที่อยู่หลักของตนเองได้
  * ทุก Endpoint ในคลาสนี้ต้องการการยืนยันตัวตน (Authentication)
  */
 @RestController
@@ -29,8 +30,8 @@ public class UserAddressController {
     private final UserService userService;
 
     /**
-     * ดึงที่อยู่สำหรับจัดส่งทั้งหมดของผู้ใช้
-     * @return List ของที่อยู่ทั้งหมด
+     * ดึงที่อยู่สำหรับจัดส่งทั้งหมดของผู้ใช้ที่ล็อกอินอยู่
+     * @return List ของที่อยู่ทั้งหมดของผู้ใช้
      */
     @GetMapping
     public ResponseEntity<List<AddressDTO>> getUserAddresses() {
@@ -41,9 +42,9 @@ public class UserAddressController {
     }
 
     /**
-     * เพิ่มที่อยู่สำหรับจัดส่งใหม่
-     * @param request ข้อมูลที่อยู่ใหม่
-     * @return ที่อยู่ที่สร้างสำเร็จ (HttpStatus 201)
+     * เพิ่มที่อยู่สำหรับจัดส่งใหม่ให้กับผู้ใช้ปัจจุบัน
+     * @param request ข้อมูลที่อยู่ใหม่ที่ต้องการเพิ่ม
+     * @return ที่อยู่ที่สร้างสำเร็จ พร้อม HttpStatus 201 CREATED
      */
     @PostMapping
     public ResponseEntity<AddressDTO> addAddress(@Valid @RequestBody AddressDTO request) {
@@ -54,7 +55,7 @@ public class UserAddressController {
     }
 
     /**
-     * อัปเดตที่อยู่ที่มีอยู่แล้ว
+     * อัปเดตข้อมูลที่อยู่ที่มีอยู่แล้ว
      * @param addressId ID ของที่อยู่ที่จะอัปเดต
      * @param request ข้อมูลที่อยู่ใหม่
      * @return ที่อยู่ที่อัปเดตแล้ว
@@ -68,8 +69,9 @@ public class UserAddressController {
     }
 
     /**
-     * ลบที่อยู่ (คืนค่า 204 No Content)
+     * ลบที่อยู่สำหรับจัดส่งของผู้ใช้
      * @param addressId ID ของที่อยู่ที่จะลบ
+     * @return HttpStatus 204 NO_CONTENT หากลบสำเร็จ
      */
     @DeleteMapping("/{addressId}")
     public ResponseEntity<Void> deleteAddress(@PathVariable String addressId) {
@@ -80,8 +82,9 @@ public class UserAddressController {
     }
 
     /**
-     * ตั้งค่าที่อยู่ให้เป็นที่อยู่หลัก
+     * ตั้งค่าที่อยู่ให้เป็นที่อยู่หลัก (Default) สำหรับการจัดส่ง
      * @param addressId ID ของที่อยู่ที่จะตั้งเป็นหลัก
+     * @return ResponseEntity ว่างๆ พร้อม HttpStatus 200 OK เพื่อยืนยันการทำงานสำเร็จ
      */
     @PostMapping("/set-default/{addressId}")
     public ResponseEntity<Void> setDefaultAddress(@PathVariable String addressId) {

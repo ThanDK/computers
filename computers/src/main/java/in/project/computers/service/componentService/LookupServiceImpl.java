@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class LookupServiceImpl implements LookupService {
 
+    // ==================[ Repositories & Services ]==================
     private final SocketRepository socketRepository;
     private final RamTypeRepository ramTypeRepository;
     private final FormFactorRepository formFactorRepository;
@@ -33,7 +34,7 @@ public class LookupServiceImpl implements LookupService {
     private final BrandRepository brandRepository;
     private final S3Service s3Service;
 
-    // --- Unchanged Methods ---
+    // ==================[ Lookup Retrieval ]==================
     @Override
     public Map<String, Object> getAllLookups() {
         Map<String, Object> lookups = new HashMap<>();
@@ -56,6 +57,7 @@ public class LookupServiceImpl implements LookupService {
     @Override public List<ShippingProvider> getAllShippingProviders() { return shippingProviderRepository.findAll(); }
     @Override public List<Brand> getAllBrands() { return brandRepository.findAll(); }
 
+    // ==================[ Socket Management ]==================
     @Override
     public Socket createSocket(SocketRequest request) {
         if (socketRepository.findByName(request.getName()).isPresent()) {
@@ -81,11 +83,8 @@ public class LookupServiceImpl implements LookupService {
         return socketRepository.save(socket);
     }
 
-    // --- REFACTORED DELETE METHODS ---
-
     @Override
     public void deleteSocket(String id) {
-        // REFACTOR: Fetch first to ensure it exists before checking usage.
         if (!socketRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Socket not found with id: " + id);
         }
@@ -95,6 +94,7 @@ public class LookupServiceImpl implements LookupService {
         socketRepository.deleteById(id);
     }
 
+    // ==================[ RAM Type Management ]==================
     @Override
     public RamType createRamType(RamTypeRequest request) {
         if (ramTypeRepository.findByName(request.getName()).isPresent()) {
@@ -121,7 +121,6 @@ public class LookupServiceImpl implements LookupService {
 
     @Override
     public void deleteRamType(String id) {
-        // REFACTOR: Fetch first pattern for robustness.
         if (!ramTypeRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "RAM Type not found with id: " + id);
         }
@@ -131,6 +130,7 @@ public class LookupServiceImpl implements LookupService {
         ramTypeRepository.deleteById(id);
     }
 
+    // ==================[ Form Factor Management ]==================
     @Override
     public FormFactor createFormFactor(FormFactorRequest request) {
         if (formFactorRepository.findByNameAndType(request.getName(), request.getType()).isPresent()) {
@@ -158,7 +158,6 @@ public class LookupServiceImpl implements LookupService {
 
     @Override
     public void deleteFormFactor(String id) {
-        // REFACTOR: Fetch first pattern for robustness.
         if (!formFactorRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Form Factor not found with id: " + id);
         }
@@ -168,6 +167,7 @@ public class LookupServiceImpl implements LookupService {
         formFactorRepository.deleteById(id);
     }
 
+    // ==================[ Storage Interface Management ]==================
     @Override
     public StorageInterface createStorageInterface(StorageInterfaceRequest request) {
         if (storageInterfaceRepository.findByName(request.getName()).isPresent()) {
@@ -194,7 +194,6 @@ public class LookupServiceImpl implements LookupService {
 
     @Override
     public void deleteStorageInterface(String id) {
-        // REFACTOR: Fetch first pattern for robustness.
         if (!storageInterfaceRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Storage Interface not found with id: " + id);
         }
@@ -204,7 +203,7 @@ public class LookupServiceImpl implements LookupService {
         storageInterfaceRepository.deleteById(id);
     }
 
-    // --- Correctly Implemented Methods (No Changes) ---
+    // ==================[ Shipping Provider Management ]==================
     @Override
     public ShippingProvider createShippingProvider(ShippingProviderRequest request, MultipartFile image) {
         if (shippingProviderRepository.findByName(request.getName()).isPresent()) {
@@ -244,6 +243,7 @@ public class LookupServiceImpl implements LookupService {
         shippingProviderRepository.deleteById(id);
     }
 
+    // ==================[ Brand Management ]==================
     @Override
     public Brand createBrand(BrandRequest request, MultipartFile image) {
         if (brandRepository.findByName(request.getName()).isPresent()) {

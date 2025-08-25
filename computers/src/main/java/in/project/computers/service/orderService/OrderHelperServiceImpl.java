@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// คลาส Helper สำหรับจัดการ Logic ย่อยที่ซับซ้อนของ OrderService
 @org.springframework.stereotype.Component
 @RequiredArgsConstructor
 @Slf4j
@@ -57,21 +56,20 @@ public class OrderHelperServiceImpl implements OrderHelperService {
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order cannot be created from an empty cart.");
         }
-
-        // +++ [NEW LOGIC] ดึงข้อมูลที่อยู่สำหรับจัดส่งจาก Request +++
+        // === [CREATE-3.2] ดึงข้อมูลที่อยู่สำหรับจัดส่ง ===
         Address shippingAddress = resolveShippingAddress(request, currentUser);
 
-        // === [CREATE-3.2] ตรวจสอบสต็อกสินค้าทั้งหมดที่ต้องการในตะกร้าก่อนสร้างออเดอร์ ===
+        // === [CREATE-3.3] ตรวจสอบสต็อกสินค้าทั้งหมดที่ต้องการในตะกร้าก่อนสร้างออเดอร์ ===
         validateOverallStockFromCart(cart);
 
-        // === [CREATE-3.3] สร้างรายการสินค้า (LineItems) จากตะกร้า ===
+        // === [CREATE-3.4] สร้างรายการสินค้า (LineItems) จากตะกร้า และคำนวณยอดรวมย่อย ===
         List<OrderLineItem> lineItems = new ArrayList<>();
         BigDecimal subtotal = BigDecimal.ZERO;
 
         for (CartItem cartItem : cart.getItems()) {
             OrderLineItem lineItem;
             if (cartItem.getItemType() == LineItemType.BUILD) {
-                // === [CREATE-3.3.1] กรณีเป็นสินค้าจัดสเปค (Build) ===
+                // === [CREATE-3.4.1] กรณีเป็นสินค้าจัดสเปค (Build) ===
                 lineItem = OrderLineItem.builder()
                         .itemType(LineItemType.BUILD)
                         .name(cartItem.getName())
@@ -82,7 +80,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                         .imageUrl(null)
                         .build();
             } else {
-                // === [CREATE-3.3.2] กรณีเป็นชิ้นส่วน (Component) ===
+                // === [CREATE-3.4.2] กรณีเป็นชิ้นส่วน (Component) ===
                 Component component = componentRepository.findById(cartItem.getProductId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component with ID " + cartItem.getProductId() + " not found."));
 
@@ -100,11 +98,11 @@ public class OrderHelperServiceImpl implements OrderHelperService {
             subtotal = subtotal.add(lineItem.getUnitPrice().multiply(BigDecimal.valueOf(lineItem.getQuantity())));
         }
 
-        // === [CREATE-3.4] คำนวณภาษีและยอดรวมสุทธิ ===
+        // === [CREATE-3.5] คำนวณภาษีและยอดรวมสุทธิ ===
         BigDecimal taxAmount = subtotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
         BigDecimal totalAmount = subtotal.add(taxAmount);
 
-        // === [CREATE-3.5] สร้างอ็อบเจกต์ Order พร้อมข้อมูลทั้งหมด (UPDATED) ===
+        // === [CREATE-3.6] สร้างอ็อบเจกต์ Order พร้อมข้อมูลทั้งหมด (UPDATED) ===
         Order order = Order.builder()
                 .userId(currentUser.getId())
                 .shippingAddress(shippingAddress)
@@ -128,7 +126,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
      * เมธอดภายในสำหรับตรวจสอบสต็อกสินค้าทั้งหมดในตะกร้า
      */
     private void validateOverallStockFromCart(Cart cart) {
-        // === [CREATE-3.2.1] รวบรวมจำนวนชิ้นส่วนทั้งหมดที่ต้องการจากทุกรายการในตะกร้า ===
+        // === [CREATE-3.3.1] รวบรวมจำนวนชิ้นส่วนทั้งหมดที่ต้องการจากทุกรายการในตะกร้า ===
         Map<String, Integer> requiredStock = new HashMap<>();
         for (CartItem item : cart.getItems()) {
             if (item.getItemType() == LineItemType.BUILD) {
@@ -143,19 +141,19 @@ public class OrderHelperServiceImpl implements OrderHelperService {
             }
         }
 
-        // === [CREATE-3.2.2] ตรวจสอบสต็อกคงเหลือในคลังกับจำนวนที่ต้องการ ===
+        // === [CREATE-3.3.2] ตรวจสอบสต็อกคงเหลือในคลังกับจำนวนที่ต้องการ ===
         if (requiredStock.isEmpty()) {
             return;
         }
 
+        // === [CREATE-3.3.3] ดึงข้อมูลสต็อกและชื่อของ Component ที่เกี่ยวข้อง ===
         List<String> componentIds = new ArrayList<>(requiredStock.keySet());
-
         Map<String, Integer> availableStockMap = inventoryRepository.findByComponentIdIn(componentIds).stream()
                 .collect(Collectors.toMap(Inventory::getComponentId, Inventory::getQuantity));
-
         Map<String, String> componentNameMap = componentRepository.findAllById(componentIds).stream()
                 .collect(Collectors.toMap(Component::getId, Component::getName));
 
+        // === [CREATE-3.3.4] เปรียบเทียบสต็อกคงเหลือกับจำนวนที่ต้องการสำหรับแต่ละชิ้นส่วน ===
         for (Map.Entry<String, Integer> entry : requiredStock.entrySet()) {
             String componentId = entry.getKey();
             int required = entry.getValue();
@@ -253,16 +251,17 @@ public class OrderHelperServiceImpl implements OrderHelperService {
     }
 
     private Address resolveShippingAddress(CreateOrderRequest request, UserEntity user) {
+        // === [CREATE-3.2.1] กรณีใช้ที่อยู่ที่บันทึกไว้ ===
         if (request.getSavedAddressId() != null && !request.getSavedAddressId().isBlank()) {
             log.info("Resolving address using savedAddressId: {}", request.getSavedAddressId());
             AddressDTO savedAddressDto = addressService.getAddressById(user.getId(), request.getSavedAddressId());
             return addressConverter.convertDtoToEntity(savedAddressDto);
-
+            // === [CREATE-3.2.2] กรณีใช้ที่อยู่ใหม่ที่กรอกเข้ามา ===
         } else if (request.getNewAddress() != null) {
             log.info("Resolving address using newAddress object.");
             AddressDTO newAddrDTO = request.getNewAddress();
             return addressConverter.convertDtoToEntity(newAddrDTO);
-
+            // === [CREATE-3.2.3] กรณีไม่ระบุที่อยู่ ===
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A shipping address is required. Please provide either a savedAddressId or a newAddress object.");
         }
@@ -270,8 +269,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
 
     @Override
     public OrderResponse entityToResponse(Order order) {
-        // === [RESPONSE-MAPPER-1] แปลง Order Entity เป็น OrderResponse DTO ===
-
+        // === [RESPONSE-MAPPER-1] แปลง PaymentDetails entity เป็น PaymentDetailsResponse DTO (ถ้ามี) ===
         PaymentDetailsResponse paymentDetailsResponse = null;
         if (order.getPaymentDetails() != null) {
             PaymentDetails detailsEntity = order.getPaymentDetails();
@@ -286,9 +284,10 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                     .build();
         }
 
-        // +++ [2] CONVERT the Address entity to AddressDTO +++
+        // === [RESPONSE-MAPPER-2] แปลง Address entity เป็น AddressDTO ===
         AddressDTO shippingAddressDto = addressConverter.convertEntityToDto(order.getShippingAddress());
 
+        // === [RESPONSE-MAPPER-3] สร้าง OrderResponse DTO หลักและประกอบข้อมูลทั้งหมด ===
         return OrderResponse.builder()
                 .id(order.getId())
                 .userId(order.getUserId())

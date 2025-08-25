@@ -12,5 +12,6 @@ import java.util.Optional;
 public interface InventoryRepository extends MongoRepository<Inventory, String>, InventoryRepositoryCustom {
     Optional<Inventory> findByComponentId(String componentId);
     List<Inventory> findByComponentIdIn(List<String> componentIds);
+    // ยังไม่ใช้
     //List<Inventory> findAllByComponentIdIn(List<String> componentIds);
 }

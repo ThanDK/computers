@@ -1,5 +1,3 @@
-// src/pages/ComponentsPage.js
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -10,14 +8,12 @@ import MainHeader from '../../components/MainHeader/MainHeader';
 import ReusableTable from '../../components/ReusableTable/ReusableTable';
 import ImageModal from '../../components/ImageModal/ImageModal';
 import TableControls from '../../components/TableControls/TableControls';
-import TruncatedText from '../../components/TruncatedText/TruncatedText'; // <-- IMPORT
-import InlineStockEditor from '../../components/InlineStockEditor/InlineStockEditor'; // <-- IMPORT
+import TruncatedText from '../../components/TruncatedText/TruncatedText';
+import InlineStockEditor from '../../components/InlineStockEditor/InlineStockEditor';
 import { Button, Form, InputGroup } from 'react-bootstrap';
 import { BsSearch, BsPlusCircleFill, BsArrowCounterclockwise } from 'react-icons/bs';
 import './ComponentsPage.css';
 import '../../components/ImageModal/ImageModal.css';
-
-// TruncatedText component is now removed from this file
 
 function ComponentsPage() {
   const navigate = useNavigate();
@@ -43,10 +39,8 @@ function ComponentsPage() {
   const [globalFilter, setGlobalFilter] = useState(initialState.globalFilter);
   const [columnFilters, setColumnFilters] = useState(initialState.columnFilters);
   const [pagination, setPagination] = useState(initialState.pagination);
-  const [editingRowId, setEditingRowId] = useState(null); // <-- This state remains on the page
+  const [editingRowId, setEditingRowId] = useState(null);
   const [imageModalUrl, setImageModalUrl] = useState(null);
-
-  // Stock editor refs and effect are now removed from this file
 
   const loadData = useCallback(async () => {
     if (!token) return;

@@ -1,10 +1,7 @@
-// src/pages/AddComponentPage/AddComponentPage.jsx
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Row, Col, Spinner, Card } from 'react-bootstrap';
 
-// Import Services and Components
 import { createComponent } from '../../services/ComponentService';
 import { fetchAllLookups } from '../../services/LookupService';
 import { notifySuccess, notifyError } from '../../services/NotificationService';
@@ -22,7 +19,6 @@ import {
 } from '../../config/ComponentFormConfig.jsx';
 
 function AddComponentPage() {
-    // State Management
     const [selectedType, setSelectedType] = useState('');
     const [formData, setFormData] = useState({});
     const [lookups, setLookups] = useState(null);
@@ -33,12 +29,10 @@ function AddComponentPage() {
     const [originalImageSrc, setOriginalImageSrc] = useState('');
     const [cropModalState, setCropModalState] = useState({ show: false, src: '' });
 
-    // Hooks and Refs
     const fileInputRef = useRef(null);
     const { token } = useAuth();
     const navigate = useNavigate();
 
-    // Side Effects
     useEffect(() => {
         const getLookups = async () => {
             if (!token) {
@@ -66,7 +60,6 @@ function AddComponentPage() {
         };
     }, [imagePreviewUrl]);
 
-    // Event Handlers
     const handleTypeChange = (e) => {
         const type = e.target.value;
         setSelectedType(type);
@@ -151,7 +144,6 @@ function AddComponentPage() {
         }
     };
     
-    // Render
     if (isLoading) {
         return <div className="text-center p-5"><Spinner animation="border" variant="light" /></div>;
     }
@@ -240,9 +232,6 @@ function AddComponentPage() {
 
                                 <h5 className="section-header">3. Specific Details for {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}</h5>
                                 
-                                {/* ========================================================================= */}
-                                {/* ===== THIS IS THE CRITICAL FIX: handleTagAdd/Remove ARE RESTORED ===== */}
-                                {/* ========================================================================= */}
                                 {lookups && COMPONENT_CONFIG[selectedType]?.render({
                                     formData,
                                     lookups,

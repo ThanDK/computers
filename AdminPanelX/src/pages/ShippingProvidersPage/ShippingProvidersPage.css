@@ -1,51 +1,59 @@
-/* DELETE ALL OF THESE RULES from ShippingProvidersPage.css */
-
+/* --- โซน Modal Style --- */
 .provider-form-modal .modal-content {
-    background-color: var(--secondary-bg);
-    color: var(--text-primary);
-    border: 1px solid #4a5a76;
-    border-radius: 12px;
+  background-color: var(--secondary-bg);
+  border: 1px solid #4a5a76;
+  border-radius: 12px;
+  color: var(--text-primary);
 }
+
 .provider-form-modal .modal-header {
-    border-bottom: 1px solid #4a5a76;
+  border-bottom: 1px solid #4a5a76;
 }
+
 .provider-form-modal .modal-footer {
-    border-top: 1px solid #4a5a76;
+  border-top: 1px solid #4a5a76;
 }
+
 .provider-form-modal .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%);
+  filter: invert(1) grayscale(100%) brightness(200%);
 }
+
 .provider-form-modal .form-label {
-    color: var(--text-secondary);
-    font-weight: 500;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
+
 .provider-form-modal .form-control,
 .provider-form-modal .form-select {
-    background-color: var(--primary-bg);
-    color: var(--text-primary);
-    border: 1px solid #4a5a76;
+  background-color: var(--primary-bg);
+  border: 1px solid #4a5a76;
+  color: var(--text-primary);
 }
+
 .provider-form-modal .form-control:focus,
 .provider-form-modal .form-select:focus {
-    background-color: var(--primary-bg);
-    color: var(--text-primary);
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 0.2rem rgba(136, 132, 216, 0.25);
+  background-color: var(--primary-bg);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(136, 132, 216, 0.25);
+  color: var(--text-primary);
 }
+
+
+/* --- โซนรูปภาพ Logo --- */
 .logo-preview {
-    max-height: 80px;
-    width: auto;
-    max-width: 100%;
-    object-fit: contain;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 5px;
-    background-color: var(--table-header-bg);
+  background-color: var(--table-header-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  max-height: 80px;
+  max-width: 100%;
+  object-fit: contain;
+  padding: 5px;
+  width: auto;
 }
 
 .table-logo {
-    height: 30px;
-    width: auto;
-    max-width: 80px;
-    object-fit: contain;
+  height: 30px;
+  max-width: 80px;
+  object-fit: contain;
+  width: auto;
 }

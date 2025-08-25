@@ -1,8 +1,14 @@
-// src/services/ComponentService.js
 import { showConfirmation, handlePromise } from './NotificationService';
 
 const API_BASE_URL = 'http://localhost:8080/api/components';
 
+/**
+ * ฟังก์ชัน helper กลางสำหรับส่ง request ไปยัง API
+ * @param {string} url - URL ปลายทาง
+ * @param {object} options - Options สำหรับ fetch (method, headers, body)
+ * @returns {Promise<any>} ผลลัพธ์จาก API ในรูปแบบ JSON หรือ true ถ้าเป็น no-content
+ * @throws {Error} หาก request ล้มเหลว
+ */
 async function apiRequest(url, options = {}) {
     const response = await fetch(url, options);
     if (!response.ok) {
@@ -24,12 +30,23 @@ async function apiRequest(url, options = {}) {
     return response.json();
 }
 
+/**
+ * ดึงข้อมูล component ทั้งหมดจาก API
+ * @param {string} token - JWT token สำหรับยืนยันตัวตน
+ * @returns {Promise<Array>} Array ของ component object
+ */
 export async function fetchAllComponents(token) {
     return apiRequest(API_BASE_URL, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
 };
 
+/**
+ * ลบ component หนึ่งชิ้นออกจากระบบ (หลังจากยืนยัน)
+ * @param {object} component - Component object ที่ต้องการลบ
+ * @param {string} token - JWT token
+ * @returns {Promise<boolean|object>} Promise ที่จะ resolve เป็น true/object ถ้าสำเร็จ, หรือ false ถ้าผู้ใช้ยกเลิก
+ */
 export async function deleteComponent(component, token) {
     const isConfirmed = await showConfirmation(
         'Are you sure?',
@@ -52,6 +69,13 @@ export async function deleteComponent(component, token) {
     return promise;
 };
 
+/**
+ * อัปเดตสต็อกของ component (เพิ่ม/ลด)
+ * @param {string} componentId - ID ของ component ที่ต้องการอัปเดต
+ * @param {number} quantityChange - จำนวนที่เปลี่ยนแปลง (บวกสำหรับเพิ่ม, ลบสำหรับลด)
+ * @param {string} token - JWT token
+ * @returns {Promise<object>} Promise ที่จะ resolve เป็น component object ที่อัปเดตแล้ว
+ */
 export async function updateComponentStock(componentId, quantityChange, token) {
     const promise = apiRequest(`${API_BASE_URL}/stock/${componentId}`, {
         method: 'PATCH',
@@ -71,6 +95,13 @@ export async function updateComponentStock(componentId, quantityChange, token) {
     return promise;
 };
 
+/**
+ * สร้าง component ใหม่
+ * @param {object} componentData - ข้อมูลของ component ที่จะสร้าง
+ * @param {File} imageFile - ไฟล์รูปภาพ (ถ้ามี)
+ * @param {string} token - JWT token
+ * @returns {Promise<object>} Component object ที่ถูกสร้างใหม่
+ */
 export async function createComponent(componentData, imageFile, token) {
     const formData = new FormData();
     formData.append('request', new Blob([JSON.stringify(componentData)], { type: 'application/json' }));
@@ -85,12 +116,27 @@ export async function createComponent(componentData, imageFile, token) {
     });
 };
 
+/**
+ * ดึงข้อมูล component หนึ่งชิ้นด้วย ID
+ * @param {string} id - ID ของ component
+ * @param {string} token - JWT token
+ * @returns {Promise<object>} Component object ที่ตรงกับ ID
+ */
 export async function getComponentById(id, token) {
     return apiRequest(`${API_BASE_URL}/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
 };
 
+/**
+ * อัปเดตข้อมูล component หนึ่งชิ้น
+ * @param {string} id - ID ของ component ที่จะอัปเดต
+ * @param {object} componentData - ข้อมูลใหม่ของ component
+ * @param {File} imageFile - ไฟล์รูปภาพใหม่ (ถ้ามีการเปลี่ยน)
+ * @param {boolean} removeImage - ตั้งเป็น true ถ้าต้องการลบรูปภาพปัจจุบัน
+ * @param {string} token - JWT token
+ * @returns {Promise<object>} Component object ที่อัปเดตแล้ว
+ */
 export async function updateComponent(id, componentData, imageFile, removeImage, token) {
     const formData = new FormData();
     formData.append('request', new Blob([JSON.stringify(componentData)], { type: "application/json" }));

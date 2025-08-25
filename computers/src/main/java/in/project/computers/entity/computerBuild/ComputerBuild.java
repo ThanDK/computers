@@ -20,14 +20,12 @@ public class ComputerBuild {
     private String userId;
     private String buildName;
 
-    // --- ส่วนประกอบที่มีชิ้นเดียว ---
     private Cpu cpu;
     private Motherboard motherboard;
     private Psu psu;
     private Case caseDetail;
     private Cooler cooler;
 
-    // --- ส่วนประกอบที่อาจมีหลายชิ้น ---
     private List<BuildPart<RamKit>> ramKits;
     private List<BuildPart<Gpu>> gpus;
     private List<BuildPart<StorageDrive>> storageDrives;

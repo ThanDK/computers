@@ -7,10 +7,10 @@ import in.project.computers.DTO.component.componentResponse.*;
 import in.project.computers.entity.component.*;
 import in.project.computers.entity.computerBuild.BuildPart;
 import in.project.computers.entity.computerBuild.ComputerBuild;
-import in.project.computers.repository.componentRepository.ComponentRepository;
 import in.project.computers.repository.generalReposiroty.ComputerBuildRepository;
 import in.project.computers.service.componentService.ComponentConverter;
 import in.project.computers.service.userAuthenticationService.UserService;
+import in.project.computers.service.util.ComponentFetcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,17 +21,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * เอกสารอธิบาย:
- * คลาสนี้ได้รับการปรับปรุงใหม่ทั้งหมดเพื่อให้ทำงานกับ ComputerBuild Entity ที่เก็บข้อมูลแบบ Embedded
- * การเปลี่ยนแปลงหลัก:
- * - ใช้เมธอด convertEntityToResponse(entity, Class) ที่เป็น Type-Safe จาก ComponentConverter
- *   เพื่อกำจัดคำเตือน "Unchecked Cast" ทั้งหมด ทำให้โค้ดปลอดภัยและน่าเชื่อถือมากขึ้น
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -39,23 +31,23 @@ public class UserBuildServiceImpl implements UserBuildService {
 
     private final ComputerBuildRepository buildRepository;
     private final UserService userService;
-    private final ComponentRepository componentRepository;
     private final ComponentConverter componentConverter;
+    private final ComponentFetcher componentFetcher;
 
     @Override
     @Transactional
     public ComputerBuildDetailResponse saveBuild(ComputerBuildRequest request) {
         String userId = userService.findByUserId();
 
-        Cpu cpu = fetchComponentEntity(request.getCpuId(), Cpu.class);
-        Motherboard motherboard = fetchComponentEntity(request.getMotherboardId(), Motherboard.class);
-        Psu psu = fetchComponentEntity(request.getPsuId(), Psu.class);
-        Case caseDetail = fetchComponentEntity(request.getCaseId(), Case.class);
-        Cooler cooler = fetchComponentEntity(request.getCoolerId(), Cooler.class);
+        Cpu cpu = componentFetcher.fetchComponentEntity(request.getCpuId(), Cpu.class);
+        Motherboard motherboard = componentFetcher.fetchComponentEntity(request.getMotherboardId(), Motherboard.class);
+        Psu psu = componentFetcher.fetchComponentEntity(request.getPsuId(), Psu.class);
+        Case caseDetail = componentFetcher.fetchComponentEntity(request.getCaseId(), Case.class);
+        Cooler cooler = componentFetcher.fetchComponentEntity(request.getCoolerId(), Cooler.class);
 
-        List<BuildPart<RamKit>> ramKits = fetchBuildParts(request.getRamKits(), RamKit.class);
-        List<BuildPart<Gpu>> gpus = fetchBuildParts(request.getGpus(), Gpu.class);
-        List<BuildPart<StorageDrive>> storageDrives = fetchBuildParts(request.getStorageDrives(), StorageDrive.class);
+        List<BuildPart<RamKit>> ramKits = componentFetcher.fetchBuildParts(request.getRamKits(), RamKit.class);
+        List<BuildPart<Gpu>> gpus = componentFetcher.fetchBuildParts(request.getGpus(), Gpu.class);
+        List<BuildPart<StorageDrive>> storageDrives = componentFetcher.fetchBuildParts(request.getStorageDrives(), StorageDrive.class);
 
         ComputerBuild buildEntity = ComputerBuild.builder()
                 .userId(userId)
@@ -98,6 +90,43 @@ public class UserBuildServiceImpl implements UserBuildService {
         }
 
         return convertEntityToResponse(build);
+    }
+    @Override
+    @Transactional
+    public ComputerBuildDetailResponse updateBuild(String buildId, ComputerBuildRequest request) {
+        String currentUserId = userService.findByUserId();
+
+        ComputerBuild buildToUpdate = buildRepository.findById(buildId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Build not found with ID: " + buildId));
+
+        if (!buildToUpdate.getUserId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: You do not have permission to edit this build.");
+        }
+
+        Cpu cpu = componentFetcher.fetchComponentEntity(request.getCpuId(), Cpu.class);
+        Motherboard motherboard = componentFetcher.fetchComponentEntity(request.getMotherboardId(), Motherboard.class);
+        Psu psu = componentFetcher.fetchComponentEntity(request.getPsuId(), Psu.class);
+        Case caseDetail = componentFetcher.fetchComponentEntity(request.getCaseId(), Case.class);
+        Cooler cooler = componentFetcher.fetchComponentEntity(request.getCoolerId(), Cooler.class);
+        List<BuildPart<RamKit>> ramKits = componentFetcher.fetchBuildParts(request.getRamKits(), RamKit.class);
+        List<BuildPart<Gpu>> gpus = componentFetcher.fetchBuildParts(request.getGpus(), Gpu.class);
+        List<BuildPart<StorageDrive>> storageDrives = componentFetcher.fetchBuildParts(request.getStorageDrives(), StorageDrive.class);
+
+        buildToUpdate.setBuildName(request.getBuildName());
+        buildToUpdate.setCpu(cpu);
+        buildToUpdate.setMotherboard(motherboard);
+        buildToUpdate.setPsu(psu);
+        buildToUpdate.setCaseDetail(caseDetail);
+        buildToUpdate.setCooler(cooler);
+        buildToUpdate.setRamKits(ramKits);
+        buildToUpdate.setGpus(gpus);
+        buildToUpdate.setStorageDrives(storageDrives);
+
+
+        ComputerBuild updatedBuild = buildRepository.save(buildToUpdate);
+        log.info("Successfully updated build with ID: {} for user ID: {}", updatedBuild.getId(), currentUserId);
+
+        return convertEntityToResponse(updatedBuild);
     }
 
     @Override
@@ -152,31 +181,6 @@ public class UserBuildServiceImpl implements UserBuildService {
                 .map(part -> {
                     R response = componentConverter.convertEntityToResponse(part.getComponent(), responseClass);
                     return new BuildPartDetail<>(response, part.getQuantity());
-                })
-                .collect(Collectors.toList());
-    }
-
-    private <T extends Component> T fetchComponentEntity(String componentId, Class<T> componentClass) {
-        if (componentId == null || componentId.isBlank()) {
-            return null;
-        }
-        Component component = componentRepository.findById(componentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Component not found with ID: " + componentId));
-
-        if (!componentClass.isInstance(component)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Component with ID " + componentId + " is not of expected type " + componentClass.getSimpleName());
-        }
-        return componentClass.cast(component);
-    }
-
-    private <T extends Component> List<BuildPart<T>> fetchBuildParts(Map<String, Integer> componentMap, Class<T> componentClass) {
-        if (componentMap == null || componentMap.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return componentMap.entrySet().stream()
-                .map(entry -> {
-                    T component = fetchComponentEntity(entry.getKey(), componentClass);
-                    return new BuildPart<>(component, entry.getValue());
                 })
                 .collect(Collectors.toList());
     }

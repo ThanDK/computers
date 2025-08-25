@@ -16,7 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * Controller สำหรับจัดการโปรไฟล์ส่วนตัวของผู้ใช้ที่ล็อกอินอยู่
  * <p>
- * <b>คำเตือน:</b> {@code @CrossOrigin("*")} ไม่ปลอดภัยสำหรับ Production ควรระบุ Origin ของ Frontend ให้ชัดเจน
+ * ให้ผู้ใช้สามารถดู, อัปเดตข้อมูลส่วนตัว, และจัดการรูปโปรไฟล์ได้
+ * ทุก Endpoint ในคลาสนี้ต้องการการยืนยันตัวตน (Authentication)
  */
 @RestController
 @RequestMapping("/api/profile")
@@ -29,8 +30,8 @@ public class UserProfileController {
 
     /**
      * ดึงข้อมูลโปรไฟล์ของผู้ใช้ที่ล็อกอินอยู่ปัจจุบัน
-     * @param authentication ข้อมูลการยืนยันตัวตน (Spring Security inject ให้)
-     * @return ข้อมูลโปรไฟล์ของผู้ใช้
+     * @param authentication ข้อมูลการยืนยันตัวตนที่ถูก inject โดย Spring Security
+     * @return ข้อมูลโปรไฟล์ของผู้ใช้ (UserResponse)
      */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUserProfile(Authentication authentication) {
@@ -40,10 +41,12 @@ public class UserProfileController {
     }
 
     /**
-     * อัปเดตข้อมูลโปรไฟล์และรูปภาพของผู้ใช้ (รับข้อมูลแบบ multipart/form-data)
-     * @param request ข้อมูลโปรไฟล์ที่ต้องการอัปเดต (part: "profileData")
-     * @param file รูปภาพโปรไฟล์ใหม่ (optional, part: "file")
-     * @return ข้อมูลโปรไฟล์หลังการอัปเดต
+     * อัปเดตข้อมูลโปรไฟล์ (เช่น ชื่อ) และ/หรือรูปภาพของผู้ใช้
+     * <p>
+     * รับข้อมูลแบบ multipart/form-data เพื่อให้สามารถส่งข้อมูล JSON และไฟล์รูปภาพได้พร้อมกัน
+     * @param request ข้อมูลโปรไฟล์ที่ต้องการอัปเดต (JSON ใน part ที่ชื่อ "profileData")
+     * @param file รูปภาพโปรไฟล์ใหม่ (เป็นทางเลือก, ใน part ที่ชื่อ "file")
+     * @return ข้อมูลโปรไฟล์ของผู้ใช้หลังการอัปเดต
      */
     @PutMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<UserResponse> updateUserProfile(
@@ -56,8 +59,8 @@ public class UserProfileController {
     }
 
     /**
-     * ลบรูปภาพโปรไฟล์ของผู้ใช้
-     * @return ข้อมูลโปรไฟล์หลังการอัปเดต (ไม่มีรูปภาพ)
+     * ลบรูปภาพโปรไฟล์ของผู้ใช้ที่ล็อกอินอยู่
+     * @return ข้อมูลโปรไฟล์ของผู้ใช้หลังการอัปเดต (ซึ่งจะไม่มี URL ของรูปภาพ)
      */
     @DeleteMapping("/picture")
     public ResponseEntity<UserResponse> removeUserProfilePicture() {

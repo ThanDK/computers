@@ -18,14 +18,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = { ResponseStatusException.class })
     protected ResponseEntity<Object> handleResponseStatusException(ResponseStatusException ex, WebRequest request) {
 
-
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("status", ex.getStatusCode().value());
 
-
         String reason = Optional.ofNullable(ex.getReason()).orElse("No specific reason provided.");
         body.put("error", reason);
-
         return handleExceptionInternal(ex, body, new HttpHeaders(), ex.getStatusCode(), request);
     }
 

@@ -1,88 +1,106 @@
 /*
   ==========================================================================
-  Global Common Styles
+  Global Styles (สไตล์กลางที่ใช้ซ้ำ)
   ==========================================================================
-  This file contains reusable styles for common UI elements like form inputs,
-  buttons, and table layouts that are used across multiple pages.
-  This file should be imported ONCE in your main App.js or index.js.
+  ไฟล์นี้เก็บ style ที่ใช้ซ้ำๆ กันในหลายๆ หน้า เช่น form, button, table
+  เพื่อให้ UI มีความสอดคล้องกันทั่วทั้งเว็บ
 */
 
-/* --- Reusable Filter/Action Bar Controls --- */
+/* --- โซน Filter/Action Bar Controls --- */
+/*
+  ใช้หลักๆ ในหน้า:
+  - LookupsPage.js
+  - OrdersPage.js
+  - ShippingProvidersPage.js
+  - UsersPage.js
+*/
 .filter-controls {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-grow: 1;
-    flex-wrap: wrap;
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .search-bar {
-    max-width: 400px;
-    flex-grow: 1;
+  flex-grow: 1;
+  max-width: 400px;
 }
 
-/* This is the style for STANDARD, shorter dropdowns */
+/* style สำหรับ dropdown filter ทั่วไปที่มีขนาดไม่กว้างมาก */
 .type-filter {
-    max-width: 200px;
-    background-color: var(--primary-bg) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid #4a5a76 !important;
-    box-shadow: none !important;
+  background-color: var(--primary-bg) !important;
+  border: 1px solid #4a5a76 !important;
+  box-shadow: none !important;
+  color: var(--text-primary) !important;
+  max-width: 200px;
 }
 
-
+/* style สำหรับ dropdown filter customer ที่ต้องการความกว้างมากกว่าปกติ */
 .customer-filter {
-    max-width: 300px; 
-    flex-grow: 1;   
+  flex-grow: 1;
+  max-width: 300px;
 }
-
 
 .search-input {
-    background-color: var(--primary-bg) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid #4a5a76 !important;
-    box-shadow: none !important;
+  background-color: var(--primary-bg) !important;
+  border: 1px solid #4a5a76 !important;
+  box-shadow: none !important;
+  color: var(--text-primary) !important;
 }
-.search-input::placeholder { 
-    color: var(--text-secondary); 
+.search-input::placeholder {
+  color: var(--text-secondary);
 }
 .search-input-group-text {
-    background-color: var(--primary-bg) !important;
-    border: 1px solid #4a5a76 !important;
-    border-left: none !important;
-    color: var(--text-secondary) !important;
+  background-color: var(--primary-bg) !important;
+  border: 1px solid #4a5a76 !important;
+  border-left: none !important;
+  color: var(--text-secondary) !important;
 }
 
 
-/* --- Reusable Action Buttons --- */
+/* --- โซนปุ่ม Action ในตาราง --- */
+/*
+  ใช้หลักๆ ในหน้า:
+  - LookupsPage.js
+  - ShippingProvidersPage.js
+  - UsersPage.js
+*/
 .action-btn {
-    font-weight: 500;
-    min-width: 65px;
+  font-weight: 500;
+  min-width: 65px;
 }
 
 .action-btn-edit {
-    --bs-btn-color: #60a5fa;
-    --bs-btn-border-color: #60a5fa;
-    --bs-btn-hover-bg: #3b82f6;
-    --bs-btn-hover-border-color: #3b82f6;
-    --bs-btn-hover-color: #fff;
+  --bs-btn-border-color: #60a5fa;
+  --bs-btn-color: #60a5fa;
+  --bs-btn-hover-bg: #3b82f6;
+  --bs-btn-hover-border-color: #3b82f6;
+  --bs-btn-hover-color: #fff;
 }
 
 .action-btn-delete {
-    --bs-btn-color: #f87171;
-    --bs-btn-border-color: #f87171;
-    --bs-btn-hover-bg: #ef4444;
-    --bs-btn-hover-border-color: #ef4444;
-    --bs-btn-hover-color: #fff;
+  --bs-btn-border-color: #f87171;
+  --bs-btn-color: #f87171;
+  --bs-btn-hover-bg: #ef4444;
+  --bs-btn-hover-border-color: #ef4444;
+  --bs-btn-hover-color: #fff;
 }
 
 
-/* --- Reusable Table Cell Alignment --- */
-.text-center-header, 
-.text-center-cell { 
-    text-align: center; 
+/* --- โซนจัดตำแหน่ง Text ในตาราง --- */
+/*
+  ใช้ใน column definitions ของ ReusableTable ในหลายๆ หน้า:
+  - LookupsPage.js
+  - OrdersPage.js
+  - UsersPage.js
+*/
+.text-center-header,
+.text-center-cell {
+  text-align: center;
 }
 
-.text-center-cell > * { 
-    margin: auto; 
+/* ทำให้ element ที่อยู่ข้างใน cell (เช่น div ที่ครอบปุ่ม) ถูกจัดกลางไปด้วย */
+.text-center-cell > * {
+  margin: auto;
 }

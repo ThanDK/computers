@@ -1,5 +1,3 @@
-// src/components/OrderDetails/OrderSummary/OrderSummary.js
-
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { format } from 'date-fns';
@@ -10,6 +8,7 @@ import {
 } from 'react-icons/bs';
 import './OrderSummary.css';
 
+// Component ย่อยสำหรับ render แถวข้อมูลแต่ละแถวให้มี layout เหมือนกัน
 const DetailRow = ({ icon, label, children }) => (
     <div className="detail-row">
         <div className="detail-label">
@@ -20,6 +19,7 @@ const DetailRow = ({ icon, label, children }) => (
     </div>
 );
 
+// ฟังก์ชัน helper สำหรับจัดรูปแบบ object ที่อยู่ให้ออกมาเป็น string ที่อ่านง่าย
 const formatAddress = (address) => {
     if (!address) {
         return "N/A";
@@ -41,10 +41,13 @@ function OrderSummary({ order }) {
         shippingDetails, createdAt, updatedAt, orderStatus
     } = order || {};
 
+    // สร้าง URL สำหรับดู transaction บนเว็บ PayPal sandbox
     const getPaypalTransactionUrl = (txId) => `https://www.sandbox.paypal.com/activity/payment/${txId}`;
     
+    // เช็คว่าถ้าจ่ายแบบโอนเงินและมี URL ของสลิปอยู่ ก็ให้เก็บ URL นั้นไว้
     const slipUrl = (paymentDetails?.paymentMethod === 'BANK_TRANSFER' && paymentDetails?.slipImageUrl) ? paymentDetails.slipImageUrl : null;
     
+    // ตรงนี้จะเปลี่ยนหน้าตาปุ่มดูสลิปตามสถานะ ถ้าสลิปถูกปฏิเสธ ก็จะให้ปุ่มเป็นสีแดงและข้อความเปลี่ยนไป
     const isRejected = orderStatus === 'REJECTED_SLIP';
     const buttonVariant = isRejected ? 'outline-danger' : 'outline-info';
     const buttonText = isRejected ? 'View Rejected Slip' : 'View Payment Slip';
@@ -66,10 +69,10 @@ function OrderSummary({ order }) {
                 {shippingDetails?.shippingProvider && (<DetailRow icon={<BsBoxSeam />} label="Shipped Via">{shippingDetails.shippingProvider}</DetailRow>)}
                 {shippingDetails?.trackingNumber && (<DetailRow icon={<BsHash />} label="Tracking #">{shippingDetails.trackingNumber}</DetailRow>)}
                 
-                {/* --- THIS BLOCK IS NOW CORRECTED --- */}
                 {paymentDetails?.paymentMethod && (
                     <DetailRow icon={<BsWallet2 />} label="Paid Via">
                         {paymentDetails.paymentMethod.replace(/_/g, ' ')}
+                        {/* ถ้าจ่ายด้วย PayPal และมี transactionId ก็จะแสดงลิงก์ให้กดไปดูได้ */}
                         {paymentDetails.transactionId && paymentDetails.paymentMethod === 'PAYPAL' && (
                             <a href={getPaypalTransactionUrl(paymentDetails.transactionId)} target="_blank" rel="noopener noreferrer" className="ms-1">
                                 (View Transaction)
@@ -81,6 +84,7 @@ function OrderSummary({ order }) {
                 <DetailRow icon={<BsCalendarPlus />} label="Created">{createdAt ? format(new Date(createdAt), 'dd MMM yyyy, HH:mm') : 'N/A'}</DetailRow>
                 <DetailRow icon={<BsCalendarCheck />} label="Last Update">{updatedAt ? format(new Date(updatedAt), 'dd MMM yyyy, HH:mm') : 'N/A'}</DetailRow>
 
+                {/* ปุ่มดูสลิปจะแสดงก็ต่อเมื่อมี slipUrl เท่านั้น */}
                 {slipUrl && (
                     <div className="mt-3 d-grid">
                         <Button

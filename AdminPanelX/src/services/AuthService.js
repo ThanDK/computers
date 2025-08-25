@@ -1,13 +1,11 @@
-// src/services/AuthService.js
-
 const API_BASE_URL = 'http://localhost:8080/api';
 
 /**
- * Logs in a user and returns the JWT token.
- * @param {string} email - The user's email.
- * @param {string} password - The user's password.
- * @returns {Promise<string>} The JWT token.
- * @throws {Error} If login fails.
+ * ทำการล็อกอินผู้ใช้และคืนค่า JWT token กลับมา
+ * @param {string} email - อีเมลของผู้ใช้
+ * @param {string} password - รหัสผ่านของผู้ใช้
+ * @returns {Promise<string>} JWT token ที่ได้รับ
+ * @throws {Error} หากการล็อกอินล้มเหลว
  */
 export async function loginUser(email, password) {
   const response = await fetch(`${API_BASE_URL}/login`, {

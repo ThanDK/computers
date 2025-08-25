@@ -2,11 +2,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
-    /* --- THE FIX IS HERE --- */
-    /* Removed top padding, kept bottom padding */
     padding-bottom: 1rem; 
-    
     margin-bottom: 1.5rem;
     border-bottom: 1px solid #4a5a76;
 }

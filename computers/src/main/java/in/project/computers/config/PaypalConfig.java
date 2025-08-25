@@ -5,9 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * คอนฟิกสำหรับเชื่อมต่อกับ Paypal REST API
- */
 @Configuration
 public class PaypalConfig {
 

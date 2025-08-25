@@ -37,7 +37,6 @@ function PageHeader({
             </div>
 
             <div className="page-header-actions">
-                {/* --- FIX: Refresh Button is rendered here --- */}
                 {onRefresh && (
                     <Button 
                         variant="outline-secondary"

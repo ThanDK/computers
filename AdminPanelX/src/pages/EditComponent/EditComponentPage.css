@@ -7,23 +7,21 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-    gap: 1rem; /* MODIFICATION: Added gap for spacing */
+    gap: 1rem;
 }
 
-/* MODIFICATION: New container for search and filter */
 .filter-controls {
     display: flex;
     align-items: center;
     gap: 1rem;
-    flex-grow: 1; /* Allow it to take available space */
+    flex-grow: 1;
 }
 
 .search-bar {
     max-width: 400px;
-    flex-grow: 1; /* Allow search bar to grow */
+    flex-grow: 1;
 }
 
-/* MODIFICATION: Styles for the new Type filter dropdown */
 .type-filter {
     max-width: 200px;
     background-color: var(--primary-bg) !important;
@@ -32,7 +30,6 @@
     box-shadow: none !important;
 }
 
-/* --- Table Container & Main Styles --- */
 .table-container {
     background-color: var(--secondary-bg);
     border-radius: 12px;
@@ -68,7 +65,6 @@
     word-wrap: break-word;
 }
 
-/* --- Text Truncation (With Hover effect) --- */
 .truncate-text {
     white-space: nowrap;
     overflow: hidden;
@@ -85,7 +81,6 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* --- Stock Status Dot --- */
 .status-dot-container {
     display: flex;
     align-items: center;
@@ -108,14 +103,13 @@
 }
 
 .status-dot-active {
-    background-color: #22c55e; /* Green */
+    background-color: #22c55e;
 }
 
 .status-dot-inactive {
-    background-color: #ef4444; /* Red */
+    background-color: #ef4444;
 }
 
-/* --- Alignment & Action Buttons --- */
 .text-center-header, 
 .text-center-cell { 
     text-align: center; 
@@ -146,7 +140,6 @@
     --bs-btn-hover-color: #fff;
 }
 
-/* --- Other Styles --- */
 .clickable-image { 
     cursor: pointer; 
     transition: transform 0.2s ease-in-out; 
@@ -203,4 +196,3 @@
     --bs-btn-disabled-color: #4a5a76;
     --bs-btn-disabled-border-color: #344258;
 }
-

@@ -120,16 +120,20 @@ public class OrderServiceImpl implements OrderService {
 
         // === [PPC-4] กรณีการยืนยันสำเร็จ: อัปเดตสถานะออเดอร์และตัดสต็อก ===
         if ("approved".equals(payment.getState())) {
+            // === [PPC-4.1] ตัดสต็อกสินค้า ===
             orderHelper.decrementStockForOrder(order);
 
+            // === [PPC-4.2] อัปเดตรายละเอียดการชำระเงิน ===
             PaymentDetails details = order.getPaymentDetails();
             details.setTransactionId(payment.getId());
             details.setPayerId(payment.getPayer().getPayerInfo().getPayerId());
             details.setPayerEmail(payment.getPayer().getPayerInfo().getEmail());
             details.setProviderStatus(payment.getState());
 
+            // === [PPC-4.3] อัปเดตสถานะออเดอร์ ===
             updateOrderStatusToPaid(order);
             log.info("Successfully captured PayPal payment for order ID: {}", orderId);
+            // === [PPC-4.4] บันทึกและส่งคืนผลลัพธ์ ===
             orderHelper.entityToResponse(orderRepository.save(order));
         } else {
             // === [PPC-5] กรณีการยืนยันล้มเหลว: อัปเดตสถานะเป็น FAILED ===
@@ -602,8 +606,6 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // === [REJECT-SLIP-2] เปลี่ยนสถานะเพื่อให้ผู้ใช้สามารถอัปโหลดสลิปใหม่ได้ ===
-        // การตั้งค่าสถานะ OrderStatus เป็น REJECTED_SLIP และ PaymentStatus เป็น PENDING
-        // จะทำให้ออเดอร์กลับไปสู่สถานะที่ผู้ใช้สามารถส่งหลักฐานการชำระเงินใหม่ได้
         order.setOrderStatus(OrderStatus.REJECTED_SLIP);
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setUpdatedAt(Instant.now());

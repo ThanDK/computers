@@ -16,10 +16,8 @@ public interface OrderRepository extends MongoRepository<Order, String> {
     @NonNull
     List<Order> findAll();
 
-    // Finds all orders created within the specified time frame.
     List<Order> findByCreatedAtBetween(Instant startDate, Instant endDate);
 
-    // Finds the top 5 most recent orders for the dashboard widget.
     List<Order> findTop5ByOrderByCreatedAtDesc();
 
 

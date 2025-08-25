@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controller สำหรับจัดการ Endpoint ที่ผู้ใช้ทั่วไปสามารถเข้าถึงได้ เช่น การลงทะเบียน
+ * Controller สำหรับจัดการ Endpoint ที่ผู้ใช้ทั่วไปสามารถเข้าถึงได้โดยไม่ต้องยืนยันตัวตน
+ * <p>
+ * หน้าที่หลักคือการลงทะเบียนผู้ใช้ใหม่ (Register)
  */
 @RestController
 @RequestMapping("/api")
@@ -22,9 +24,9 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * ลงทะเบียนผู้ใช้ใหม่
-     * @param request ข้อมูลสำหรับลงทะเบียน (email, password, name)
-     * @return ข้อมูลผู้ใช้ที่ลงทะเบียนสำเร็จ (HttpStatus 201)
+     * ลงทะเบียนผู้ใช้ใหม่เข้าสู่ระบบ
+     * @param request ข้อมูลที่จำเป็นสำหรับการลงทะเบียน ประกอบด้วย email, password, และชื่อ
+     * @return ข้อมูลของผู้ใช้ที่ลงทะเบียนสำเร็จ (ไม่รวมรหัสผ่าน) พร้อม HttpStatus 201 CREATED
      */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {

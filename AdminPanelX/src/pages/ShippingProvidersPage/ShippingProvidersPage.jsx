@@ -1,5 +1,3 @@
-// src/pages/ShippingProvidersPage/ShippingProvidersPage.js
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -25,6 +23,7 @@ function ShippingProvidersPage() {
   const { token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // อ่านค่า state ของตารางจาก URL search params ทำให้ URL เป็น 'source of truth'
   const tableState = useMemo(() => {
     const pageIndex = parseInt(searchParams.get('page')) || 0;
     const pageSize = parseInt(searchParams.get('pageSize')) || 10;
@@ -40,11 +39,14 @@ function ShippingProvidersPage() {
   const [modalState, setModalState] = useState({ show: false, type: 'add', currentItem: null });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageModalUrl, setImageModalUrl] = useState(null);
+  
+  // state ของตารางจะถูก sync กับ URL
   const [pagination, setPagination] = useState(tableState.pagination);
   const [sorting, setSorting] = useState(tableState.sorting);
   const [globalFilter, setGlobalFilter] = useState(tableState.globalFilter);
   const [columnFilters, setColumnFilters] = useState(tableState.columnFilters);
 
+  // ใช้ useCallback ครอบฟังก์ชันโหลดข้อมูลไว้ เพื่อไม่ให้ถูกสร้างใหม่ทุกครั้งที่ re-render
   const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -63,6 +65,7 @@ function ShippingProvidersPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // effect นี้จะคอยจับการเปลี่ยนแปลงของ state ตาราง แล้วอัปเดต URL search params ตาม
   useEffect(() => {
     const newSearchParams = new URLSearchParams();
     if (pagination.pageIndex > 0) newSearchParams.set('page', pagination.pageIndex.toString());
@@ -76,6 +79,7 @@ function ShippingProvidersPage() {
   const handleShowModal = (type, item = null) => setModalState({ show: true, type, currentItem: item });
   const handleCloseModal = () => setModalState({ show: false, type: 'add', currentItem: null });
 
+  // จัดการการ submit ฟอร์ม ทั้งการสร้างใหม่และการอัปเดต
   const handleFormSubmit = async (event, imageFile) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -92,7 +96,7 @@ function ShippingProvidersPage() {
         notifySuccess('Provider updated!');
       }
       handleCloseModal();
-      loadData();
+      loadData(); // โหลดข้อมูลใหม่หลังจาก submit สำเร็จ
     } catch (err)      {
       notifyError(err.message);
     } finally {
@@ -100,6 +104,7 @@ function ShippingProvidersPage() {
     }
   };
 
+  // ใช้ useCallback กับฟังก์ชันลบ เพื่อให้ ReusableTable ไม่ re-render โดยไม่จำเป็น
   const handleDelete = useCallback(async (item) => {
     const confirmed = await showConfirmation('Are you sure?', `This will permanently delete "${item.name}".`);
     if (!confirmed) return;
@@ -120,6 +125,7 @@ function ShippingProvidersPage() {
     loadData();
   };
 
+  // กำหนด columns ของตารางโดยใช้ useMemo เพื่อ performance
   const columns = useMemo(
     () => [
       {

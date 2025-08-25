@@ -106,7 +106,7 @@ public class AddressServiceImpl implements AddressService {
     public void setDefaultAddress(String userId, String addressId) {
         log.info("Setting address ID {} as default for user ID: {}", addressId, userId);
         UserEntity user = findUserById(userId);
-        findAddressInUser(user, addressId); // Ensures the address exists for this user
+        findAddressInUser(user, addressId);
 
         unsetDefaultAddresses(user);
         user.getSavedAddresses().forEach(addr -> {

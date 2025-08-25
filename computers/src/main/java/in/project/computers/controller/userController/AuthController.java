@@ -14,9 +14,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controller สำหรับการยืนยันตัวตน (Authentication) ผ่าน Email/Password
+ * Controller สำหรับการยืนยันตัวตน (Authentication) ของผู้ใช้
  * <p>
- * <b>คำเตือน:</b> {@code @CrossOrigin("*")} ไม่ปลอดภัยสำหรับ Production ควรระบุ Origin ของ Frontend ให้ชัดเจน
+ * จัดการการล็อกอินด้วย Email และ Password เพื่อสร้าง JSON Web Token (JWT) สำหรับการเข้าถึง API อื่นๆ
  */
 @RestController
 @RequestMapping("/api")
@@ -30,9 +30,12 @@ public class AuthController {
 
     /**
      * ล็อกอินเข้าสู่ระบบด้วย Email และ Password เพื่อขอรับ JWT
+     * <p>
+     * Endpoint นี้จะรับ Email และ Password, ตรวจสอบความถูกต้องผ่าน Spring Security's AuthenticationManager,
+     * และหากสำเร็จ จะสร้าง JWT token ส่งกลับไปให้ Client
      * @param request ข้อมูลสำหรับล็อกอิน (email, password)
      * @return AuthenticationResponse ที่มี JWT token
-     * @throws BadCredentialsException หากข้อมูลล็อกอินไม่ถูกต้อง
+     * @throws BadCredentialsException หากข้อมูลล็อกอินไม่ถูกต้อง (ส่งผลให้เกิด HTTP 401 Unauthorized)
      */
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
@@ -44,7 +47,7 @@ public class AuthController {
             );
         } catch (BadCredentialsException e) {
             log.warn("Failed authentication attempt for user: {}", request.getEmail());
-            throw e; // ส่ง 401 Unauthorized กลับไปโดยอัตโนมัติ
+            throw e; // ส่ง 401 Unauthorized กลับไปโดยอัตโนมัติจาก Exception Handler ของ Spring Security
         }
 
         // ถ้า authenticate ผ่าน, ดำเนินการสร้าง Token

@@ -1,6 +1,4 @@
-// src/components/ReusableTable/ReusableTable.js
-
-import React from 'react'; // <-- No longer need useState
+import React from 'react';
 import { Table, Spinner, Button, Alert } from 'react-bootstrap';
 import {
     useReactTable,
@@ -22,14 +20,11 @@ const ReusableTable = ({
     setColumnFilters,
     globalFilter,
     setGlobalFilter,
-    // --- (CHANGE) RECEIVE PAGINATION STATE AS PROPS ---
     pagination,
     onPaginationChange,
     keepPageOnDataUpdate = false
 }) => {
     
-    // --- (CHANGE) LOCAL PAGINATION STATE REMOVED ---
-
     const table = useReactTable({
         data,
         columns,
@@ -37,9 +32,8 @@ const ReusableTable = ({
             sorting,
             columnFilters,
             globalFilter,
-            pagination, // Use pagination state from props
+            pagination,
         },
-        // --- (CHANGE) USE THE PROP TO UPDATE PAGINATION IN PARENT ---
         onPaginationChange: onPaginationChange, 
         
         autoResetPageIndex: !keepPageOnDataUpdate,
@@ -53,7 +47,6 @@ const ReusableTable = ({
         getPaginationRowModel: getPaginationRowModel(),
     });
 
-    // Main render logic (JSX is unchanged, it now reads from props via table.getState())
     return (
         <>
             <div className="table-container">

@@ -2,14 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Form, Button, Row, Col, Image, Spinner } from 'react-bootstrap';
 import ImageCropper from '../ImageCropper/ImageCropper';
 
+// Modal นี้ถูกออกแบบมาให้ใช้ซ้ำได้ทั้งกับ lookup ที่เป็น text ธรรมดา และ 'Brands' ที่มีรูปภาพ
 function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, activeTab, lookupConfig, formFactorTypes }) {
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
-  const [originalImageSrc, setOriginalImageSrc] = useState('');
-  const [cropModalState, setCropModalState] = useState({ show: false, src: '' });
+  // state ชุดนี้ใช้สำหรับจัดการเรื่องรูปภาพโดยเฉพาะ
+  const [imageFile, setImageFile] = useState(null); // เก็บ File object สุดท้ายที่จะอัปโหลด
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null); // เก็บ URL สำหรับโชว์ใน <img>
+  const [originalImageSrc, setOriginalImageSrc] = useState(''); // เก็บ base64 string ของรูปต้นฉบับ ไว้ส่งให้ cropper
+  const [cropModalState, setCropModalState] = useState({ show: false, src: '' }); // state เปิด/ปิด modal ครอปรูป
   const fileInputRef = useRef(null);
   const { currentItem } = modalState;
 
+  // ใช้ effect นี้เพื่อเซ็ตค่าเริ่มต้นของรูปภาพ ตอนที่ modal เปิดขึ้นมาในโหมด edit
   useEffect(() => {
     if (show) {
       const existingUrl = currentItem?.logoUrl || null;
@@ -18,6 +21,7 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
     }
   }, [show, currentItem]);
 
+  // ใช้ effect นี้ cleanup กัน memory leak ตอนที่ imagePreviewUrl เป็น URL แบบ blob ที่สร้างขึ้นมาเอง
   useEffect(() => {
     return () => {
       if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
@@ -26,6 +30,7 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
     };
   }, [imagePreviewUrl]);
 
+  // ตอนเลือกไฟล์ใหม่ ก็จะสร้าง URL สำหรับ preview และ base64 สำหรับ cropper
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -42,6 +47,7 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
     if (originalImageSrc) setCropModalState({ show: true, src: originalImageSrc });
   };
 
+  // ฟังก์ชัน callback ที่รับไฟล์ซึ่งครอปเสร็จแล้วจาก ImageCropper มาอัปเดต state
   const handleCropComplete = (croppedFile) => {
     if (croppedFile) {
       setImageFile(croppedFile);
@@ -51,6 +57,7 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
     setCropModalState({ show: false, src: '' });
   };
 
+  // จัดการตอนกดปุ่มลบรูปภาพ ก็จะเคลียร์ state ทั้งหมดที่เกี่ยวกับรูป
   const handleRemoveImage = () => {
     setImageFile(null);
     if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl);
@@ -59,15 +66,19 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // ฟังก์ชันนี้จะรวบรวมข้อมูลจากฟอร์ม แล้วส่ง formData กับ imageFile กลับไปให้ parent component
   const handleInternalSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     onSubmit(formData, imageFile); 
   };
 
+  // ฟังก์ชันนี้จะ render body ของฟอร์มตาม lookupConfig ที่ถูกส่งเข้ามา
   const renderModalFormBody = () => {
     const config = lookupConfig[activeTab];
     if (!config) return null;
+
+    // ส่วนนี้สำหรับ render ฟอร์มของ 'Brands' ที่มีเรื่องรูปภาพเข้ามาเกี่ยว
     if (config.hasImage) {
       return (
         <Row>
@@ -97,12 +108,14 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
         </Row>
       );
     }
+    // ส่วนนี้สำหรับ render ฟอร์ม lookup ทั่วไป ที่มีแค่ text field
     return (
       <Row>
         {config.fields.map((field, index) => (
           <Col md={12} key={field}>
             <Form.Group className="mb-3">
               <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+              {/* เช็คเงื่อนไขพิเศษ: ถ้า field ชื่อ 'type' ให้ render เป็น Form.Select แทน */}
               {field === 'type' ? (
                 <Form.Select name="type" required defaultValue={currentItem?.type || ''}>
                   <option value="" disabled>-- Select Type --</option>
@@ -135,6 +148,7 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
         </Form>
       </Modal>
 
+      {/* ตัว Modal ที่ใช้ครอปรูปภาพ จะถูก render ไว้ตรงนี้ แต่จะแสดงผลก็ต่อเมื่อ state ถูกสั่งให้โชว์ */}
       <ImageCropper show={cropModalState.show} imageSrc={cropModalState.src} onHide={() => setCropModalState({ show: false, src: '' })} onCropComplete={handleCropComplete} aspect={1} />
     </>
   );

@@ -1,5 +1,4 @@
-/* src/components/ImageModal/ImageModal.css */
-
+/* --- โซนรูปภาพที่คลิกได้ (Thumbnail) --- */
 .clickable-image {
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
@@ -9,6 +8,8 @@
   transform: scale(1.1);
 }
 
+
+/* --- โซน Modal แสดงรูปภาพเต็มจอ --- */
 .image-modal .modal-content {
   background-color: transparent;
   border: none;
@@ -19,17 +20,17 @@
 }
 
 .image-modal .modal-body {
-  padding: 0;
+  align-items: center;
   display: flex;
   justify-content: center;
-  align-items: center;
+  padding: 0;
 }
 
 .fullscreen-image {
-  max-width: 90vw;
-  max-height: 90vh;
-  width: auto;
-  height: auto;
-  object-fit: contain;
   border-radius: 8px;
+  height: auto;
+  max-height: 90vh;
+  max-width: 90vw;
+  object-fit: contain;
+  width: auto;
 }

@@ -7,13 +7,12 @@ import MainHeader from '../../components/MainHeader/MainHeader';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import RevenueChart from '../../components/Charts/RevenueChart';
 import TopSellingChart from '../../components/Charts/TopSellingChart';
-import StatusBadge from '../../components/StatusBadge/StatusBadge'; // --- FIX: Import reusable component ---
+import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import { fetchDashboardData, fetchOrdersForExport } from '../../services/DashboardService';
 import { useAuth } from '../../context/AuthContext';
 import './Dashboard.css';
 
 const exportToCsv = (filename, rows) => {
-    // (exportToCsv function remains unchanged)
     if (!rows || !rows.length) {
         return;
     }
@@ -48,12 +47,10 @@ const exportToCsv = (filename, rows) => {
     }
 };
 
-// --- FIX: Removed local helper components (LoadingOverlay, NoDataMessage, and hardcoded StatusBadge) ---
 const LoadingOverlay = () => <div className="d-flex justify-content-center align-items-center h-100"><Spinner animation="border" /></div>;
 const NoDataMessage = ({ message }) => <div className="d-flex justify-content-center align-items-center h-100"><p className="text-secondary">{message}</p></div>;
 
 const StatCard = ({ title, value, trend, icon, periodLabel, isCurrency = false, onClick, clickable = false }) => {
-    // (StatCard component remains unchanged)
     const isPositive = trend >= 0;
     const showTrend = typeof trend === 'number' && !isNaN(trend);
     
@@ -82,7 +79,6 @@ const rangeOptions = [
 ];
 
 const DateRangeControls = ({ selectedRange, onRangeChange }) => {
-    // (DateRangeControls component remains unchanged)
     return (
         <ButtonGroup className="date-range-buttons">
             {rangeOptions.map(option => (
@@ -246,7 +242,6 @@ function Dashboard() {
                                                 <tr key={order.id}>
                                                     <td>{order.id}</td>
                                                     <td>{order.customerName}</td>
-                                                    {/* --- FIX: Use the reusable StatusBadge component --- */}
                                                     <td><StatusBadge status={order.orderStatus} type="order" /></td>
                                                     <td>{formatCurrency(order.totalAmount)}</td>
                                                 </tr>

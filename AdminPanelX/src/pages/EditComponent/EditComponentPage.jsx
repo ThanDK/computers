@@ -1,10 +1,7 @@
-// src/pages/EditComponentPage/EditComponentPage.jsx
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Form, Button, Row, Col, Spinner, Card } from 'react-bootstrap';
 
-// Import Services and Components
 import { getComponentById, updateComponent } from '../../services/ComponentService';
 import { fetchAllLookups } from '../../services/LookupService';
 import { notifySuccess, notifyError } from '../../services/NotificationService';
@@ -30,7 +27,6 @@ function EditComponentPage() {
 
     const fromLocation = location.state?.from || { pathname: '/components' };
 
-    // State Management
     const [componentType, setComponentType] = useState('');
     const [formData, setFormData] = useState({});
     const [lookups, setLookups] = useState(null);
@@ -43,7 +39,6 @@ function EditComponentPage() {
     const [cropModalState, setCropModalState] = useState({ show: false, src: '' });
     const fileInputRef = useRef(null);
 
-    // Side Effects
     useEffect(() => {
         const fetchData = async () => {
             if (!token || !id) return;
@@ -79,7 +74,6 @@ function EditComponentPage() {
         };
     }, [imagePreviewUrl]);
     
-    // Event Handlers
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
         if (name === 'brandName') {
@@ -220,9 +214,6 @@ function EditComponentPage() {
                         <hr className="form-divider my-4" />
                         <h5 className="section-header">Specific Details for {typeLabel}</h5>
                         
-                        {/* ========================================================================= */}
-                        {/* ===== THIS IS THE CRITICAL FIX: handleTagAdd/Remove ARE RESTORED ===== */}
-                        {/* ========================================================================= */}
                         {lookups && COMPONENT_CONFIG[componentType]?.render({
                             formData,
                             lookups,

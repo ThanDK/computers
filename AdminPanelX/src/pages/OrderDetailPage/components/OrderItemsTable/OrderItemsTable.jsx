@@ -1,10 +1,8 @@
-// src/components/OrderDetails/OrderItemsTable/OrderItemsTable.js
-
 import React, { useMemo } from 'react';
 import { Table, Card, Image } from 'react-bootstrap';
 import './OrderItemsTable.css';
 
-// This utility function is well-written and remains unchanged.
+// ฟังก์ชัน helper สำหรับจัดรูปแบบตัวเลขเป็นสกุลเงิน
 function formatCurrency(amount, currency) {
     const numberPart = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
@@ -13,7 +11,7 @@ function formatCurrency(amount, currency) {
     return `${currency} ${numberPart}`;
 }
 
-// REFACTORED: Simplified component structure and improved React key usage.
+// Component ย่อยสำหรับ render แถวพิเศษที่แสดงรายการ part ทั้งหมดใน Custom Build
 function ContainedItems({ items, currency }) {
     return (
         <tr className="build-contents-row">
@@ -30,7 +28,6 @@ function ContainedItems({ items, currency }) {
                                 <div className="part-info">
                                     <div className="part-name-line">
                                         <span className="me-2 part-quantity">{part.quantity}x</span>
-                                        {/* CLEANED: Using a CSS class for the status dot. */}
                                         <span className="status-dot me-2"></span>
                                         <span className="part-name">{part.name}</span>
                                     </div>
@@ -49,7 +46,8 @@ function ContainedItems({ items, currency }) {
     );
 }
 
-
+// Component สำหรับ render แถวของสินค้าประเภท 'Custom Build'
+// และจะ render Component ContainedItems ต่อท้ายถ้ามีรายการ part อยู่ข้างใน
 function BuildItemRow({ item, currency }) {
     return (
         <>
@@ -67,7 +65,7 @@ function BuildItemRow({ item, currency }) {
     );
 }
 
-// REFACTORED: Removed inline styles for better separation of concerns.
+// Component สำหรับ render แถวของสินค้าประเภท 'Component' ทั่วไป
 function ComponentItemRow({ item, currency }) {
     return (
         <tr>
@@ -77,7 +75,6 @@ function ComponentItemRow({ item, currency }) {
                 )}
             </td>
             <td>
-                {/* CLEANED: Replaced inline style with a dedicated CSS class. */}
                 <div className="item-name-wrapper">
                     <span className="status-dot me-2"></span>
                     <strong>{item.name}</strong>
@@ -91,7 +88,8 @@ function ComponentItemRow({ item, currency }) {
     );
 }
 
-// NO LOGIC CHANGE: This reusable component is excellent as-is.
+// Component นี้สร้างขึ้นมาให้เป็นตารางที่ใช้ซ้ำได้
+// โดยจะรับ RowComponent เข้ามาเพื่อกำหนดหน้าตาของแต่ละแถว ทำให้ใช้ได้ทั้งกับ Build และ Component
 function ItemCategoryTable({ title, headerName, items, currency, RowComponent, showImageColumn }) {
     if (!items || items.length === 0) {
         return null;
@@ -125,8 +123,9 @@ function ItemCategoryTable({ title, headerName, items, currency, RowComponent, s
     );
 }
 
-// NO LOGIC CHANGE: `useMemo` is used correctly here.
 function OrderItemsTable({ lineItems = [], currency }) {
+    // ใช้ useMemo เพื่อแยก lineItems ออกเป็น 2 กลุ่ม คือ build กับ component
+    // ทำแบบนี้เพื่อป้องกันการคำนวณที่ไม่จำเป็นทุกครั้งที่ re-render
     const { buildItems, componentItems } = useMemo(() => {
         return lineItems.reduce((acc, item) => {
             if (item.itemType === 'BUILD') {

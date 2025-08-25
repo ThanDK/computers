@@ -157,7 +157,7 @@ public class CartServiceImpl implements CartService {
                     .quantity(request.getQuantity())
                     .itemType(LineItemType.COMPONENT)
                     .unitPrice(price)
-                    .imageUrl(component.getImageUrl()) // A component has its own image URL
+                    .imageUrl(component.getImageUrl())
                     .containedItemsSnapshot(null)
                     .build();
         } else if (request.getItemType() == LineItemType.BUILD) {
@@ -240,7 +240,6 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartResponse entityToResponse(Cart cart) {
-        // Handle null or empty cart gracefully
         if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
             return CartResponse.builder()
                     .id(cart != null ? cart.getId() : null)

@@ -1,33 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button, Modal, Form, Spinner, Image } from 'react-bootstrap';
 import { useAuth } from '../../../../context/AuthContext';
-// 1. Service functions remain the same
 import { approveSlip, shipOrder, approveRefund, rejectRefund, fetchValidNextStatuses, updateOrderStatus, updateShippingDetails, rejectSlip, revertSlipApproval, forceRefundByAdmin } from '../../../../services/OrderService';
 import { fetchAllShippingProviders } from '../../../../services/LookupService';
 import { handlePromise } from '../../../../services/NotificationService';
 import ConfirmationModal from '../../../../components/ConfirmationModal/ConfirmationModal';
 import ReasonModal from '../../../../components/ReasonModal/ReasonModal';
-// 2. IMPORT THE NEW ICON
 import { BsTruck, BsPencilSquare, BsCheckCircle, BsXCircle, BsArrowRepeat, BsShieldX, BsBackspaceReverseFill, BsInfoCircleFill, BsCurrencyExchange, BsExclamationTriangleFill } from 'react-icons/bs';
 import './OrderActions.css';
 
 function OrderActions({ order, onActionSuccess }) {
     const { token } = useAuth();
 
+    // state สำหรับจัดการ modal ต่างๆ ที่อยู่ใน component นี้
     const [showShippingModal, setShowShippingModal] = useState(false);
     const [shippingModalMode, setShippingModalMode] = useState('create');
     const [shippingInfo, setShippingInfo] = useState({ shippingProvider: '', trackingNumber: '' });
-
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [confirmState, setConfirmState] = useState({ show: false, title: '', body: '', onConfirm: null, confirmVariant: 'primary', confirmText: 'Confirm' });
     const [reasonModalState, setReasonModalState] = useState({ show: false, title: '', onSubmit: null });
 
+    // state สำหรับเก็บข้อมูลที่ fetch มา
     const [nextStatuses, setNextStatuses] = useState([]);
     const [isFetchingStatuses, setIsFetchingStatuses] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('');
     const [shippingProviders, setShippingProviders] = useState([]);
     const [isLoadingProviders, setIsLoadingProviders] = useState(false);
 
+    // ใช้ effect นี้เพื่อดึงสถานะถัดไปที่เป็นไปได้ของออเดอร์ ทุกครั้งที่ข้อมูลออเดอร์เปลี่ยน
     useEffect(() => {
         if (order?.id) {
             setIsFetchingStatuses(true);
@@ -39,6 +39,7 @@ function OrderActions({ order, onActionSuccess }) {
         }
     }, [order?.id, order?.orderStatus, token]);
 
+    // ดึงข้อมูลบริษัทขนส่งทั้งหมดมาเก็บไว้ ตอน component โหลดครั้งแรก
     useEffect(() => {
         setIsLoadingProviders(true);
         fetchAllShippingProviders(token)
@@ -47,6 +48,7 @@ function OrderActions({ order, onActionSuccess }) {
             .finally(() => setIsLoadingProviders(false));
     }, [token]);
 
+    // ใช้ useMemo เพื่อคำนวณหารูปภาพของบริษัทขนส่งที่เลือก จะได้ไม่ต้องคำนวณใหม่ทุกครั้งที่ re-render
     const selectedProviderImage = useMemo(() => {
         if (!shippingInfo.shippingProvider || shippingProviders.length === 0) {
             return null;
@@ -55,6 +57,8 @@ function OrderActions({ order, onActionSuccess }) {
         return provider?.imageUrl || null;
     }, [shippingInfo.shippingProvider, shippingProviders]);
 
+    // ฟังก์ชันกลางสำหรับจัดการ action ทุกอย่าง เพื่อลดการเขียนโค้ดซ้ำซ้อน
+    // จะรับ promise, แสดง notification, และเรียก onActionSuccess ให้อัตโนมัติ
     const handleAction = async (actionPromise, successMessage) => {
         setConfirmState(p => ({ ...p, show: false }));
         setReasonModalState(p => ({ ...p, show: false }));
@@ -66,13 +70,12 @@ function OrderActions({ order, onActionSuccess }) {
         } catch (err) { }
     };
 
+    // กลุ่มฟังก์ชันสำหรับเปิด modal ยืนยัน หรือ modal ที่ต้องกรอกเหตุผล
     const confirmApproveSlip = () => setConfirmState({ show: true, title: 'Approve Payment Slip?', body: 'This will approve the payment, mark the order as PROCESSING, and deduct stock. Are you sure?', onConfirm: () => handleAction(approveSlip(order.id, token), 'Payment slip approved!'), confirmVariant: 'success', confirmText: 'Yes, Approve' });
     const confirmApproveRefund = () => setConfirmState({ show: true, title: 'Approve Refund Request?', body: 'This will refund the customer and increment stock. This action cannot be undone. Are you sure?', onConfirm: () => handleAction(approveRefund(order.id, token), 'Refund request has been approved!'), confirmVariant: 'success', confirmText: 'Yes, Approve Refund' });
     const confirmRejectRefund = () => setConfirmState({ show: true, title: 'Reject Refund Request?', body: 'This will mark the refund request as rejected. The user will be notified. Are you sure?', onConfirm: () => handleAction(rejectRefund(order.id, token), 'Refund request has been rejected.'), confirmVariant: 'danger', confirmText: 'Yes, Reject' });
     const openRejectSlipModal = () => setReasonModalState({ show: true, title: 'Reject Payment Slip', label: 'Reason for Rejection', placeholder: 'e.g., Incorrect amount, Blurry image...', onSubmit: (reason) => handleAction(rejectSlip(order.id, reason, token), 'Payment slip rejected.') });
     const openRevertApprovalModal = () => setReasonModalState({ show: true, title: 'Revert Slip Approval', label: 'Reason for Reversion', placeholder: 'e.g., Approved by mistake, Customer request...', onSubmit: (reason) => handleAction(revertSlipApproval(order.id, reason, token), 'Approval reverted and stock returned.') });
-
-
     const confirmForceRefund = () => setConfirmState({
         show: true,
         title: 'Force Refund This Order?',
@@ -82,6 +85,7 @@ function OrderActions({ order, onActionSuccess }) {
         confirmText: 'Yes, Force Refund'
     });
 
+    // เซ็ตค่าเริ่มต้นให้ shipping modal ตอนกดสร้างการจัดส่งใหม่
     const handleOpenCreateShipModal = () => {
         const defaultProvider = shippingProviders.length > 0 ? shippingProviders[0].name : '';
         setShippingInfo({ shippingProvider: defaultProvider, trackingNumber: '' });
@@ -89,6 +93,7 @@ function OrderActions({ order, onActionSuccess }) {
         setShowShippingModal(true);
     };
 
+    // ดึงข้อมูลการจัดส่งเดิมมาแสดงใน modal ตอนกดอัปเดต
     const handleOpenUpdateShipModal = () => {
         setShippingInfo({
             shippingProvider: order.shippingDetails?.shippingProvider || '',
@@ -98,6 +103,7 @@ function OrderActions({ order, onActionSuccess }) {
         setShowShippingModal(true);
     };
 
+    // ตอน submit ฟอร์มจัดส่ง จะเช็คว่าเป็นโหมด 'create' หรือ 'edit' แล้วเรียก service ที่ถูกต้อง
     const handleShipmentSubmit = (e) => {
         e.preventDefault();
         const actionPromise = shippingModalMode === 'create'
@@ -113,6 +119,7 @@ function OrderActions({ order, onActionSuccess }) {
         handleAction(updateOrderStatus(order.id, selectedStatus, token), `Order status updated to ${selectedStatus}!`);
     };
 
+    // เงื่อนไขสำหรับเช็คว่าออเดอร์นี้สามารถกด 'Force Refund' ได้หรือไม่
     const canBeForciblyRefunded = [
         'PROCESSING', 'SHIPPED', 'COMPLETED',
         'DELIVERY_FAILED', 'RETURNED_TO_SENDER', 'REFUND_REJECTED'
@@ -123,6 +130,7 @@ function OrderActions({ order, onActionSuccess }) {
             <Card className="detail-card">
                 <Card.Header>Actions</Card.Header>
                 <Card.Body className="d-grid gap-2">
+                    {/* ปุ่มต่างๆ จะแสดงผลตามสถานะปัจจุบันของออเดอร์ */}
                     {order.paymentStatus === 'PENDING_APPROVAL' && (
                         <>
                             <Button variant="success" onClick={confirmApproveSlip} className="d-flex align-items-center justify-content-center gap-2"><BsCheckCircle /> Approve Payment Slip</Button>
@@ -130,7 +138,6 @@ function OrderActions({ order, onActionSuccess }) {
                         </>
                     )}
 
-                    {/* --- NEW: Contextual warning for REJECTED_SLIP status --- */}
                     {order.orderStatus === 'REJECTED_SLIP' && (
                         <div className="action-warning-box">
                             <BsExclamationTriangleFill className="warning-icon" />
@@ -156,7 +163,6 @@ function OrderActions({ order, onActionSuccess }) {
                         </>
                     )}
 
-                    {/* --- NEW: Contextual warning for REFUND_REJECTED status --- */}
                     {order.orderStatus === 'REFUND_REJECTED' && (
                          <div className="action-warning-box">
                             <BsShieldX className="warning-icon" />

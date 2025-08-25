@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * Controller สำหรับจัดการข้อมูลชิ้นส่วนคอมพิวเตอร์ (Component)
+ * Controller สำหรับจัดการข้อมูลชิ้นส่วนคอมพิวเตอร์
  */
 @RestController
 @RequestMapping("/api/components")

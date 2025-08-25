@@ -1,5 +1,3 @@
-// src/pages/UsersPage.js
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -11,8 +9,8 @@ import ReusableTable from '../../components/ReusableTable/ReusableTable';
 import ImageModal from '../../components/ImageModal/ImageModal';
 import TableControls from '../../components/TableControls/TableControls';
 import AdminProfileCard from '../../components/AdminProfileCard/AdminProfileCard';
-import TruncatedText from '../../components/TruncatedText/TruncatedText'; // <-- IMPORT
-import UserFormModal from '../../components/UserFormModal/UserFormModal'; // <-- IMPORT
+import TruncatedText from '../../components/TruncatedText/TruncatedText';
+import UserFormModal from '../../components/UserFormModal/UserFormModal';
 import { Button, Form, InputGroup, Badge } from 'react-bootstrap';
 import { BsSearch, BsPlusCircleFill, BsArrowCounterclockwise } from 'react-icons/bs';
 import './UsersPage.css';
@@ -20,12 +18,11 @@ import '../../components/ImageModal/ImageModal.css';
 
 const roleOptions = ["ROLE_USER", "ROLE_ADMIN"];
 
-// TruncatedText component is now removed from here
-
 function UsersPage() {
   const { token, user: currentUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // อ่านค่า state ของตารางจาก URL search params ทำให้ URL เป็น 'source of truth'
   const tableState = useMemo(() => {
     const pageIndex = parseInt(searchParams.get('page')) || 0;
     const pageSize = parseInt(searchParams.get('pageSize')) || 10;
@@ -43,6 +40,8 @@ function UsersPage() {
   const [modalState, setModalState] = useState({ show: false, type: 'add', currentItem: null });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageModalUrl, setImageModalUrl] = useState(null);
+  
+  // state ของตารางจะถูก sync กับ URL
   const [pagination, setPagination] = useState(tableState.pagination);
   const [sorting, setSorting] = useState(tableState.sorting);
   const [globalFilter, setGlobalFilter] = useState(tableState.globalFilter);
@@ -54,6 +53,7 @@ function UsersPage() {
     setError('');
     try {
       const data = await fetchAllUsers(token);
+      // ฟิลเตอร์ user ที่กำลัง login อยู่ออกจาก list ที่แสดงในตาราง
       setUsers(data.filter(u => u.id !== currentUser.id));
     } catch (err) {
       setError(err.message);
@@ -64,6 +64,7 @@ function UsersPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // effect นี้จะคอยจับการเปลี่ยนแปลงของ state ตาราง แล้วอัปเดต URL search params ตาม
   useEffect(() => {
     const newSearchParams = new URLSearchParams();
     if (pagination.pageIndex > 0) newSearchParams.set('page', pagination.pageIndex);
@@ -79,6 +80,7 @@ function UsersPage() {
   const handleShowModal = (type, item = null) => setModalState({ show: true, type, currentItem: item });
   const handleCloseModal = () => setModalState({ show: false, type: 'add', currentItem: null });
 
+  // จัดการการ submit ฟอร์ม ทั้งการสร้าง user ใหม่ และการอัปเดต
   const handleFormSubmit = async (data) => {
     setIsSubmitting(true);
     const { type, currentItem } = modalState;
@@ -109,11 +111,13 @@ function UsersPage() {
       }
   }, [token]);
 
+  // ฟังก์ชันสำหรับสลับสถานะ lock/unlock user
   const handleToggleLock = useCallback(async (user) => {
       const action = user.locked ? unlockUser : lockUser;
       const actionVerb = user.locked ? 'Unlocking' : 'Locking';
       const actionPast = user.locked ? 'unlocked' : 'locked';
 
+      // สร้าง promise แล้วส่งไปให้ handlePromise เพื่อจัดการ notification ให้อัตโนมัติ
       const promise = action(user.id, token).then(updatedUser => {
         setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
         return updatedUser;
@@ -161,6 +165,7 @@ function UsersPage() {
       id: 'actions', header: 'Actions', meta: { cellClassName: 'text-center-cell', width: '250px' },
       cell: ({ row }) => {
         const user = row.original;
+        // เช็คว่าเป็น account ของตัวเองหรือไม่ เพื่อ disable ปุ่มบางปุ่ม
         const isSelf = currentUser?.email === user.email;
 
         return (
@@ -183,6 +188,7 @@ function UsersPage() {
       <MainHeader />
       <PageHeader title="Manage Users" subtitle="View, search, and manage user accounts" />
       
+      {/* แสดง card ของ admin ที่ login อยู่ด้านบน */}
       <AdminProfileCard />
 
       <TableControls>

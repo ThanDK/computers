@@ -1,10 +1,7 @@
-/* ComponentPage.css */
-
 .page-header-container {
     flex-grow: 1;
 }
 
-/* --- Table Container & Main Styles (Unique to this page layout) --- */
 .table-container {
     background-color: var(--secondary-bg);
     border-radius: 12px;
@@ -16,7 +13,6 @@
     --bs-table-striped-bg: #344258;
     --bs-table-hover-bg: #3a4a63;
     border: none !important;
-    /* table-layout: fixed;  <-- REMOVE OR COMMENT OUT THIS LINE */
     width: 100%;
 }
 
@@ -39,8 +35,6 @@
 .custom-table td {
     word-wrap: break-word;
 }
-
-/* ... all other styles in this file remain the same ... */
 
 .truncate-text {
     white-space: nowrap;
@@ -80,11 +74,11 @@
 }
 
 .status-dot-active {
-    background-color: #22c55e; /* Green */
+    background-color: #22c55e;
 }
 
 .status-dot-inactive {
-    background-color: #ef4444; /* Red */
+    background-color: #ef4444;
 }
 
 .clickable-image { 

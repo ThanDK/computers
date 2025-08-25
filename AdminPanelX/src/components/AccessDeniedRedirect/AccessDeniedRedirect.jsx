@@ -7,10 +7,11 @@ const AccessDeniedRedirect = () => {
     const navigate = useNavigate();
     const { logout } = useAuth();
 
+    // useEffect ตัวนี้จัดการเรื่องนับถอยหลังทั้งหมด
     useEffect(() => {
+        // พอเวลานับถอยหลังหมด ก็ให้ logout แล้วเด้งไปหน้า login
         if (countdown <= 0) {
             logout();
-
             navigate('/login', { replace: true });
             return; 
         }
@@ -19,6 +20,7 @@ const AccessDeniedRedirect = () => {
             setCountdown(countdown - 1);
         }, 1000);
 
+        // cleanup function: เผื่อ user กดออกจากหน้านี้เอง timer จะได้ไม่ทำงานมั่ว
         return () => clearTimeout(timerId);
 
     }, [countdown, logout, navigate]); 

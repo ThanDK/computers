@@ -1,93 +1,100 @@
-/* src/pages/OrderDetailPage/components/OrderActions/OrderActions.css */
-
-/* --- Shared Card Style --- */
+/* --- โซน Card Style ทั่วไป --- */
 .detail-card {
-    background-color: var(--secondary-bg);
-    border: 1px solid #4a5a76;
-    border-radius: 12px;
+  background-color: var(--secondary-bg);
+  border: 1px solid #4a5a76;
+  border-radius: 12px;
 }
+
 .detail-card .card-header {
-    background-color: #344258;
-    font-weight: 600;
-    color: var(--text-primary);
-    border-bottom: 1px solid #4a5a76;
+  background-color: #344258;
+  border-bottom: 1px solid #4a5a76;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
-/* --- Themed Modal Styles --- */
+
+/* --- โซน Modal Style (สำหรับ Dark Theme) --- */
 .modal-content {
-    background-color: var(--secondary-bg) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid #4a5a76;
-}
-.modal-header {
-    border-bottom: 1px solid #4a5a76 !important;
-}
-.modal-header .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%);
-}
-.modal-body .form-label {
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-.modal-body .form-control, .modal-body .form-select {
-    background-color: var(--primary-bg) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid #4a5a76 !important;
-}
-.modal-footer {
-    border-top: 1px solid #4a5a76 !important;
-}
-.modal-body .form-control::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.6;
+  background-color: var(--secondary-bg) !important;
+  border: 1px solid #4a5a76;
+  color: var(--text-primary) !important;
 }
 
-/* --- Informational Box (Blue) --- */
+.modal-header {
+  border-bottom: 1px solid #4a5a76 !important;
+}
+
+.modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.modal-body .form-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.modal-body .form-control,
+.modal-body .form-select {
+  background-color: var(--primary-bg) !important;
+  border: 1px solid #4a5a76 !important;
+  color: var(--text-primary) !important;
+}
+
+.modal-footer {
+  border-top: 1px solid #4a5a76 !important;
+}
+
+.modal-body .form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+
+/* --- โซนกล่องข้อความแจ้งเตือน --- */
 .action-info-box {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background-color: rgba(45, 85, 133, 0.2);
-    border: 1px solid rgba(67, 129, 202, 0.4);
-    border-radius: 8px;
-    font-size: 0.9em;
-    color: var(--text-secondary);
-    line-height: 1.5;
+  align-items: flex-start;
+  background-color: rgba(45, 85, 133, 0.2);
+  border: 1px solid rgba(67, 129, 202, 0.4);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  display: flex;
+  font-size: 0.9em;
+  gap: 0.75rem;
+  line-height: 1.5;
+  padding: 0.75rem;
 }
 
 .action-info-box .info-icon {
-    font-size: 1.2rem;
-    color: var(--accent-color);
-    flex-shrink: 0;
-    margin-top: 2px;
+  color: var(--accent-color);
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  margin-top: 2px;
 }
 
-/* --- *** THIS WAS THE MISSING PART *** --- */
-/* --- Warning Box (Amber/Yellow) --- */
 .action-warning-box {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background-color: rgba(181, 138, 32, 0.15); /* Amber background */
-    border: 1px solid rgba(255, 193, 7, 0.4);   /* Amber border */
-    border-radius: 8px;
-    font-size: 0.9em;
-    color: var(--text-secondary);
-    line-height: 1.5;
+  align-items: flex-start;
+  background-color: rgba(181, 138, 32, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  display: flex;
+  font-size: 0.9em;
+  gap: 0.75rem;
+  line-height: 1.5;
+  padding: 0.75rem;
 }
 
 .action-warning-box .warning-icon {
-    font-size: 1.2rem;
-    color: #ffc107; /* Amber icon color */
-    flex-shrink: 0;
-    margin-top: 2px;
+  color: #ffc107;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  margin-top: 2px;
 }
-/* --- *** END OF MISSING PART *** --- */
 
+
+/* --- โซนเส้นคั่น --- */
 .action-divider {
-    border: none;
-    border-top: 1px solid #4a5a76;
-    margin: 0.5rem 0;
+  border: none;
+  border-top: 1px solid #4a5a76;
+  margin: 0.5rem 0;
 }

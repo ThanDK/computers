@@ -1,18 +1,19 @@
-/* src/pages/OrderDetailPage/OrderDetailPage.css */
-
-/* --- Main Page Layout --- */
+/* --- โซน Layout หลักของหน้า --- */
 .order-detail-layout {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
-    align-items: flex-start;
+  align-items: flex-start;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 2fr 1fr;
 }
-.order-main-content, .order-sidebar-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
+
+.order-main-content,
 .order-sidebar-content {
-    position: sticky;
-    top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.order-sidebar-content {
+  position: sticky;
+  top: 1.5rem;
 }

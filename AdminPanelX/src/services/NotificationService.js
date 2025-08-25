@@ -1,11 +1,10 @@
-// src/services/NotificationService.js
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
 const MySwal = withReactContent(Swal);
 
-// Configuration for dark-themed SweetAlert2 modals
+// object สำหรับตั้งค่า theme ของ SweetAlert2 ให้เป็น dark mode
 const swalDarkConfig = {
     background: 'var(--secondary-bg)',
     color: 'var(--text-primary)',
@@ -14,10 +13,10 @@ const swalDarkConfig = {
 };
 
 /**
- * Displays a confirmation dialog using SweetAlert2.
- * @param {string} title - The title of the dialog.
- * @param {string} text - The main text/question of the dialog.
- * @returns {Promise<boolean>} - True if the user confirmed, false otherwise.
+ * แสดงกล่องโต้ตอบเพื่อยืนยันการกระทำ
+ * @param {string} title - หัวข้อของกล่องโต้ตอบ
+ * @param {string} text - ข้อความ/คำถามหลัก
+ * @returns {Promise<boolean>} คืนค่า true ถ้าผู้ใช้กดยืนยัน, false ถ้าไม่
  */
 export async function showConfirmation(title, text) {
     const result = await MySwal.fire({
@@ -32,26 +31,26 @@ export async function showConfirmation(title, text) {
 };
 
 /**
- * Displays a success notification toast.
- * @param {string} message - The message to display.
+ * แสดง Toast notification สำหรับการกระทำที่สำเร็จ
+ * @param {string} message - ข้อความที่จะแสดง
  */
 export function notifySuccess(message) {
     toast.success(message);
 };
 
 /**
- * Displays an error notification toast.
- * @param {string} message - The message to display.
+ * แสดง Toast notification สำหรับข้อผิดพลาด
+ * @param {string} message - ข้อความที่จะแสดง
  */
 export function notifyError(message) {
     toast.error(message);
 };
 
 /**
- * Wraps a promise with toast notifications for loading, success, and error states.
- * @param {Promise<any>} promise - The promise to track.
- * @param {object} messages - The messages for different states (loading, success, error).
- * @returns {Promise<any>} - The original promise.
+ * ครอบ Promise ด้วย Toast notification เพื่อแสดงสถานะ loading, success, และ error
+ * @param {Promise<any>} promise - Promise ที่ต้องการติดตามสถานะ
+ * @param {object} messages - Object ที่มีข้อความสำหรับแต่ละสถานะ (loading, success, error)
+ * @returns {Promise<any>} Promise เดิมที่ส่งเข้ามา
  */
 export function handlePromise(promise, messages) {
     return toast.promise(promise, messages);

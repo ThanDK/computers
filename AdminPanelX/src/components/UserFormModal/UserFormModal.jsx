@@ -1,5 +1,3 @@
-// src/components/UserFormModal/UserFormModal.js
-
 import React from 'react';
 import { Modal, Form, Button, Row, Col, Spinner } from 'react-bootstrap';
 
@@ -12,7 +10,6 @@ function UserFormModal({ show, onHide, modalState, onSubmit, isSubmitting }) {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    // Remove password from data if it's empty to avoid overwriting it
     if (!data.password) {
       delete data.password;
     }

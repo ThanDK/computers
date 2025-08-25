@@ -1,10 +1,6 @@
-// src/config/ComponentFormConfig.jsx
-
 import React from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import MultiSelectTag from '../components/MultiSelectTag/MultiSelectTag';
-
-// --- Shared Helper Functions ---
 
 export const renderField = (name, label, { type = "text", md = 6, value, onChange, required = true }) => (
     <Form.Group as={Col} md={md} className="mb-3">
@@ -48,10 +44,6 @@ export const renderBrandSelect = ({ formData, lookups, onChange }) => (
 const mapToTagOptions = (items = [], keyField = 'id', valueField = 'name') =>
     items.map(i => ({ key: i[keyField], value: i[valueField], label: i[valueField] }));
 
-// --- Component Type Definitions ---
-// =========================================================================
-// ===== MY INCORRECT CHANGE IS REVERTED HERE. VALUES ARE NOW CORRECTLY LOWERCASE. =====
-// =========================================================================
 export const componentTypes = [
     { label: "CPU", value: "cpu" },
     { label: "Motherboard", value: "motherboard" },
@@ -63,12 +55,7 @@ export const componentTypes = [
     { label: "Storage Drive", value: "storage" }
 ];
 
-// --- Specific Form Configurations for Each Component Type ---
-
 export const COMPONENT_CONFIG = {
-    // =========================================================================
-    // ===== KEYS ARE NOW CORRECTLY LOWERCASE. VALIDATION IS ADDED. =====
-    // =========================================================================
     cpu: {
         initialState: { wattage: "", socket: "" },
         fields: [
@@ -178,8 +165,8 @@ export const COMPONENT_CONFIG = {
         fields: [
             { name: 'socket_support', label: 'Supported Sockets', type: 'tags', required: true },
             { name: 'wattage', label: 'Wattage (TDP)', type: 'number', required: true },
-            { name: 'height_mm', label: 'Height (mm)', type: 'number', required: false }, // Can be optional
-            { name: 'radiatorSize_mm', label: 'Radiator Size (mm)', type: 'number', required: false } // Can be optional
+            { name: 'height_mm', label: 'Height (mm)', type: 'number', required: false },
+            { name: 'radiatorSize_mm', label: 'Radiator Size (mm)', type: 'number', required: false }
         ],
         render: ({ formData, lookups, handleChange, handleTagAdd, handleTagRemove }) => (
              <>
@@ -211,7 +198,7 @@ export const COMPONENT_CONFIG = {
             { name: 'max_cooler_height_mm', label: 'Max Cooler Height (mm)', type: 'number', required: true },
             { name: 'bays_2_5_inch', label: '2.5 Inch Bays', type: 'number', required: true },
             { name: 'bays_3_5_inch', label: '3.5 Inch Bays', type: 'number', required: true },
-            { name: 'supportedRadiatorSizesMm', label: 'Supported Radiator Sizes (mm)', type: 'tags', required: false } // This can be optional
+            { name: 'supportedRadiatorSizesMm', label: 'Supported Radiator Sizes (mm)', type: 'tags', required: false }
         ],
         render: ({ formData, lookups, handleChange, handleTagAdd, handleTagRemove }) => {
             const radiatorOptions = (lookups.radiatorSizes || []).map(s => ({ key: s, value: String(s), label: `${s}mm` }));

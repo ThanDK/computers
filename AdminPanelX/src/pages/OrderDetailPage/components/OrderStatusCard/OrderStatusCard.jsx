@@ -3,6 +3,7 @@ import { Card, ListGroup } from 'react-bootstrap';
 import StatusBadge from '../../../../components/StatusBadge/StatusBadge';
 import './OrderStatusCard.css';
 
+// Component สำหรับแสดงสถานะของออเดอร์และสถานะการจ่ายเงิน
 function OrderStatusCard({ order }) {
     return (
         <Card className="detail-card">

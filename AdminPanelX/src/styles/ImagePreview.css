@@ -1,35 +1,41 @@
 /*
   ==========================================================================
-  Shared Image Preview Styles
+  Shared Image Preview Styles (สไตล์ Preview รูปภาพที่ใช้ซ้ำ)
   ==========================================================================
-  This file contains the beautiful, reusable styles for image previews
-  that appear inside modals on various pages.
+  ไฟล์นี้เก็บ style สำหรับการแสดงผล preview รูปภาพใน Modal
+  เพื่อให้มีหน้าตาที่สวยงามและสอดคล้องกัน
 */
 
+/* --- โซนกรอบ Preview รูปภาพ --- */
+/*
+  ใช้หลักๆ ใน:
+  - LookupFormModal.js (สำหรับ Brands)
+  - ShippingProviderFormModal.js
+*/
 .image-preview-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 1.5rem; /* Space below the preview */
-    padding: 0.5rem;
-    background-color: var(--primary-bg); /* A slightly lighter background */
-    border: 1px dashed var(--border-color);
-    border-radius: var(--border-radius-lg, 12px); /* Use a larger border radius */
-    min-height: 120px; /* Ensure the container has a minimum height */
+  align-items: center;
+  background-color: var(--primary-bg);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius-lg, 12px);
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  min-height: 120px;
+  padding: 0.5rem;
 }
 
 .image-preview-placeholder {
-    color: var(--text-secondary);
-    font-style: italic;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .logo-preview {
-    max-height: 100px;
-    width: auto;
-    max-width: 100%;
-    object-fit: contain;
-    border-radius: var(--border-radius, 8px);
-    background-color: #ffffff; /* White background for transparent logos */
-    padding: 5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* A subtle shadow */
+  background-color: #ffffff;
+  border-radius: var(--border-radius, 8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-height: 100px;
+  max-width: 100%;
+  object-fit: contain;
+  padding: 5px;
+  width: auto;
 }

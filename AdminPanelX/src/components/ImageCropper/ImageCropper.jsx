@@ -1,17 +1,19 @@
 import React, { useState, useRef } from 'react';
-import { Modal, Button, ButtonGroup } from 'react-bootstrap'; // Import ButtonGroup
+import { Modal, Button, ButtonGroup } from 'react-bootstrap';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
-// --- Helper Functions (No changes here) ---
+// ฟังก์ชัน helper สำหรับสร้างกรอบ crop เริ่มต้นให้อยู่กลางรูปภาพ
 function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
-    if (!aspect) { // Handle freeform case
+    if (!aspect) { 
+        // ถ้าไม่ได้ล็อค aspect ratio ก็ให้เป็นกรอบสี่เหลี่ยมอิสระกลางๆ
         return centerCrop(
             { unit: '%', width: 90, height: 90 },
             mediaWidth,
             mediaHeight
         );
     }
+    // ถ้ามีการล็อค aspect ratio ก็ให้สร้างกรอบตามนั้นแล้วจัดให้อยู่กลาง
     return centerCrop(
         makeAspectCrop({ unit: '%', width: 90 }, aspect, mediaWidth, mediaHeight),
         mediaWidth,
@@ -19,6 +21,7 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
     );
 }
 
+// ฟังก์ชันสำคัญที่ใช้ canvas 'วาด' ส่วนที่ crop ออกมา แล้วแปลงเป็นไฟล์รูปภาพจริงๆ
 async function getCroppedImg(image, crop, fileName) {
     const canvas = document.createElement('canvas');
     const scaleX = image.naturalWidth / image.width;
@@ -39,6 +42,7 @@ async function getCroppedImg(image, crop, fileName) {
         crop.height
     );
 
+    // แปลงสิ่งที่วาดใน canvas ให้กลายเป็น File object
     return new Promise((resolve) => {
         canvas.toBlob(blob => {
             if (!blob) {
@@ -46,24 +50,27 @@ async function getCroppedImg(image, crop, fileName) {
                 return;
             }
             resolve(new File([blob], fileName, { type: 'image/jpeg' }));
-        }, 'image/jpeg', 0.9);
+        }, 'image/jpeg', 0.9); // กำหนดคุณภาพของไฟล์ jpeg
     });
 }
 
 
 function ImageCropper({ imageSrc, show, onHide, onCropComplete, aspect = 1 }) {
     const [crop, setCrop] = useState();
+    // completedCrop คือ state ที่จะเก็บค่าพิกัดสุดท้ายหลังจาก user ปล่อยเมาส์
     const [completedCrop, setCompletedCrop] = useState(null);
     const [currentAspect, setCurrentAspect] = useState(aspect);
     const imageRef = useRef(null);
 
 
+    // ฟังก์ชันนี้จะทำงานตอนรูปโหลดเสร็จ เพื่อคำนวณและกำหนดพื้นที่ crop เริ่มต้นให้
     const onImageLoad = (e) => {
         imageRef.current = e.currentTarget;
         const { width, height } = e.currentTarget;
         setCrop(centerAspectCrop(width, height, currentAspect));
     };
     
+    // จัดการตอนกดปุ่มเปลี่ยน aspect ratio แล้วคำนวณกรอบ crop ใหม่
     const handleAspectChange = (newAspect) => {
         setCurrentAspect(newAspect);
         if (imageRef.current) {
@@ -72,6 +79,7 @@ function ImageCropper({ imageSrc, show, onHide, onCropComplete, aspect = 1 }) {
         }
     };
 
+    // ตอนกดยืนยัน ก็จะเรียก getCroppedImg เพื่อเอาไฟล์รูปที่ตัดแล้ว และส่งค่านั้นกลับไปหา parent component
     const handleConfirm = async () => {
         if (completedCrop?.width && completedCrop?.height && imageRef.current) {
             const croppedFile = await getCroppedImg(imageRef.current, completedCrop, 'cropped-component.jpg');
@@ -94,11 +102,13 @@ function ImageCropper({ imageSrc, show, onHide, onCropComplete, aspect = 1 }) {
                         aspect={currentAspect}
                         className="d-inline-block"
                     >
+                        {/* ref ตรงนี้สำคัญมาก เพราะเราต้องใช้ element ของรูปในการคำนวณ */}
                         <img ref={imageRef} src={imageSrc} onLoad={onImageLoad} alt="Crop" style={{ maxHeight: '70vh' }}/>
                     </ReactCrop>
                 )}
             </Modal.Body>
             <Modal.Footer className="d-flex justify-content-between">
+                {/* กลุ่มปุ่มสำหรับเปลี่ยน Aspect Ratio ของกรอบ crop */}
                 <ButtonGroup>
                     <Button variant="outline-secondary" active={currentAspect === 16/9} onClick={() => handleAspectChange(16/9)}>16:9</Button>
                     <Button variant="outline-secondary" active={currentAspect === 9/16} onClick={() => handleAspectChange(9/16)}>9:16</Button>

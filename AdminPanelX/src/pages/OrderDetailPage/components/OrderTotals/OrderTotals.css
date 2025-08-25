@@ -1,48 +1,54 @@
-/* src/pages/OrderDetailPage/components/OrderTotals/OrderTotals.css */
-
-/* --- Shared Card Style --- */
+/* --- โซน Card และ List Group ทั่วไป --- */
 .detail-card {
-    background-color: var(--secondary-bg);
-    border: 1px solid #4a5a76;
-    border-radius: 12px;
-}
-.detail-card .card-header {
-    background-color: #344258;
-    font-weight: 600;
-    color: var(--text-primary);
-    border-bottom: 1px solid #4a5a76;
-}
-.detail-card .list-group-item {
-    background-color: transparent;
-    border-bottom: 1px solid #4a5a76;
-    padding: 0.85rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.detail-card .list-group-item:last-child {
-    border-bottom: none;
+  background-color: var(--secondary-bg);
+  border: 1px solid #4a5a76;
+  border-radius: 12px;
 }
 
-/* --- Component Specific Styles --- */
+.detail-card .card-header {
+  background-color: #344258;
+  border-bottom: 1px solid #4a5a76;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.detail-card .list-group-item {
+  align-items: center;
+  background-color: transparent;
+  border-bottom: 1px solid #4a5a76;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+}
+
+.detail-card .list-group-item:last-child {
+  border-bottom: none;
+}
+
+
+/* --- โซน Totals Card โดยเฉพาะ --- */
 .totals-card .list-group-item {
-    font-size: 1rem;
-    padding: 0.85rem 1rem;
+  font-size: 1rem;
+  padding: 0.85rem 1rem;
 }
+
 .totals-label {
-    font-weight: 500;
-    color: var(--text-secondary);
+  color: var(--text-secondary);
+  font-weight: 500;
 }
+
 .totals-value {
-    font-weight: 600;
-    color: var(--text-primary);
+  color: var(--text-primary);
+  font-weight: 600;
 }
+
 .totals-card .grand-total {
-    background-color: #344258;
+  background-color: #344258;
 }
+
 .totals-card .grand-total .totals-label,
 .totals-card .grand-total .totals-value {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--text-primary);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 700;
 }

@@ -62,8 +62,6 @@
     border-color: #4a5a76;
 }
 
-/* --- NEW STYLES FOR IMAGE PREVIEW --- */
-
 .image-preview-container-center {
   display: flex;
   flex-direction: column;
