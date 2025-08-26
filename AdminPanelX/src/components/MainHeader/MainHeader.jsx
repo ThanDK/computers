@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import './MainHeader.css';
 
 function MainHeader() {
+  //AuthContext เพื่อใช้กับปุ่ม
   const { logout } = useAuth();
 
   return (

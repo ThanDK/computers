@@ -8,11 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-/**
- * A dedicated component responsible for mapping between User DTOs and the UserEntity.
- * This follows the Single Responsibility Principle, separating data conversion logic
- * from business logic in the UserService.
- */
 @Component
 @RequiredArgsConstructor
 public class UserMapper {
@@ -36,8 +31,8 @@ public class UserMapper {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .role(request.getRole()) // Role is set from the admin request
-                .locked(false)    // Default to unlocked
+                .role(request.getRole())
+                .locked(false)
                 .build();
     }
 

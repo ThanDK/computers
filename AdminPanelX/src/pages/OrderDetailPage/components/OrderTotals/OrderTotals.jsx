@@ -15,7 +15,7 @@ const formatCurrency = (amount, currency) => {
 function OrderTotals({ order }) {
     const { lineItems = [], totalAmount = 0, taxAmount = 0, currency = '' } = order || {};
     
-    // ใช้ useMemo ในการคำนวณ 'Subtotal' (ยอดรวมก่อนภาษี)
+    // ใช้ useMemo คำนวณยอดรวมก่อนภาษี
     // เพื่อให้แน่ใจว่าการคำนวณนี้จะเกิดขึ้นก็ต่อเมื่อ lineItems เปลี่ยนแปลงเท่านั้น
     const subtotal = useMemo(() => {
         return lineItems.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);

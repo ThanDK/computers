@@ -1,5 +1,3 @@
-// src/components/TruncatedText/TruncatedText.js
-
 import React from 'react';
 import { notifySuccess } from '../../services/NotificationService';
 

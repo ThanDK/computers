@@ -155,9 +155,6 @@ public class PaypalServiceImpl implements PaypalService {
     /**
      * สร้าง Transaction แบบง่าย (ไม่มีรายละเอียดสินค้า) เพื่อเป็น Fallback
      * ทำให้การชำระเงินสามารถดำเนินต่อไปได้เสมอ แม้ว่าตรรกะการแจกแจงสินค้าจะล้มเหลว
-     * @param order อ็อบเจกต์ Order เพื่อดึงยอดรวมและสกุลเงิน
-     * @param description คำอธิบายสั้นๆ สำหรับ Transaction
-     * @return List ที่มี Transaction แบบง่ายเพียง 1 รายการ
      */
     private List<Transaction> createNonItemizedTransaction(Order order, String description) {
         // === [FALLBACK-TX-1] สร้าง Amount แบบไม่มีรายละเอียดสินค้า มีเพียงยอดรวม ===

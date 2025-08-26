@@ -61,7 +61,6 @@ public class SecurityConfig {
                         // Authenticated user endpoints
                         .requestMatchers("/api/orders/**").authenticated()
                         .requestMatchers("/api/builds/**").authenticated()
-                        // The endpoint /api/profile/me is covered by this rule
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exceptions -> exceptions
@@ -79,22 +78,16 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 2. DEFINE THE CORS CONFIGURATION SOURCE BEAN
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Be specific about your origins
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        // Allow common headers
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        // This is crucial for sending cookies or auth headers
         config.setAllowCredentials(true);
-        // How long the browser can cache the preflight response
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Apply this configuration to all paths
         source.registerCorsConfiguration("/**", config);
 
         return source;
