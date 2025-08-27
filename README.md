@@ -152,7 +152,7 @@ GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
 ### 2. การรันโปรเจคด้วย Docker (วิธีที่แนะนำ)
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/ThanDK/OnlineShopComputerBuilder.git
+    git clone https://github.com/ThanDK/fullstack-pc-builder.git
     cd OnlineShopComputerBuilder
     ```
 2.  **Start all services:**
