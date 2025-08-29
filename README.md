@@ -138,19 +138,19 @@
 SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/computers
 
 # JWT Secret Key
-JWT_SECRET_KEY=YourGeneratedStrongAndRandomSecretKey
+JWT_SECRET_KEY=รหัสแบบสุ่มที่ยาวและแข็งแรง
 
 # AWS S3 Bucket Credentials
-AWS_ACCESS_KEY=YOUR_AWS_ACCESS_KEY
-AWS_SECRET_KEY=YOUR_AWS_SECRET_KEY
+AWS_ACCESS_KEY=รหัสกุญแจของ_Amazon_Webservice
+AWS_SECRET_KEY=รหัสกุญแจลับของ_Amazon_Webservice
 
 # PayPal Developer Credentials
-PAYPAL_CLIENT_ID=YOUR_PAYPAL_SANDBOX_CLIENT_ID
-PAYPAL_CLIENT_SECRET=YOUR_PAYPAL_SANDBOX_SECRET
+PAYPAL_CLIENT_ID=รหัสกุญแจของ_Paypal_Client_Id
+PAYPAL_CLIENT_SECRET=รหัสกุญแจลับของ_Paypal_Client_Secret
 
 # Google OAuth2 Credentials
-GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
+GOOGLE_CLIENT_ID=รหัสกุญแจของ_Google_Client_id_.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=รหัสกุญแจลับของ_Google_Client_Secret
 ```
 
 ### 2. การรันโปรเจคด้วย Docker
