@@ -5,8 +5,10 @@ import ScreenSizeWarning from '../../components/ScreenSizeWarning/ScreenSizeWarn
 import { Toaster } from 'react-hot-toast';
 import './AdminLayout.css';
 
+// Layout หลักของหน้า Admin ทั้งหมด
 const AdminLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
   return (
@@ -37,7 +39,11 @@ const AdminLayout = () => {
       <ScreenSizeWarning />
 
       <div className={`app-container ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
-        <Sidebar isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
+        <Sidebar
+          isCollapsed={isCollapsed}
+          toggleSidebar={toggleSidebar}
+        />
+        
         <main className="content-wrapper">
           <Outlet />
         </main>

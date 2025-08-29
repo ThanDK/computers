@@ -1,18 +1,23 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react'; 
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query'; 
 import { useAuth } from '../../context/AuthContext';
+import { format } from 'date-fns';
+
 import {
   fetchAllOrders,
   fetchAllOrderStatuses,
 } from '../../services/OrderService';
-import { format } from 'date-fns';
+
 import MainHeader from '../../components/MainHeader/MainHeader';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import ReusableTable from '../../components/ReusableTable/ReusableTable';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import TableControls from '../../components/TableControls/TableControls';
+
 import { Alert, Spinner, Button, Form, InputGroup } from 'react-bootstrap';
 import { BsSearch, BsArrowCounterclockwise } from 'react-icons/bs';
+
 import './OrdersPage.css';
 
 function OrdersPage() {
@@ -21,90 +26,94 @@ function OrdersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
 
-  // ใช้ useMemo ในการอ่านค่า state ของตารางจาก URL search params
-  // ทำให้ URL เป็น 'source of truth' และสามารถแชร์ลิงก์พร้อม filter/sort ที่ตั้งไว้ได้
+  // อ่าน state ตารางจาก URL, ทำให้แชร์ลิงก์พร้อม filter/sort ได้
   const tableState = useMemo(() => {
     const pageIndex = parseInt(searchParams.get('page')) || 0;
     const pageSize = parseInt(searchParams.get('pageSize')) || 10;
     const sortingParams = searchParams.get('sort');
+    
+    // default sort คือเรียงตามวันที่สร้างล่าสุด
     const sorting = sortingParams
       ? JSON.parse(sortingParams)
-      : [{ id: 'createdAt', desc: true }]; // ค่า default คือเรียงตามวันที่สร้างล่าสุด
+      : [{ id: 'createdAt', desc: true }]; 
+
     const globalFilter = searchParams.get('globalFilter') || '';
     const statusFilter = searchParams.get('statusFilter');
     const customerFilter = searchParams.get('customerFilter');
-    const columnFilters = [];
-    if (statusFilter)
-      columnFilters.push({ id: 'orderStatus', value: statusFilter });
-    if (customerFilter)
-      columnFilters.push({ id: 'email', value: customerFilter });
 
-    return {
-      pagination: { pageIndex, pageSize },
-      sorting,
-      globalFilter,
-      columnFilters,
-    };
+    const columnFilters = [];
+    if (statusFilter) columnFilters.push({ id: 'orderStatus', value: statusFilter });
+    if (customerFilter) columnFilters.push({ id: 'email', value: customerFilter });
+
+    return { pagination: { pageIndex, pageSize }, sorting, globalFilter, columnFilters };
   }, [searchParams]);
 
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [allStatuses, setAllStatuses] = useState([]);
-
-  // state ของตาราง (pagination, sorting, etc.) จะถูก sync กับ URL
+  // State ของตาราง, sync กับ URL ด้านบน
   const [pagination, setPagination] = useState(tableState.pagination);
   const [sorting, setSorting] = useState(tableState.sorting);
   const [globalFilter, setGlobalFilter] = useState(tableState.globalFilter);
   const [columnFilters, setColumnFilters] = useState(tableState.columnFilters);
 
-  const loadData = useCallback(async () => {
-    if (!token) return;
-    setLoading(true);
-    setError('');
-    try {
-      const [ordersData, statusesData] = await Promise.all([
-        fetchAllOrders(token),
-        fetchAllOrderStatuses(token),
-        new Promise((resolve) => setTimeout(resolve, 20)),
-      ]);
-      setOrders(ordersData);
-      setAllStatuses(statusesData);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch data.');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  // ดึงข้อมูล Orders
+  const {
+    data: orders = [],
+    isLoading: isOrdersLoading,
+    isFetching: isOrdersFetching,
+    error: ordersError,
+    refetch: refetchOrders,
+  } = useQuery({
+    queryKey: ['orders', token],
+    queryFn: async () => {
+        const [ordersData] = await Promise.all([
+            fetchAllOrders(token),
+            new Promise((resolve) => setTimeout(resolve, 20)),
+        ]);
+        return ordersData;
+    },
+    enabled: !!token,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  // ดึงข้อมูล Order Statuses สำหรับ dropdown
+  const {
+    data: allStatuses = [],
+    isLoading: isStatusesLoading,
+    isFetching: isStatusesFetching,
+    error: statusesError,
+    refetch: refetchStatuses,
+  } = useQuery({
+    queryKey: ['orderStatuses', token],
+    queryFn: () => fetchAllOrderStatuses(token),
+    enabled: !!token,
+  });
 
-  // effect นี้จะคอยจับการเปลี่ยนแปลงของ state ตาราง แล้วอัปเดต URL search params ตาม
+  const isLoading = isOrdersLoading || isStatusesLoading;
+  const isFetching = isOrdersFetching || isStatusesFetching;
+  const error = ordersError?.message || statusesError?.message || null;
+
+  // เมื่อ state ตารางเปลี่ยน, ให้อัปเดต URL ตาม
   useEffect(() => {
     const newSearchParams = new URLSearchParams();
-    if (pagination.pageIndex > 0)
-      newSearchParams.set('page', pagination.pageIndex.toString());
-    if (pagination.pageSize !== 10)
-      newSearchParams.set('pageSize', pagination.pageSize.toString());
+
+    if (pagination.pageIndex > 0) newSearchParams.set('page', pagination.pageIndex.toString());
+    if (pagination.pageSize !== 10) newSearchParams.set('pageSize', pagination.pageSize.toString());
+
     // ไม่ต้องเซ็ต sort ใน URL ถ้าเป็นค่า default
     if (sorting && (sorting[0]?.id !== 'createdAt' || !sorting[0]?.desc)) {
       newSearchParams.set('sort', JSON.stringify(sorting));
     }
+
     if (globalFilter) newSearchParams.set('globalFilter', globalFilter);
-    const statusFilter = columnFilters.find(
-      (f) => f.id === 'orderStatus'
-    )?.value;
+
+    const statusFilter = columnFilters.find((f) => f.id === 'orderStatus')?.value;
     const customerFilter = columnFilters.find((f) => f.id === 'email')?.value;
+
     if (statusFilter) newSearchParams.set('statusFilter', statusFilter);
     if (customerFilter) newSearchParams.set('customerFilter', customerFilter);
 
-    // ใช้ replace: true เพื่อไม่ให้ history ของ browserรก
     setSearchParams(newSearchParams, { replace: true });
   }, [pagination, sorting, globalFilter, columnFilters, setSearchParams]);
 
-  // สร้าง list ของ customer ที่ไม่ซ้ำกันสำหรับ dropdown filter
+  // สร้าง list customer ที่ไม่ซ้ำ สำหรับ dropdown
   const uniqueCustomers = useMemo(() => {
     if (orders.length === 0) return [];
     return [...new Set(orders.map((order) => order.email))].sort();
@@ -115,10 +124,11 @@ function OrdersPage() {
     setColumnFilters([]);
     setPagination((p) => ({ ...p, pageIndex: 0 }));
     setSorting([{ id: 'createdAt', desc: true }]);
-    loadData();
+    refetchOrders();
+    refetchStatuses();
   };
 
-  // ฟังก์ชัน helper สำหรับการตั้งค่า column filter
+  // Helper function สำหรับตั้งค่า filter
   const setFilter = (columnId, value) => {
     setColumnFilters((prev) => {
       const newFilters = prev.filter((f) => f.id !== columnId);
@@ -127,77 +137,70 @@ function OrdersPage() {
     });
   };
 
-  // กำหนด columns ของตารางโดยใช้ useMemo เพื่อ performance
-  const columns = useMemo(
-    () => [
-      {
-        accessorKey: 'id',
-        header: 'Order ID',
-        meta: { width: '15%' },
-        cell: (info) => (
-          // แสดงแค่ 8 ตัวท้าย แต่ให้ดูตัวเต็มได้ตอนเอาเมาส์ชี้
-          <span className="order-id" title={info.getValue()}>
-            {info.getValue().slice(-8)}
-          </span>
-        ),
-      },
-      { accessorKey: 'email', header: 'Customer', meta: { width: '25%' } },
-      {
-        accessorKey: 'createdAt',
-        header: 'Date',
-        meta: { width: '20%' },
-        cell: (info) => format(new Date(info.getValue()), 'dd MMM yyyy, HH:mm'),
-      },
-      {
-        accessorKey: 'totalAmount',
-        header: 'Total',
-        meta: { width: '15%' },
-        cell: (info) =>
-          `฿ ${Number(info.getValue()).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-          })}`,
-      },
-      {
-        accessorKey: 'paymentStatus',
-        header: 'Payment',
-        meta: { width: '15%' },
-        cell: (info) => <StatusBadge status={info.getValue()} type="payment" />,
-      },
-      {
-        accessorKey: 'orderStatus',
-        header: 'Order Status',
-        meta: { width: '15%' },
-        cell: (info) => <StatusBadge status={info.getValue()} type="order" />,
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        meta: { cellClassName: 'text-center-cell', width: '150px' },
-        cell: ({ row }) => (
-          <div className="d-flex gap-2 justify-content-center">
-            <Button
-              variant="outline-primary"
-              size="sm"
-              className="action-btn"
-              onClick={() =>
-                navigate(`/order-details/${row.original.id}`, {
-                  state: { from: location },
-                })
-              }
-            >
-              View Details
-            </Button>
-          </div>
-        ),
-      },
-    ],
-    [navigate, location]
-  );
+  // Config คอลัมน์สำหรับตาราง
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'id',
+      header: 'Order ID',
+      meta: { width: '15%' },
+      cell: (info) => (
+        <span className="order-id" title={info.getValue()}>
+          {info.getValue().slice(-8)}
+        </span>
+      ),
+    },
+    { 
+      accessorKey: 'email', 
+      header: 'Customer', 
+      meta: { width: '25%' } 
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Date',
+      meta: { width: '20%' },
+      cell: (info) => format(new Date(info.getValue()), 'dd MMM yyyy, HH:mm'),
+    },
+    {
+      accessorKey: 'totalAmount',
+      header: 'Total',
+      meta: { width: '15%' },
+      cell: (info) => `฿ ${Number(info.getValue()).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+      })}`,
+    },
+    {
+      accessorKey: 'paymentStatus',
+      header: 'Payment',
+      meta: { width: '15%' },
+      cell: (info) => <StatusBadge status={info.getValue()} type="payment" />,
+    },
+    {
+      accessorKey: 'orderStatus',
+      header: 'Order Status',
+      meta: { width: '15%' },
+      cell: (info) => <StatusBadge status={info.getValue()} type="order" />,
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      meta: { cellClassName: 'text-center-cell', width: '150px' },
+      cell: ({ row }) => (
+        <div className="d-flex gap-2 justify-content-center">
+          <Button
+            variant="outline-primary"
+            size="sm"
+            className="action-btn"
+            onClick={() => navigate(`/order-details/${row.original.id}`, { state: { from: location } })}
+          >
+            View Details
+          </Button>
+        </div>
+      ),
+    },
+  ], [navigate, location]);
 
-  const statusFilterValue =
-    columnFilters.find((f) => f.id === 'orderStatus')?.value || '';
-  const customerFilterValue =
-    columnFilters.find((f) => f.id === 'email')?.value || '';
+  const statusFilterValue = columnFilters.find((f) => f.id === 'orderStatus')?.value || '';
+  const customerFilterValue = columnFilters.find((f) => f.id === 'email')?.value || '';
 
   return (
     <>
@@ -262,16 +265,16 @@ function OrdersPage() {
       <ReusableTable
         columns={columns}
         data={orders}
-        isLoading={loading}
+        isLoading={isFetching || isLoading}
         error={error}
+        pagination={pagination}
+        onPaginationChange={setPagination}
         sorting={sorting}
         setSorting={setSorting}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
         columnFilters={columnFilters}
         setColumnFilters={setColumnFilters}
-        pagination={pagination}
-        onPaginationChange={setPagination}
         keepPageOnDataUpdate={true}
       />
     </>

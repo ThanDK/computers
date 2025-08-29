@@ -2,16 +2,17 @@ import React, { useMemo } from 'react';
 import { Table, Card, Image } from 'react-bootstrap';
 import './OrderItemsTable.css';
 
-// ฟังก์ชัน helper สำหรับจัดรูปแบบตัวเลขเป็นสกุลเงิน
+// จัดรูปแบบตัวเลขเป็นสกุลเงิน
 function formatCurrency(amount, currency) {
     const numberPart = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(amount);
+
     return `${currency} ${numberPart}`;
 }
 
-// Component ย่อยสำหรับ render แถวพิเศษที่แสดงรายการ part ทั้งหมดใน Custom Build
+// แสดงรายการ part ทั้งหมดใน Custom Build
 function ContainedItems({ items, currency }) {
     return (
         <tr className="build-contents-row">
@@ -22,7 +23,11 @@ function ContainedItems({ items, currency }) {
                         {items.map((part) => (
                             <div key={part.mpn} className="build-part-item">
                                 {part.imageUrl && (
-                                    <Image src={part.imageUrl} className="build-part-image" alt={part.name} />
+                                    <Image
+                                        src={part.imageUrl}
+                                        className="build-part-image"
+                                        alt={part.name}
+                                    />
                                 )}
 
                                 <div className="part-info">
@@ -46,8 +51,7 @@ function ContainedItems({ items, currency }) {
     );
 }
 
-// Component สำหรับ render แถวของสินค้าประเภท 'Custom Build'
-// และจะ render Component ContainedItems ต่อท้ายถ้ามีรายการ part อยู่ข้างใน
+// แสดงแถวสินค้าประเภท 'Custom Build'
 function BuildItemRow({ item, currency }) {
     return (
         <>
@@ -60,12 +64,14 @@ function BuildItemRow({ item, currency }) {
                 <td className="text-end">{formatCurrency(item.unitPrice, currency)}</td>
                 <td className="text-end">{formatCurrency(item.unitPrice * item.quantity, currency)}</td>
             </tr>
-            {item.containedItems?.length > 0 && <ContainedItems items={item.containedItems} currency={currency} />}
+            {item.containedItems?.length > 0 && (
+                <ContainedItems items={item.containedItems} currency={currency} />
+            )}
         </>
     );
 }
 
-// Component สำหรับ render แถวของสินค้าประเภท 'Component' ทั่วไป
+// แสดงแถวสินค้าประเภท 'Component'
 function ComponentItemRow({ item, currency }) {
     return (
         <tr>
@@ -88,12 +94,12 @@ function ComponentItemRow({ item, currency }) {
     );
 }
 
-// Component นี้สร้างขึ้นมาให้เป็นตารางที่ใช้ซ้ำได้
-// โดยจะรับ RowComponent เข้ามาเพื่อกำหนดหน้าตาของแต่ละแถว ทำให้ใช้ได้ทั้งกับ Build และ Component
+// ตารางกลางสำหรับแสดงรายการสินค้า (Builds/Components)
 function ItemCategoryTable({ title, headerName, items, currency, RowComponent, showImageColumn }) {
     if (!items || items.length === 0) {
         return null;
     }
+
     return (
         <Card className="detail-card mb-4">
             <Card.Header>{title}</Card.Header>
@@ -124,8 +130,7 @@ function ItemCategoryTable({ title, headerName, items, currency, RowComponent, s
 }
 
 function OrderItemsTable({ lineItems = [], currency }) {
-    // ใช้ useMemo เพื่อแยก lineItems ออกเป็น 2 กลุ่ม คือ build กับ component
-    // ทำแบบนี้เพื่อป้องกันการคำนวณที่ไม่จำเป็นทุกครั้งที่ re-render
+    // แยก lineItems เป็น build และ component
     const { buildItems, componentItems } = useMemo(() => {
         return lineItems.reduce((acc, item) => {
             if (item.itemType === 'BUILD') {
@@ -147,6 +152,7 @@ function OrderItemsTable({ lineItems = [], currency }) {
                 RowComponent={BuildItemRow}
                 showImageColumn={false}
             />
+
             <ItemCategoryTable
                 title="Individual Components"
                 headerName="Component Name"

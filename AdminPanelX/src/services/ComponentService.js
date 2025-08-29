@@ -1,4 +1,4 @@
-import { showConfirmation, handlePromise } from './NotificationService';
+import { showConfirmation } from './NotificationService';
 
 const API_BASE_URL = 'http://localhost:8080/api/components';
 
@@ -53,20 +53,15 @@ export async function deleteComponent(component, token) {
         `You are about to delete "${component.name}". This cannot be undone.`
     );
 
-    if (!isConfirmed) return false;
+    if (!isConfirmed) {
+        // Throw a specific error to be caught in the mutation's onError to prevent further action
+        throw new Error('Deletion cancelled by user.');
+    }
 
-    const promise = apiRequest(`${API_BASE_URL}/${component.id}`, {
+    return apiRequest(`${API_BASE_URL}/${component.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
     });
-
-    handlePromise(promise, {
-        loading: 'Deleting component...',
-        success: `"${component.name}" deleted successfully.`,
-        error: (err) => err.message,
-    });
-
-    return promise;
 };
 
 /**
@@ -77,7 +72,7 @@ export async function deleteComponent(component, token) {
  * @returns {Promise<object>} Promise ที่จะ resolve เป็น component object ที่อัปเดตแล้ว
  */
 export async function updateComponentStock(componentId, quantityChange, token) {
-    const promise = apiRequest(`${API_BASE_URL}/stock/${componentId}`, {
+    return apiRequest(`${API_BASE_URL}/stock/${componentId}`, {
         method: 'PATCH',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -85,14 +80,6 @@ export async function updateComponentStock(componentId, quantityChange, token) {
         },
         body: JSON.stringify({ quantity: quantityChange })
     });
-
-    handlePromise(promise, {
-        loading: 'Updating stock...',
-        success: (updatedComponent) => `Stock for "${updatedComponent.name}" updated!`,
-        error: (err) => err.message,
-    });
-
-    return promise;
 };
 
 /**

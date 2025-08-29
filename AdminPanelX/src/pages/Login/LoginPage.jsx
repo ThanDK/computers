@@ -1,40 +1,39 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Card, Form, Button, Alert, Spinner } from 'react-bootstrap'; // Add Spinner
+import { Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { BsShieldLockFill } from 'react-icons/bs';
-
+import { useMutation } from '@tanstack/react-query';
 import { loginUser } from '../../services/AuthService';
-
 import './LoginPage.css';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false); // Add loading state for the button
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // ===================================================================
-  // ===== THIS IS THE OTHER CRITICAL FIX ==============================
-  // ===================================================================
+  // จัดการ logic การ login ด้วย mutation
+  const loginMutation = useMutation({
+    mutationFn: (credentials) => loginUser(credentials.email, credentials.password),
+    onSuccess: async (token) => {
+        // เมื่อ login สำเร็จ, เก็บ token และ redirect
+        await login(token);
+        navigate('/');
+    },
+    onError: (err) => {
+        setError(err.message);
+    }
+  });
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    setIsLoggingIn(true); // Start loading
-
-    try {
-      const token = await loginUser(email, password);
-      await login(token); 
-      
-      navigate('/'); 
-
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoggingIn(false);
-    }
+    
+    // เรียกใช้ mutation
+    loginMutation.mutate({ email, password });
   };
 
   return (
@@ -46,7 +45,11 @@ function LoginPage() {
             <h2 className="login-title mt-2">Admin Panel</h2>
           </div>
           
-          {error && <Alert variant="danger" className="login-alert">{error}</Alert>}
+          {error && (
+            <Alert variant="danger" className="login-alert">
+              {error}
+            </Alert>
+          )}
           
           <Form onSubmit={handleLogin}>
             <Form.Group className="mb-3">
@@ -57,9 +60,10 @@ function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="login-input"
-                disabled={isLoggingIn}
+                disabled={loginMutation.isPending}
               />
             </Form.Group>
+
             <Form.Group className="mb-4">
               <Form.Label>Password</Form.Label>
               <Form.Control
@@ -68,12 +72,24 @@ function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="login-input"
-                disabled={isLoggingIn}
+                disabled={loginMutation.isPending}
               />
             </Form.Group>
-            <Button className="w-100 login-button" type="submit" variant="primary" disabled={isLoggingIn}>
-              {isLoggingIn ? (
-                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+
+            <Button
+              className="w-100 login-button"
+              type="submit"
+              variant="primary"
+              disabled={loginMutation.isPending}
+            >
+              {loginMutation.isPending ? (
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                />
               ) : (
                 'Log In'
               )}

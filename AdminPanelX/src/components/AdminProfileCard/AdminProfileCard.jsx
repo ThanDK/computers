@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useMutation, useQueryClient } from '@tanstack/react-query'; // แก้ไข - เพิ่ม tanstack query hooks
 import { updateUserProfile, removeProfilePicture } from '../../services/ProfileService';
 import { notifySuccess, notifyError, showConfirmation } from '../../services/NotificationService';
 import { Card, Button, Modal, Form, Spinner, Badge } from 'react-bootstrap';
@@ -9,10 +10,10 @@ import './AdminProfileCard.css';
 
 const AdminProfileCard = () => {
   const { user, token, updateCurrentUser } = useAuth();
+  const queryClient = useQueryClient(); // แก้ไข - สร้าง instance ของ query client
   
   const [showEditModal, setShowEditModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // State ชุดนี้สำหรับจัดการขั้นตอนการครอปรูปทั้งหมด
   const [cropModalState, setCropModalState] = useState({ show: false, src: '' });
   const [croppedImageFile, setCroppedImageFile] = useState(null);
@@ -28,6 +29,34 @@ const AdminProfileCard = () => {
         }
     };
   }, [croppedPreviewUrl]);
+  
+  //สร้าง mutation สำหรับอัปเดตโปรไฟล์
+  const updateProfileMutation = useMutation({
+    mutationFn: (formData) => updateUserProfile(formData, token),
+    onSuccess: (updatedUser) => {
+        updateCurrentUser(updatedUser);
+        notifySuccess('Profile updated successfully!');
+        handleClose();
+    },
+    onError: (err) => {
+        notifyError(err.message);
+    }
+  });
+  
+  // สร้าง mutation สำหรับลบรูปโปรไฟล์
+  const removePictureMutation = useMutation({
+    mutationFn: () => removeProfilePicture(token),
+    onSuccess: (updatedUser) => {
+        updateCurrentUser(updatedUser);
+        notifySuccess('Profile picture removed.');
+        setCroppedImageFile(null);
+        setCroppedPreviewUrl('');
+    },
+    onError: (err) => {
+        notifyError(err.message);
+    }
+  });
+
 
   if (!user) return null;
 
@@ -66,7 +95,7 @@ const AdminProfileCard = () => {
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-    setIsSubmitting(true);
+    // setIsSubmitting(true); // แก้ไข - ลบออก
 
     const form = event.currentTarget;
     const password = form.password.value;
@@ -74,7 +103,6 @@ const AdminProfileCard = () => {
 
     if (password !== confirmPassword) {
       notifyError("Passwords do not match.");
-      setIsSubmitting(false);
       return;
     }
 
@@ -96,34 +124,16 @@ const AdminProfileCard = () => {
       formData.append('file', croppedImageFile, 'profile-picture.jpg');
     }
 
-    try {
-      const updatedUser = await updateUserProfile(formData, token);
-      updateCurrentUser(updatedUser);
-      notifySuccess('Profile updated successfully!');
-      handleClose();
-    } catch (err) {
-      notifyError(err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
+
+    updateProfileMutation.mutate(formData);
   };
 
   const handleRemovePicture = async () => {
     if (!await showConfirmation('Are you sure?', 'This will permanently remove your profile picture.')) {
         return;
     }
-    
-    try {
-        const updatedUser = await removeProfilePicture(token);
-        updateCurrentUser(updatedUser); 
-        notifySuccess('Profile picture removed.');
-        
-        setCroppedImageFile(null);
-        setCroppedPreviewUrl('');
-        
-    } catch(err) {
-        notifyError(err.message);
-    }
+
+    removePictureMutation.mutate();
   };
   
   // ถ้ามีรูป preview ใหม่ให้ใช้รูปนั้น, ถ้าไม่มีก็ใช้รูปโปรไฟล์ปัจจุบัน
@@ -180,8 +190,8 @@ const AdminProfileCard = () => {
                   Upload & Crop New Image
                 </Button>
                 {previewSource && (
-                    <Button variant="outline-danger" onClick={handleRemovePicture} title="Remove current picture">
-                        <BsTrash />
+                    <Button variant="outline-danger" onClick={handleRemovePicture} disabled={removePictureMutation.isPending} title="Remove current picture">
+                        {removePictureMutation.isPending ? <Spinner size="sm" /> : <BsTrash />}
                     </Button>
                 )}
               </div>
@@ -199,8 +209,8 @@ const AdminProfileCard = () => {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-            <Button variant="primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <><Spinner as="span" animation="border" size="sm" /> Saving...</> : 'Save Changes'}
+            <Button variant="primary" type="submit" disabled={updateProfileMutation.isPending}>
+              {updateProfileMutation.isPending ? <><Spinner as="span" animation="border" size="sm" /> Saving...</> : 'Save Changes'}
             </Button>
           </Modal.Footer>
         </Form>

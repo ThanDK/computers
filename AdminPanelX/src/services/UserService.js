@@ -1,5 +1,3 @@
-import { showConfirmation, handlePromise } from './NotificationService';
-
 const API_BASE_URL = 'http://localhost:8080/api/admin/users';
 
 /**
@@ -72,33 +70,21 @@ export async function updateUserByAdmin(userId, userData, token) {
 }
 
 /**
- * ลบผู้ใช้ออกจากระบบ (หลังจากยืนยัน)
+ * ลบผู้ใช้ออกจากระบบ
  * @param {object} user - User object ที่ต้องการลบ
  * @param {string} token - JWT token
- * @returns {Promise<boolean>} Promise ที่จะ resolve เป็น true ถ้าสำเร็จ, หรือ false ถ้าผู้ใช้ยกเลิก
+ * @returns {Promise<boolean>} Promise ที่จะ resolve เป็น true ถ้าสำเร็จ
  */
 export async function deleteUser(user, token) {
-    const isConfirmed = await showConfirmation(
-        'Are you sure?',
-        `You are about to delete user "${user.name}" (${user.email}). This is permanent.`
-    );
-    if (!isConfirmed) return false;
-
-    const promise = fetch(`${API_BASE_URL}/${user.id}`, {
+    const response = await fetch(`${API_BASE_URL}/${user.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
-    }).then(response => {
-        if (!response.ok) throw new Error('Deletion failed.');
-        return true;
     });
 
-    handlePromise(promise, {
-        loading: 'Deleting user...',
-        success: `User "${user.name}" deleted successfully.`,
-        error: 'Could not delete user.'
-    });
-
-    return promise;
+    if (!response.ok) {
+        throw new Error('Deletion failed.');
+    }
+    return true;
 };
 
 /**

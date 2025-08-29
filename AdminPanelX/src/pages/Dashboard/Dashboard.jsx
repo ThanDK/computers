@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Row, Col, Spinner, Table, Button, Modal, ButtonGroup } from 'react-bootstrap';
-import { BsArrowUpRight, BsArrowDownRight, BsBoxSeam, BsGraphUp, BsHourglassSplit, BsFillBellFill, BsDownload, BsArchiveFill } from 'react-icons/bs';
+import {
+    BsArrowUpRight, BsArrowDownRight, BsBoxSeam, BsGraphUp,
+    BsHourglassSplit, BsFillBellFill, BsDownload, BsArchiveFill
+} from 'react-icons/bs';
 import { subDays, subMonths, subYears, format } from 'date-fns';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
 import MainHeader from '../../components/MainHeader/MainHeader';
 import PageHeader from '../../components/PageHeader/PageHeader';
@@ -10,18 +14,20 @@ import TopSellingChart from '../../components/Charts/TopSellingChart';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import { fetchDashboardData, fetchOrdersForExport } from '../../services/DashboardService';
 import { useAuth } from '../../context/AuthContext';
+import { handlePromise } from '../../services/NotificationService';
+
 import './Dashboard.css';
 
+// Helper function: Export data array เป็นไฟล์ CSV
 const exportToCsv = (filename, rows) => {
     if (!rows || !rows.length) {
         return;
     }
     const separator = ',';
     const keys = Object.keys(rows[0]);
-    const csvContent =
-        keys.join(separator) +
-        '\n' +
-        rows.map(row => {
+    const csvContent = [
+        keys.join(separator),
+        ...rows.map(row => {
             return keys.map(k => {
                 let cell = row[k] === null || row[k] === undefined ? '' : row[k];
                 cell = cell instanceof Date
@@ -32,10 +38,12 @@ const exportToCsv = (filename, rows) => {
                 }
                 return cell;
             }).join(separator);
-        }).join('\n');
+        })
+    ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
+
     if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
@@ -47,15 +55,15 @@ const exportToCsv = (filename, rows) => {
     }
 };
 
+// Components ย่อยสำหรับ UI
 const LoadingOverlay = () => <div className="d-flex justify-content-center align-items-center h-100"><Spinner animation="border" /></div>;
 const NoDataMessage = ({ message }) => <div className="d-flex justify-content-center align-items-center h-100"><p className="text-secondary">{message}</p></div>;
 
 const StatCard = ({ title, value, trend, icon, periodLabel, isCurrency = false, onClick, clickable = false }) => {
     const isPositive = trend >= 0;
     const showTrend = typeof trend === 'number' && !isNaN(trend);
-    
     const displayTitle = periodLabel ? `${title.toUpperCase()} (${periodLabel})` : title.toUpperCase();
-    
+
     return (
         <div className={`stat-card ${clickable ? 'stat-card--clickable' : ''}`} onClick={onClick}>
             <div className="stat-card__icon">{icon}</div>
@@ -78,30 +86,58 @@ const rangeOptions = [
     { key: '3m', label: '3 Months' }, { key: '1y', label: '1 Year' }, { key: 'all', label: 'All Time' },
 ];
 
-const DateRangeControls = ({ selectedRange, onRangeChange }) => {
-    return (
-        <ButtonGroup className="date-range-buttons">
-            {rangeOptions.map(option => (
-                <Button key={option.key} variant={selectedRange === option.key ? 'primary' : 'outline-secondary'} onClick={() => onRangeChange(option.key)}>
-                    {option.label}
-                </Button>
-            ))}
-        </ButtonGroup>
-    );
-};
+const DateRangeControls = ({ selectedRange, onRangeChange }) => (
+    <ButtonGroup className="date-range-buttons">
+        {rangeOptions.map(option => (
+            <Button
+                key={option.key}
+                variant={selectedRange === option.key ? 'primary' : 'outline-secondary'}
+                onClick={() => onRangeChange(option.key)}
+            >
+                {option.label}
+            </Button>
+        ))}
+    </ButtonGroup>
+);
 
 function Dashboard() {
     const { token } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [isExporting, setIsExporting] = useState(false);
-    const [data, setData] = useState(null);
     const [dateRange, setDateRange] = useState({ startDate: subDays(new Date(), 6), endDate: new Date() });
     const [selectedRange, setSelectedRange] = useState('7d');
     const [showLowStockModal, setShowLowStockModal] = useState(false);
 
+    // ดึงข้อมูล dashboard ตามช่วงวันที่, re-fetch อัตโนมัติเมื่อ `dateRange` เปลี่ยน
+    const { data, isLoading, isFetching } = useQuery({
+        queryKey: ['dashboardData', dateRange],
+        queryFn: () => fetchDashboardData(token, dateRange.startDate, dateRange.endDate),
+        enabled: !!token,
+        // placeholderData: ใช้ข้อมูลเก่าแสดงค้างไว้ก่อน ระหว่างที่กำลัง fetch ข้อมูลใหม่
+        placeholderData: (previousData) => previousData,
+    });
+
+    // จัดการ export report
+    const exportMutation = useMutation({
+        mutationFn: () => fetchOrdersForExport(token, dateRange.startDate, dateRange.endDate),
+        onSuccess: (ordersToExport) => {
+            if (ordersToExport && ordersToExport.length > 0) {
+                const formattedStartDate = format(dateRange.startDate, 'yyyy-MM-dd');
+                const formattedEndDate = format(dateRange.endDate, 'yyyy-MM-dd');
+                const fileName = `orders-report-${formattedStartDate}-to-${formattedEndDate}.csv`;
+                exportToCsv(fileName, ordersToExport);
+            } else {
+                alert("No order data available to export for the selected range.");
+            }
+        },
+        onError: (error) => {
+             console.error("Export failed:", error);
+        }
+    });
+
+    // คำนวณช่วงวันที่ใหม่เมื่อ user กดปุ่ม
     const handleRangeChange = (rangeKey) => {
         const endDate = new Date();
         let startDate;
+
         switch (rangeKey) {
             case '7d': startDate = subDays(endDate, 6); break;
             case '15d': startDate = subDays(endDate, 14); break;
@@ -111,70 +147,56 @@ function Dashboard() {
             case 'all': startDate = new Date('2020-01-01'); break;
             default: startDate = subDays(endDate, 6);
         }
+
         setSelectedRange(rangeKey);
         setDateRange({ startDate, endDate });
     };
 
-    const handleExport = async () => {
-        setIsExporting(true);
-        try {
-            const ordersToExport = await fetchOrdersForExport(token, dateRange.startDate, dateRange.endDate);
-            
-            if (ordersToExport && ordersToExport.length > 0) {
-                const formattedStartDate = format(dateRange.startDate, 'yyyy-MM-dd');
-                const formattedEndDate = format(dateRange.endDate, 'yyyy-MM-dd');
-                const fileName = `orders-report-${formattedStartDate}-to-${formattedEndDate}.csv`;
-                exportToCsv(fileName, ordersToExport);
-            } else {
-                alert("No order data available to export for the selected range.");
-            }
-        } catch (error) {
-            console.error("Export failed:", error);
-        } finally {
-            setIsExporting(false);
-        }
+    // เรียกใช้ mutation และ handle notification
+    const handleExport = () => {
+        const promise = exportMutation.mutateAsync();
+        handlePromise(promise, {
+            loading: 'Preparing export data...',
+            success: 'Export data ready for download!',
+            error: (err) => err.message || 'Failed to prepare export data.',
+        });
     };
-
-    useEffect(() => {
-        if (!token) { setLoading(false); return; }
-        const loadDashboard = async () => {
-            setLoading(true);
-            try {
-                const result = await fetchDashboardData(token, dateRange.startDate, dateRange.endDate);
-                setData(result);
-            } catch (error) {
-                console.error("Failed to load dashboard data:", error);
-                setData(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadDashboard();
-    }, [token, dateRange]);
 
     const formatCurrency = (val) => `฿${(val || 0).toLocaleString('en-US')}`;
     const formattedDateRange = `${format(dateRange.startDate, 'MMM d, yyyy')} - ${format(dateRange.endDate, 'MMM d, yyyy')}`;
 
     const getPeriodLabel = () => {
         const option = rangeOptions.find(opt => opt.key === selectedRange);
-        if (option && option.key !== 'all') {
-            return `LAST ${option.label.toUpperCase()}`;
-        }
-        return null; 
+        return (option && option.key !== 'all') ? `LAST ${option.label.toUpperCase()}` : null;
     };
-    const periodLabel = getPeriodLabel();
 
-    const statCards = loading || !data ? (
+    const periodLabel = getPeriodLabel();
+    const loading = isLoading || isFetching;
+
+    // แสดง skeleton UI ขณะที่ข้อมูลกำลังโหลดครั้งแรก
+    const statCards = isLoading && !data ? (
         Array.from({ length: 5 }).map((_, i) => (
-            <Col key={i} xs={12} md={6} lg={4} className="mb-4"><div className="stat-card skeleton" style={{ height: '110px' }}/></Col>
+            <Col key={i} xs={12} md={6} lg={4} className="mb-4">
+                <div className="stat-card skeleton" style={{ height: '110px' }}/>
+            </Col>
         ))
     ) : (
         <>
-            <Col xs={12} md={6} lg={4} className="mb-4"><StatCard title="Total Revenue" periodLabel={periodLabel} value={data.stats.totalRevenue} trend={data.stats.revenueChange} icon={<BsGraphUp />} isCurrency /></Col>
-            <Col xs={12} md={6} lg={4} className="mb-4"><StatCard title="Total Sales" periodLabel={periodLabel} value={data.stats.totalSales} trend={data.stats.salesChange} icon={<BsBoxSeam />} /></Col>
-            <Col xs={12} md={6} lg={4} className="mb-4"><StatCard title="Pending Orders" periodLabel={periodLabel} value={data.stats.pendingOrders} icon={<BsHourglassSplit />} /></Col>
-            <Col xs={12} md={6} lg={4} className="mb-4"><StatCard title="Total Products" value={data.stats.products} icon={<BsArchiveFill />} /></Col>
-            <Col xs={12} md={6} lg={4} className="mb-4"><StatCard title="Low Stock Alerts" value={data.stats.alerts} icon={<BsFillBellFill />} onClick={() => data.stats.alerts > 0 && setShowLowStockModal(true)} clickable={data.stats.alerts > 0} /></Col>
+            <Col xs={12} md={6} lg={4} className="mb-4">
+                <StatCard title="Total Revenue" periodLabel={periodLabel} value={data?.stats.totalRevenue} trend={data?.stats.revenueChange} icon={<BsGraphUp />} isCurrency />
+            </Col>
+            <Col xs={12} md={6} lg={4} className="mb-4">
+                <StatCard title="Total Sales" periodLabel={periodLabel} value={data?.stats.totalSales} trend={data?.stats.salesChange} icon={<BsBoxSeam />} />
+            </Col>
+            <Col xs={12} md={6} lg={4} className="mb-4">
+                <StatCard title="Pending Orders" periodLabel={periodLabel} value={data?.stats.pendingOrders} icon={<BsHourglassSplit />} />
+            </Col>
+            <Col xs={12} md={6} lg={4} className="mb-4">
+                <StatCard title="Total Products" value={data?.stats.products} icon={<BsArchiveFill />} />
+            </Col>
+            <Col xs={12} md={6} lg={4} className="mb-4">
+                <StatCard title="Low Stock Alerts" value={data?.stats.alerts} icon={<BsFillBellFill />} onClick={() => data?.stats.alerts > 0 && setShowLowStockModal(true)} clickable={data?.stats.alerts > 0} />
+            </Col>
         </>
     );
 
@@ -186,13 +208,8 @@ function Dashboard() {
             <div className="dashboard-controls-container">
                 <DateRangeControls selectedRange={selectedRange} onRangeChange={handleRangeChange} />
                 <div>
-                    <Button 
-                        variant="primary" 
-                        className="export-button" 
-                        onClick={handleExport}
-                        disabled={loading || isExporting}
-                    >
-                        {isExporting ? (
+                    <Button variant="primary" className="export-button" onClick={handleExport} disabled={loading || exportMutation.isPending}>
+                        {exportMutation.isPending ? (
                             <>
                                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/>
                                 <span className="ms-2">Exporting...</span>
@@ -210,13 +227,25 @@ function Dashboard() {
                 <Col xs={12} lg={7} className="mb-4">
                     <div className="chart-card chart-card--graph">
                         <div className="chart-header"><h4>Revenue Overview</h4></div>
-                        <div className="chart-container">{loading ? <LoadingOverlay /> : (data?.revenueChartData?.length > 0 ? <RevenueChart data={data.revenueChartData} /> : <NoDataMessage message="No revenue data for this period." />)}</div>
+                        <div className="chart-container">
+                            {loading ? <LoadingOverlay /> : (
+                                data?.revenueChartData?.length > 0
+                                ? <RevenueChart data={data.revenueChartData} />
+                                : <NoDataMessage message="No revenue data for this period." />
+                            )}
+                        </div>
                     </div>
                 </Col>
                 <Col xs={12} lg={5} className="mb-4">
                      <div className="chart-card chart-card--graph">
                         <div className="chart-header"><h4>Top Selling Products</h4></div>
-                        <div className="chart-container">{loading ? <LoadingOverlay /> : (data?.topSellingData?.length > 0 ? <TopSellingChart data={data.topSellingData} /> : <NoDataMessage message="No sales data for this period." />)}</div>
+                        <div className="chart-container">
+                            {loading ? <LoadingOverlay /> : (
+                                data?.topSellingData?.length > 0
+                                ? <TopSellingChart data={data.topSellingData} />
+                                : <NoDataMessage message="No sales data for this period." />
+                            )}
+                        </div>
                     </div>
                 </Col>
             </Row>
@@ -230,12 +259,7 @@ function Dashboard() {
                                 {loading ? <LoadingOverlay /> : (
                                     <Table hover responsive className="recent-orders-table">
                                         <thead>
-                                            <tr>
-                                                <th>Order ID</th>
-                                                <th>Customer</th>
-                                                <th>Status</th>
-                                                <th>Amount</th>
-                                            </tr>
+                                            <tr><th>Order ID</th><th>Customer</th><th>Status</th><th>Amount</th></tr>
                                         </thead>
                                         <tbody>
                                             {data?.recentOrders?.length > 0 ? data.recentOrders.map(order => (
@@ -263,7 +287,15 @@ function Dashboard() {
                     <div className="modal-table-container">
                         <Table hover responsive className="recent-orders-table">
                             <thead><tr><th>Product Name</th><th>MPN</th><th className="text-end">Stock Remaining</th></tr></thead>
-                            <tbody>{data?.lowStockProducts?.map(product => (<tr key={product.id}><td>{product.name}</td><td>{product.mpn}</td><td className="text-end fw-bold text-warning">{product.stock}</td></tr>))}</tbody>
+                            <tbody>
+                                {data?.lowStockProducts?.map(product => (
+                                    <tr key={product.id}>
+                                        <td>{product.name}</td>
+                                        <td>{product.mpn}</td>
+                                        <td className="text-end fw-bold text-warning">{product.stock}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
                         </Table>
                     </div>
                 </Modal.Body>

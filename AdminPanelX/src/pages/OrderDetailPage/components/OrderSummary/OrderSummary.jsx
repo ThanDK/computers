@@ -8,7 +8,7 @@ import {
 } from 'react-icons/bs';
 import './OrderSummary.css';
 
-// Component ย่อยสำหรับ render แถวข้อมูลแต่ละแถวให้มี layout เหมือนกัน
+// Component ย่อยสำหรับแสดงข้อมูลแต่ละแถว
 const DetailRow = ({ icon, label, children }) => (
     <div className="detail-row">
         <div className="detail-label">
@@ -19,7 +19,7 @@ const DetailRow = ({ icon, label, children }) => (
     </div>
 );
 
-// ฟังก์ชัน helper สำหรับจัดรูปแบบ object ที่อยู่ให้ออกมาเป็น string ที่อ่านง่าย
+// จัดรูปแบบ object ที่อยู่เป็น string
 const formatAddress = (address) => {
     if (!address) {
         return "N/A";
@@ -37,17 +37,24 @@ const formatAddress = (address) => {
 
 function OrderSummary({ order }) {
     const {
-        email, shippingAddress, paymentDetails,
-        shippingDetails, createdAt, updatedAt, orderStatus
+        email,
+        shippingAddress,
+        paymentDetails,
+        shippingDetails,
+        createdAt,
+        updatedAt,
+        orderStatus
     } = order || {};
 
-    // สร้าง URL สำหรับดู transaction บนเว็บ PayPal sandbox
+    // สร้าง URL สำหรับ PayPal sandbox
     const getPaypalTransactionUrl = (txId) => `https://www.sandbox.paypal.com/activity/payment/${txId}`;
     
-    // เช็คว่าถ้าจ่ายแบบโอนเงินและมี URL ของสลิปอยู่ ก็ให้เก็บ URL นั้นไว้
-    const slipUrl = (paymentDetails?.paymentMethod === 'BANK_TRANSFER' && paymentDetails?.slipImageUrl) ? paymentDetails.slipImageUrl : null;
+    // หา URL ของสลิป ถ้ามี
+    const slipUrl = (paymentDetails?.paymentMethod === 'BANK_TRANSFER' && paymentDetails?.slipImageUrl)
+        ? paymentDetails.slipImageUrl
+        : null;
     
-    // ตรงนี้จะเปลี่ยนหน้าตาปุ่มดูสลิปตามสถานะ ถ้าสลิปถูกปฏิเสธ ก็จะให้ปุ่มเป็นสีแดงและข้อความเปลี่ยนไป
+    // กำหนดหน้าตาปุ่มดูสลิปตามสถานะ (ปกติ/ถูกปฏิเสธ)
     const isRejected = orderStatus === 'REJECTED_SLIP';
     const buttonVariant = isRejected ? 'outline-danger' : 'outline-info';
     const buttonText = isRejected ? 'View Rejected Slip' : 'View Payment Slip';
@@ -57,34 +64,65 @@ function OrderSummary({ order }) {
         <Card className="detail-card">
             <Card.Header>Customer & Shipping</Card.Header>
             <Card.Body className="detail-card-body">
-                <DetailRow icon={<BsPerson />} label="Contact Name">{shippingAddress?.contactName || 'N/A'}</DetailRow>
-                <DetailRow icon={<BsTelephone />} label="Phone">{shippingAddress?.phoneNumber || 'N/A'}</DetailRow>
-                <DetailRow icon={<BsPerson />} label="Account Email">{email}</DetailRow>
+
+                <DetailRow icon={<BsPerson />} label="Contact Name">
+                    {shippingAddress?.contactName || 'N/A'}
+                </DetailRow>
+                <DetailRow icon={<BsTelephone />} label="Phone">
+                    {shippingAddress?.phoneNumber || 'N/A'}
+                </DetailRow>
+                <DetailRow icon={<BsPerson />} label="Account Email">
+                    {email}
+                </DetailRow>
                 
                 <div className="detail-item-full-width">
-                    <div className="detail-label mb-2"><BsGeoAlt /><span>Shipping Address</span></div>
-                    <p className="address-block">{formatAddress(shippingAddress)}</p>
+                    <div className="detail-label mb-2">
+                        <BsGeoAlt />
+                        <span>Shipping Address</span>
+                    </div>
+                    <p className="address-block">
+                        {formatAddress(shippingAddress)}
+                    </p>
                 </div>
 
-                {shippingDetails?.shippingProvider && (<DetailRow icon={<BsBoxSeam />} label="Shipped Via">{shippingDetails.shippingProvider}</DetailRow>)}
-                {shippingDetails?.trackingNumber && (<DetailRow icon={<BsHash />} label="Tracking #">{shippingDetails.trackingNumber}</DetailRow>)}
+                {shippingDetails?.shippingProvider && (
+                    <DetailRow icon={<BsBoxSeam />} label="Shipped Via">
+                        {shippingDetails.shippingProvider}
+                    </DetailRow>
+                )}
+
+                {shippingDetails?.trackingNumber && (
+                    <DetailRow icon={<BsHash />} label="Tracking #">
+                        {shippingDetails.trackingNumber}
+                    </DetailRow>
+                )}
                 
                 {paymentDetails?.paymentMethod && (
                     <DetailRow icon={<BsWallet2 />} label="Paid Via">
                         {paymentDetails.paymentMethod.replace(/_/g, ' ')}
-                        {/* ถ้าจ่ายด้วย PayPal และมี transactionId ก็จะแสดงลิงก์ให้กดไปดูได้ */}
+
+                        {/* แสดงลิงก์ไป PayPal ถ้ามี transactionId */}
                         {paymentDetails.transactionId && paymentDetails.paymentMethod === 'PAYPAL' && (
-                            <a href={getPaypalTransactionUrl(paymentDetails.transactionId)} target="_blank" rel="noopener noreferrer" className="ms-1">
+                            <a
+                                href={getPaypalTransactionUrl(paymentDetails.transactionId)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ms-1"
+                            >
                                 (View Transaction)
                             </a>
                         )}
                     </DetailRow>
                 )}
                 
-                <DetailRow icon={<BsCalendarPlus />} label="Created">{createdAt ? format(new Date(createdAt), 'dd MMM yyyy, HH:mm') : 'N/A'}</DetailRow>
-                <DetailRow icon={<BsCalendarCheck />} label="Last Update">{updatedAt ? format(new Date(updatedAt), 'dd MMM yyyy, HH:mm') : 'N/A'}</DetailRow>
+                <DetailRow icon={<BsCalendarPlus />} label="Created">
+                    {createdAt ? format(new Date(createdAt), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                </DetailRow>
+                <DetailRow icon={<BsCalendarCheck />} label="Last Update">
+                    {updatedAt ? format(new Date(updatedAt), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                </DetailRow>
 
-                {/* ปุ่มดูสลิปจะแสดงก็ต่อเมื่อมี slipUrl เท่านั้น */}
+                {/* แสดงปุ่มดูสลิป ถ้ามี URL */}
                 {slipUrl && (
                     <div className="mt-3 d-grid">
                         <Button

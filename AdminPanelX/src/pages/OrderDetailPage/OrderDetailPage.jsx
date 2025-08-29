@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchOrderById } from '../../services/OrderService';
-import { notifyError } from '../../services/NotificationService';
+import { useQuery } from '@tanstack/react-query';
 import { Spinner, Alert } from 'react-bootstrap';
 
 import MainHeader from '../../components/MainHeader/MainHeader';
@@ -20,64 +20,42 @@ function OrderDetailPage() {
     const navigate = useNavigate();
     const { token } = useAuth();
 
-    const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true); // state สำหรับ loading ตอนเปิดหน้าครั้งแรก
-    const [error, setError] = useState('');
-    const [isRefreshing, setIsRefreshing] = useState(false); // state สำหรับ loading ตอนกด refresh
+    // ดึงข้อมูล order ด้วย tanstack query
+    const {
+        data: order,
+        isLoading, 
+        isError,
+        error,
+        isFetching, 
+        refetch,    
+    } = useQuery({
+        queryKey: ['order', orderId], 
+        queryFn: () => fetchOrderById(orderId, token),
+        enabled: !!token && !!orderId, // สั่งให้ run query เมื่อมี token และ orderId เท่านั้น
+    });
 
-    // ใช้ useCallback ครอบฟังก์ชันโหลดข้อมูลไว้ เพื่อไม่ให้ถูกสร้างใหม่ทุกครั้งที่ re-render
-    const loadOrderData = useCallback(async () => {
-        if (!token || !orderId) return;
-        setIsRefreshing(true);
-        setError('');
-        try {
-            // ใช้ Promise.all กับ setTimeout เพื่อให้ spinner หมุนอย่างน้อย 200ms กันการกระพริบ
-            const [data] = await Promise.all([
-                fetchOrderById(orderId, token),
-                new Promise(resolve => setTimeout(resolve, 200))
-            ]);
-            setOrder(data);
-        } catch (err) {
-            const errorMessage = err.message || 'Failed to refresh order details.';
-            setError(errorMessage);
-            notifyError(errorMessage);
-        } finally {
-            setIsRefreshing(false);
-        }
-    }, [orderId, token]);
-
-    // useEffect นี้จะทำงานแค่ครั้งเดียวตอน component ถูกสร้าง เพื่อโหลดข้อมูลครั้งแรก
-    useEffect(() => {
-        const initialLoad = async () => {
-            setLoading(true);
-            await loadOrderData();
-            setLoading(false);
-        };
-        initialLoad();
-    }, [loadOrderData]);
-
-    const handleRefresh = () => {
-        if (isRefreshing) return;
-        loadOrderData();
-    };
-
-    // ส่วนนี้คือการแสดงผลตาม state ต่างๆ เช่น loading, error, หรือข้อมูลที่โหลดสำเร็จ
-    if (loading) {
+    // หน้า loading ขณะดึงข้อมูล
+    if (isLoading) {
         return (
             <>
                 <MainHeader />
                 <PageHeader title="Loading Order..." />
-                <div className="text-center p-5"><Spinner animation="border" /></div>
+                <div className="text-center p-5">
+                    <Spinner animation="border" />
+                </div>
             </>
         );
     }
     
-    if (error || !order) {
+    // หน้า error ถ้าดึงข้อมูลไม่ได้
+    if (isError || !order) {
         return (
             <>
                 <MainHeader />
                 <PageHeader title="Error" subtitle="Could not load order details" />
-                <Alert variant="danger" className="m-4">{error || "Order not found."}</Alert>
+                <Alert variant="danger" className="m-4">
+                    {error?.message || "Order not found."}
+                </Alert>
             </>
         );
     }
@@ -90,24 +68,22 @@ function OrderDetailPage() {
                 subtitle={`Current Status: ${order.orderStatus.replace(/_/g, ' ')}`}
                 showBackButton={true}
                 onBack={() => navigate('/orders')}
-                onRefresh={handleRefresh}
-                isRefreshing={isRefreshing}
+                onRefresh={refetch}
+                isRefreshing={isFetching}
             />
 
             <div className="order-detail-layout">
                 <div className="order-main-content">
-                    <OrderItemsTable lineItems={order.lineItems} currency={order.currency} />
+                    <OrderItemsTable 
+                        lineItems={order.lineItems} 
+                        currency={order.currency} 
+                    />
                     <OrderTotals order={order} />
                 </div>
+
                 <div className="order-sidebar-content">
-                    {/* key={order.updatedAt} ตรงนี้สำคัญมาก
-                        เป็นการบังคับให้ React ทำการ unmount และ re-mount component OrderActions ใหม่ทุกครั้ง
-                        ที่มีการอัปเดตข้อมูล order ซึ่งจะทำให้ state ภายใน OrderActions ถูกรีเซ็ตและดึงข้อมูลใหม่เสมอ */}
-                    <OrderActions 
-                        key={order.updatedAt} 
-                        order={order} 
-                        onActionSuccess={loadOrderData} 
-                    />
+
+                    <OrderActions order={order} />
                     <OrderStatusCard order={order} />
                     <OrderSummary order={order} />
                 </div>

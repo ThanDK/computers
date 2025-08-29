@@ -14,6 +14,7 @@ function ShippingProviderFormModal({ show, onHide, provider, onSubmit, isSubmitt
       const existingUrl = provider?.imageUrl || null;
       setImagePreviewUrl(existingUrl);
       setOriginalImageSrc(existingUrl);
+      setImageFile(null); 
     }
   }, [show, provider]);
 
@@ -60,7 +61,8 @@ function ShippingProviderFormModal({ show, onHide, provider, onSubmit, isSubmitt
   
   const handleInternalSubmit = (event) => {
     event.preventDefault();
-    onSubmit(event, imageFile);
+    const formData = new FormData(event.currentTarget);
+    onSubmit(formData, imageFile);
   };
 
   return (
@@ -78,7 +80,7 @@ function ShippingProviderFormModal({ show, onHide, provider, onSubmit, isSubmitt
                     <>
                       <Image src={imagePreviewUrl} alt="Provider logo preview" className="logo-preview" />
                       <div className="image-actions d-flex gap-2 mt-2">
-                        <Button variant="secondary" size="sm" onClick={handleOpenCropper}>Crop</Button>
+                        <Button variant="secondary" size="sm" onClick={handleOpenCropper} disabled={!imageFile}>Crop</Button>
                         <Button variant="outline-danger" size="sm" onClick={handleRemoveImage}>Remove</Button>
                       </div>
                     </>

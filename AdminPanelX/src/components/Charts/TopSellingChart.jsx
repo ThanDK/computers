@@ -16,13 +16,15 @@ const TopSellingChart = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
-        // กำหนดให้กราฟเป็นแนวนอน (แท่งวิ่งจากซ้ายไปขวา)
+        // กำหนดให้กราฟเป็นแนวนอน จากซ้ายไปขวา
         layout="vertical"
         data={data}
         margin={{ top: 5, right: 30, left: 30, bottom: 20 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#4a5a76" />
-        <XAxis type="number" stroke="var--text-secondary" />
+        
+        <XAxis type="number" stroke="var(--text-secondary)" />
+        
         <YAxis
           type="category"
           dataKey="name"
@@ -30,7 +32,7 @@ const TopSellingChart = ({ data }) => {
           width={100} 
           tick={{ fontSize: 14 }} 
           tickFormatter={formatYAxisTick}
-          // interval={0} คือบังคับให้แสดงชื่อสินค้าทุกอัน ไม่ให้มีอันไหนถูกข้ามไป
+          // interval={0} คือบังคับให้แสดงชื่อสินค้าทุกอัน 
           interval={0}
         />
         <Tooltip
@@ -42,8 +44,14 @@ const TopSellingChart = ({ data }) => {
             color: 'var(--text-primary)'
           }}
         />
-        <Legend verticalAlign="bottom" height={36}/>
-        {/* 'name' คือชื่อที่จะไปโชว์ใน Legend กับ Tooltip */}
+        
+        <Legend 
+            verticalAlign="bottom" 
+            height={36} 
+            wrapperStyle={{ color: 'var(--text-primary)' }} 
+        />
+        
+        {/* 'name' ที่จะไปโชว์ใน Legend กับ Tooltip */}
         <Bar dataKey="quantitySold" name="Quantity Sold" fill="#38bdf8" />
       </BarChart>
     </ResponsiveContainer>

@@ -88,7 +88,7 @@ function LookupFormModal({ show, onHide, onSubmit, isSubmitting, modalState, act
                 <>
                   <Image src={imagePreviewUrl} alt="Logo preview" className="logo-preview" />
                   <div className="image-actions d-flex gap-2 mt-2">
-                    <Button variant="secondary" size="sm" onClick={handleOpenCropper}>Crop</Button>
+                    <Button variant="secondary" size="sm" onClick={handleOpenCropper} disabled={!imageFile}>Crop</Button>
                     <Button variant="outline-danger" size="sm" onClick={handleRemoveImage}>Remove</Button>
                   </div>
                 </>
