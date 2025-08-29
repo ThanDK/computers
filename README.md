@@ -111,7 +111,7 @@
 | **Frontend** | `React (Vite)`, `React Router` | ส่วนติดต่อผู้ใช้สำหรับผู้ดูแลระบบในรูปแบบ Single Page Application |
 | **Database** | `MongoDB` | ฐานข้อมูล NoSQL สำหรับจัดเก็บข้อมูลสินค้า, ผู้ใช้, และคำสั่งซื้อ |
 | **Styling** | `React-Bootstrap`, `CSS Modules` | ออกแบบและจัดวางส่วนประกอบ UI |
-| **State Mgt.** | `React Context API` | จัดการสถานะการล็อกอินและข้อมูลผู้ใช้ส่วนกลางใน Frontend |
+| **State Mgt.** | `TanStack Query`, `React Context API` | ใช้ **TanStack Query** สำหรับจัดการ Server State ทั้งหมด (Fetching, Caching, Mutations) และใช้ **Context API** สำหรับจัดการสถานะการล็อกอินของผู้ใช้ |
 | **Data Tables** | `Tanstack React Table` | สร้างตารางข้อมูลที่มีฟังก์ชันการทำงานขั้นสูง |
 | **Data Viz** | `Recharts` | แสดงผลข้อมูลในรูปแบบกราฟบนหน้า Dashboard |
 | **Authentication** | `Spring Security`, `JWT`, `Google OAuth2` | จัดการการยืนยันตัวตนและกำหนดสิทธิ์การเข้าถึง (RBAC) |
