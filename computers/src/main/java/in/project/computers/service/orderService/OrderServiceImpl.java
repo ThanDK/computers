@@ -718,10 +718,10 @@ public class OrderServiceImpl implements OrderService {
         return switch (currentStatus) {
             case PENDING_PAYMENT, REJECTED_SLIP -> List.of(OrderStatus.CANCELLED);
             case PROCESSING, SHIPPED, DELIVERY_FAILED -> Stream.of(
-                            OrderStatus.COMPLETED,
-                            OrderStatus.DELIVERY_FAILED,
-                            OrderStatus.RETURNED_TO_SENDER
-
+                            OrderStatus.PROCESSING,         // Can re-ship
+                            OrderStatus.COMPLETED,          // Can mark as complete
+                            OrderStatus.DELIVERY_FAILED,    // Can mark as failed
+                            OrderStatus.RETURNED_TO_SENDER  // Can mark as returned
                     )
                     .filter(status -> status != currentStatus)
                     .toList();
