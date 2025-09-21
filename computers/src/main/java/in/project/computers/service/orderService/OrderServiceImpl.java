@@ -716,12 +716,13 @@ public class OrderServiceImpl implements OrderService {
      */
     private List<OrderStatus> getValidManualTransitionsFor(OrderStatus currentStatus) {
         return switch (currentStatus) {
-            case PENDING_PAYMENT, REJECTED_SLIP -> List.of(OrderStatus.CANCELLED);
-            case PROCESSING, SHIPPED, DELIVERY_FAILED -> Stream.of(
-                            OrderStatus.PROCESSING,         // Can re-ship
-                            OrderStatus.COMPLETED,          // Can mark as complete
-                            OrderStatus.DELIVERY_FAILED,    // Can mark as failed
-                            OrderStatus.RETURNED_TO_SENDER  // Can mark as returned
+            case PENDING_PAYMENT, REJECTED_SLIP, PROCESSING -> List.of(OrderStatus.CANCELLED);
+
+            case SHIPPED, DELIVERY_FAILED -> Stream.of(
+                            OrderStatus.PROCESSING,         // To correct an error and re-prepare for shipping
+                            OrderStatus.COMPLETED,          // Delivery was successful
+                            OrderStatus.DELIVERY_FAILED,    // Another delivery attempt failed
+                            OrderStatus.RETURNED_TO_SENDER  // Package is being returned
                     )
                     .filter(status -> status != currentStatus)
                     .toList();

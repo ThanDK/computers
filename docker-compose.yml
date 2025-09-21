@@ -29,6 +29,19 @@ services:
     networks:
       - computers-network
 
+  user-frontend:
+    build:
+      context: ./User-ui
+      dockerfile: Dockerfile
+      args:
+        - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    container_name: user-frontend-container
+    ports:
+      - "5174:80"
+    restart: unless-stopped
+    networks:
+      - computers-network
+      
   # The MongoDB database service
   mongo:
     image: mongo:latest
