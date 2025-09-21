@@ -1,0 +1,35 @@
+
+.main-content {
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+
+.filter-bar {
+    margin-bottom: 30px;
+}
+
+
+.category-filters button {
+    margin-right: 10px;
+    margin-bottom: 10px; 
+    padding: 8px 15px;
+    border: 1px solid #ccc;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    border-radius: 20px; 
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    font-weight: 500;
+}
+
+.category-filters button.active {
+    background-color: #f04e23;
+    color: white;
+    border-color: #f04e23;
+}
+
+.category-filters button:hover:not(.active) {
+    background-color: #eee;
+    border-color: #bbb;
+}
+

@@ -1,0 +1,121 @@
+.status-page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 2rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.status-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem 3rem;
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    border-top: 5px solid;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-icon {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+}
+
+.status-card h1 {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.status-card p {
+    color: #666;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.status-card .order-id {
+    background-color: #f2f2f2;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: bold;
+    color: #333;
+    display: inline-block;
+    margin-bottom: 2rem;
+}
+
+.status-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.status-button {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.primary {
+    background-color: #007bff;
+    color: white;
+}
+.primary:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.secondary {
+    background-color: #e9ecef;
+    color: #333;
+    border: 1px solid #ddd;
+}
+.secondary:hover {
+    background-color: #d8dde2;
+}
+
+
+.success .status-card {
+    border-color: #28a745; 
+}
+.success .status-icon {
+    color: #28a745;
+}
+
+.error .status-card {
+    border-color: #dc3545; 
+}
+.error .status-icon {
+    color: #dc3545;
+}
+
+.cancelled .status-card {
+    border-color: #ffc107; 
+}
+.cancelled .status-icon {
+    color: #ffc107;
+}

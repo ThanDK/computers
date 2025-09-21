@@ -1,0 +1,13 @@
+.logo-color {
+    color: #f04e23 !important; 
+}
+
+#button-search {
+    background-color: #f04e23;
+    border-color: #f04e23;
+}
+
+#button-search:hover {
+    background-color: #d8421b;
+    border-color: #d8421b;
+}

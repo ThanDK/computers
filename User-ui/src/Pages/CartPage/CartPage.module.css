@@ -1,0 +1,207 @@
+/* --- General Page Styles --- */
+.pageContainer {
+    padding: 2rem 1rem;
+    background-color: #f8f9fa; /* พื้นหลังสีเทาอ่อนเพื่อให้ Card ดูเด่นขึ้น */
+}
+
+/* --- Step Indicator --- */
+.stepIndicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    background-color: #fff;
+    padding: 1rem;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.stepButton {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    color: #6c757d;
+    background-color: #e9ecef;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: default;
+}
+.stepButton.firstStep { border-radius: 25px 0 0 25px; }
+.stepButton.lastStep { border-radius: 0 25px 25px 0; }
+.stepButton.active {
+    background-color: var(--bs-primary);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4);
+}
+
+/* --- Empty Cart State --- */
+.emptyCartCard {
+    max-width: 500px;
+    margin: auto;
+    border: none;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.emptyCartIcon {
+    font-size: 5rem;
+    color: var(--bs-primary);
+}
+
+
+/* --- Cart Item Card --- */
+.cartCard {
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s ease-in-out, opacity 0.3s ease;
+}
+.cartCard:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.cartCard.updating {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Image Containers (ส่วนสำคัญในการแก้ปัญหารูปไม่เท่ากัน) */
+.imageContainer {
+    width: 100%;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 5px;
+    border: 1px solid #e9ecef;
+}
+.productImage {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* <<-- คำสั่งพระเอก: ทำให้รูปพอดีในกรอบโดยไม่เสียสัดส่วน */
+}
+
+/* Line Total Price */
+.lineTotal {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--bs-dark);
+}
+
+/* --- Build Components Section --- */
+.componentDivider {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-top: 1px dashed #ced4da;
+}
+.componentList {
+    padding-left: 15px;
+    border-left: 3px solid #f0f2f5;
+}
+.componentItem {
+    display: flex;
+    align-items: center;
+    color: #495057;
+    margin-bottom: 10px;
+}
+.componentImageContainer {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    margin-right: 12px;
+    flex-shrink: 0;
+    padding: 4px;
+}
+.componentImage {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* <<-- ใช้หลักการเดียวกันกับรูปหลัก */
+}
+
+/* --- Summary Card --- */
+.summaryCard {
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    position: sticky;
+    top: 20px; /* ทำให้เลื่อนตามหน้าจอ */
+}
+
+/* --- Quantity Controls --- */
+.quantityControl {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #dee2e6;
+    border-radius: 25px;
+    overflow: hidden;
+    width: 110px;
+    margin: 0 auto;
+}
+.quantityButton {
+    background-color: #f8f9fa;
+    border: none;
+    color: #495057;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.quantityButton:hover:not(:disabled) {
+    background-color: #e9ecef;
+}
+.quantityButton:disabled {
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+.quantityDisplay {
+    font-weight: 500;
+    padding: 0 0.5rem;
+    font-size: 1rem;
+}
+
+/* --- Step 2 & 3 Styles --- */
+.formSection {
+    margin-bottom: 2rem;
+}
+.addressCard {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.addressCard.selected {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+.checkIcon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: var(--bs-primary);
+}
+
+/* Other styles */
+.hiddenInput { display: none; }
+.qrImage { max-width: 180px; margin-bottom: 1rem; }
+.bankLogo { max-height: 40px; margin-bottom: 1rem; }
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 991.98px) {
+    .summaryCard {
+        position: static;
+        top: auto;
+        margin-top: 0; /* No margin needed when stacked */
+    }
+}
+@media (max-width: 767.98px) {
+    .lineTotal {
+        text-align: right;
+    }
+}
