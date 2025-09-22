@@ -1,6 +1,7 @@
 import { showConfirmation } from './NotificationService';
+import { API_BASE_URL } from './apiConfig';
 
-const API_BASE_URL = 'http://localhost:8080/api/components';
+const COMPONENTS_ENDPOINT = `${API_BASE_URL}/components`;
 
 /**
  * ฟังก์ชัน helper กลางสำหรับส่ง request ไปยัง API
@@ -36,7 +37,7 @@ async function apiRequest(url, options = {}) {
  * @returns {Promise<Array>} Array ของ component object
  */
 export async function fetchAllComponents(token) {
-    return apiRequest(API_BASE_URL, {
+    return apiRequest(COMPONENTS_ENDPOINT, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
 };
@@ -58,7 +59,7 @@ export async function deleteComponent(component, token) {
         throw new Error('Deletion cancelled by user.');
     }
 
-    return apiRequest(`${API_BASE_URL}/${component.id}`, {
+    return apiRequest(`${COMPONENTS_ENDPOINT}/${component.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -72,7 +73,7 @@ export async function deleteComponent(component, token) {
  * @returns {Promise<object>} Promise ที่จะ resolve เป็น component object ที่อัปเดตแล้ว
  */
 export async function updateComponentStock(componentId, quantityChange, token) {
-    return apiRequest(`${API_BASE_URL}/stock/${componentId}`, {
+    return apiRequest(`${COMPONENTS_ENDPOINT}/stock/${componentId}`, {
         method: 'PATCH',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -96,7 +97,7 @@ export async function createComponent(componentData, imageFile, token) {
         formData.append('image', imageFile);
     }
 
-    return apiRequest(`${API_BASE_URL}/`, {
+    return apiRequest(`${COMPONENTS_ENDPOINT}/`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
@@ -110,7 +111,7 @@ export async function createComponent(componentData, imageFile, token) {
  * @returns {Promise<object>} Component object ที่ตรงกับ ID
  */
 export async function getComponentById(id, token) {
-    return apiRequest(`${API_BASE_URL}/${id}`, {
+    return apiRequest(`${COMPONENTS_ENDPOINT}/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
 };
@@ -131,7 +132,7 @@ export async function updateComponent(id, componentData, imageFile, removeImage,
         formData.append('image', imageFile);
     }
 
-    const url = `${API_BASE_URL}/${id}?removeImage=${removeImage}`;
+    const url = `${COMPONENTS_ENDPOINT}/${id}?removeImage=${removeImage}`;
 
     return apiRequest(url, {
         method: 'PUT',

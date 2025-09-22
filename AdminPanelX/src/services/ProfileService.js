@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8080/api/profile';
+import { API_BASE_URL } from './apiConfig';
+
+const PROFILE_ENDPOINT = `${API_BASE_URL}/profile`;
 
 /**
  * ดึงข้อมูลโปรไฟล์ของผู้ใช้ที่กำลังล็อกอินอยู่
@@ -7,7 +9,7 @@ const API_BASE_URL = 'http://localhost:8080/api/profile';
  * @throws {Error} หากดึงข้อมูลไม่สำเร็จ
  */
 export async function fetchCurrentUserProfile(token) {
-    const response = await fetch(`${API_BASE_URL}/me`, {
+    const response = await fetch(`${PROFILE_ENDPOINT}/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to fetch user profile.');
@@ -22,7 +24,7 @@ export async function fetchCurrentUserProfile(token) {
  * @throws {Error} หากอัปเดตไม่สำเร็จ
  */
 export async function updateUserProfile(formData, token) {
-    const response = await fetch(API_BASE_URL, {
+    const response = await fetch(PROFILE_ENDPOINT, {
         method: 'PUT',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -44,7 +46,7 @@ export async function updateUserProfile(formData, token) {
  * @throws {Error} หากลบรูปไม่สำเร็จ
  */
 export async function removeProfilePicture(token) {
-    const response = await fetch(`${API_BASE_URL}/picture`, {
+    const response = await fetch(`${PROFILE_ENDPOINT}/picture`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
     });

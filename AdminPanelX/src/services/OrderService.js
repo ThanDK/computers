@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8080/api/admin/orders';
+import { API_BASE_URL } from './apiConfig';
+
+const ORDERS_ENDPOINT = `${API_BASE_URL}/admin/orders`;
 
 /**
  * ฟังก์ชัน helper กลางสำหรับส่ง request ไปยัง API ที่เกี่ยวกับออเดอร์
@@ -38,7 +40,7 @@ async function apiRequest(url, method = 'GET', body = null, token) {
  * @returns {Promise<Array>} Array ของ order object
  */
 export const fetchAllOrders = (token) => {
-    return apiRequest(`${API_BASE_URL}`, 'GET', null, token);
+    return apiRequest(`${ORDERS_ENDPOINT}`, 'GET', null, token);
 };
 
 /**
@@ -47,7 +49,7 @@ export const fetchAllOrders = (token) => {
  * @returns {Promise<Array>} Array ของชื่อสถานะ (string)
  */
 export const fetchAllOrderStatuses = (token) => {
-    return apiRequest(`${API_BASE_URL}/statuses`, 'GET', null, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/statuses`, 'GET', null, token);
 };
 
 /**
@@ -57,7 +59,7 @@ export const fetchAllOrderStatuses = (token) => {
  * @returns {Promise<object>} Order object
  */
 export const fetchOrderById = (orderId, token) => {
-    return apiRequest(`${API_BASE_URL}/${orderId}`, 'GET', null, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/${orderId}`, 'GET', null, token);
 };
 
 /**
@@ -67,7 +69,7 @@ export const fetchOrderById = (orderId, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const approveSlip = (orderId, token) => {
-    return apiRequest(`${API_BASE_URL}/approve-slip/${orderId}`, 'POST', null, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/approve-slip/${orderId}`, 'POST', null, token);
 };
 
 /**
@@ -78,7 +80,7 @@ export const approveSlip = (orderId, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const shipOrder = (orderId, shippingData, token) => {
-    return apiRequest(`${API_BASE_URL}/ship/${orderId}`, 'POST', shippingData, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/ship/${orderId}`, 'POST', shippingData, token);
 };
 
 /**
@@ -88,7 +90,7 @@ export const shipOrder = (orderId, shippingData, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const approveRefund = (orderId, token) => {
-    return apiRequest(`${API_BASE_URL}/approve-refund/${orderId}`, 'POST', null, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/approve-refund/${orderId}`, 'POST', null, token);
 };
 
 /**
@@ -98,7 +100,7 @@ export const approveRefund = (orderId, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const rejectRefund = (orderId, token) => {
-    return apiRequest(`${API_BASE_URL}/reject-refund/${orderId}`, 'POST', null, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/reject-refund/${orderId}`, 'POST', null, token);
 };
 
 /**
@@ -109,7 +111,7 @@ export const rejectRefund = (orderId, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const updateOrderStatus = (orderId, newStatus, token) => {
-    return apiRequest(`${API_BASE_URL}/status/${orderId}`, 'POST', { newStatus }, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/status/${orderId}`, 'POST', { newStatus }, token);
 };
 
 /**
@@ -119,7 +121,7 @@ export const updateOrderStatus = (orderId, newStatus, token) => {
  * @returns {Promise<Array>} Array ของชื่อสถานะ (string)
  */
 export const fetchValidNextStatuses = (orderId, token) => {
-    return apiRequest(`${API_BASE_URL}/next-statuses/${orderId}`, 'GET', null, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/next-statuses/${orderId}`, 'GET', null, token);
 };
 
 /**
@@ -130,7 +132,7 @@ export const fetchValidNextStatuses = (orderId, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const updateShippingDetails = (orderId, shippingData, token) => {
-    return apiRequest(`${API_BASE_URL}/update-shipping/${orderId}`, 'PUT', shippingData, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/update-shipping/${orderId}`, 'PUT', shippingData, token);
 };
 
 /**
@@ -141,7 +143,7 @@ export const updateShippingDetails = (orderId, shippingData, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const rejectSlip = (orderId, reason, token) => {
-    return apiRequest(`${API_BASE_URL}/reject-slip/${orderId}`, 'POST', { reason }, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/reject-slip/${orderId}`, 'POST', { reason }, token);
 };
 
 /**
@@ -152,7 +154,7 @@ export const rejectSlip = (orderId, reason, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const revertSlipApproval = (orderId, reason, token) => {
-    return apiRequest(`${API_BASE_URL}/revert-approval/${orderId}`, 'POST', { reason }, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/revert-approval/${orderId}`, 'POST', { reason }, token);
 };
 
 /**
@@ -162,5 +164,5 @@ export const revertSlipApproval = (orderId, reason, token) => {
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
 export const forceRefundByAdmin = (orderId, token) => {
-    return apiRequest(`${API_BASE_URL}/force-refund/${orderId}`, 'POST', null, token);
+    return apiRequest(`${ORDERS_ENDPOINT}/force-refund/${orderId}`, 'POST', null, token);
 };

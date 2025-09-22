@@ -1,6 +1,5 @@
 import { format } from 'date-fns';
-
-const API_BASE_URL = 'http://localhost:8080/api';
+import { API_BASE_URL } from './apiConfig';
 
 /**
  * ดึงข้อมูลทั้งหมดสำหรับแสดงผลบนหน้า Dashboard หลัก

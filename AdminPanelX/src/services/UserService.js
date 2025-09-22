@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8080/api/admin/users';
+import { API_BASE_URL } from './apiConfig';
+
+const USERS_ENDPOINT = `${API_BASE_URL}/admin/users`;
 
 /**
  * ดึงข้อมูลผู้ใช้ทั้งหมดจากระบบ
@@ -7,7 +9,7 @@ const API_BASE_URL = 'http://localhost:8080/api/admin/users';
  * @throws {Error} หากดึงข้อมูลไม่สำเร็จ
  */
 export async function fetchAllUsers(token) {
-    const response = await fetch(API_BASE_URL, {
+    const response = await fetch(USERS_ENDPOINT, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to fetch users.');
@@ -22,7 +24,7 @@ export async function fetchAllUsers(token) {
  * @throws {Error} หากสร้างไม่สำเร็จ หรืออีเมลซ้ำ (409 Conflict)
  */
 export async function createUserByAdmin(userData, token) {
-    const response = await fetch(API_BASE_URL, {
+    const response = await fetch(USERS_ENDPOINT, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -50,7 +52,7 @@ export async function createUserByAdmin(userData, token) {
  * @throws {Error} หากอัปเดตไม่สำเร็จ หรืออีเมลซ้ำ (409 Conflict)
  */
 export async function updateUserByAdmin(userId, userData, token) {
-    const response = await fetch(`${API_BASE_URL}/${userId}`, {
+    const response = await fetch(`${USERS_ENDPOINT}/${userId}`, {
         method: 'PUT',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -76,7 +78,7 @@ export async function updateUserByAdmin(userId, userData, token) {
  * @returns {Promise<boolean>} Promise ที่จะ resolve เป็น true ถ้าสำเร็จ
  */
 export async function deleteUser(user, token) {
-    const response = await fetch(`${API_BASE_URL}/${user.id}`, {
+    const response = await fetch(`${USERS_ENDPOINT}/${user.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -95,7 +97,7 @@ export async function deleteUser(user, token) {
  * @throws {Error} หากล็อกไม่สำเร็จ
  */
 export async function lockUser(userId, token) {
-    const response = await fetch(`${API_BASE_URL}/lock/${userId}`, {
+    const response = await fetch(`${USERS_ENDPOINT}/lock/${userId}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -111,7 +113,7 @@ export async function lockUser(userId, token) {
  * @throws {Error} หากปลดล็อกไม่สำเร็จ
  */
 export async function unlockUser(userId, token) {
-    const response = await fetch(`${API_BASE_URL}/unlock/${userId}`, {
+    const response = await fetch(`${USERS_ENDPOINT}/unlock/${userId}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
     });

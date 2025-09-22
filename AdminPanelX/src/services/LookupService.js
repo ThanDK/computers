@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8080/api/admin/lookups';
+import { API_BASE_URL } from './apiConfig';
+
+const LOOKUPS_ENDPOINT = `${API_BASE_URL}/admin/lookups`;
 
 /**
  * ฟังก์ชัน helper กลางสำหรับส่ง request ไปยัง API พร้อมการจัดการ error ที่ครอบคลุม
@@ -55,7 +57,7 @@ async function apiRequest(url, method = 'GET', body = null, token) {
  * @returns {Promise<object>} Object ที่มี lookup data ทั้งหมด
  */
 export const fetchAllLookups = async (token) => {
-    const response = await fetch(API_BASE_URL, {
+    const response = await fetch(LOOKUPS_ENDPOINT, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to fetch form lookup data.');
@@ -69,7 +71,7 @@ export const fetchAllLookups = async (token) => {
  * @returns {Promise<Array>} Array ของ lookup object
  */
 export const fetchLookupsByType = (type, token) => {
-    return apiRequest(`${API_BASE_URL}/${type}`, 'GET', null, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/${type}`, 'GET', null, token);
 };
 
 /**
@@ -80,7 +82,7 @@ export const fetchLookupsByType = (type, token) => {
  * @returns {Promise<object>} Lookup object ที่ถูกสร้างใหม่
  */
 export const createLookup = (type, data, token) => {
-    return apiRequest(`${API_BASE_URL}/${type}`, 'POST', data, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/${type}`, 'POST', data, token);
 };
 
 /**
@@ -92,7 +94,7 @@ export const createLookup = (type, data, token) => {
  * @returns {Promise<object>} Lookup object ที่อัปเดตแล้ว
  */
 export const updateLookup = (type, id, data, token) => {
-    return apiRequest(`${API_BASE_URL}/${type}/${id}`, 'PUT', data, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/${type}/${id}`, 'PUT', data, token);
 };
 
 /**
@@ -103,7 +105,7 @@ export const updateLookup = (type, id, data, token) => {
  * @returns {Promise<boolean>} คืนค่า true ถ้าลบสำเร็จ
  */
 export const deleteLookup = (type, id, token) => {
-    return apiRequest(`${API_BASE_URL}/${type}/${id}`, 'DELETE', null, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/${type}/${id}`, 'DELETE', null, token);
 };
 
 /**
@@ -112,7 +114,7 @@ export const deleteLookup = (type, id, token) => {
  * @returns {Promise<Array>} Array ของ shipping provider object
  */
 export const fetchAllShippingProviders = (token) => {
-    return apiRequest(`${API_BASE_URL}/shipping-providers`, 'GET', null, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/shipping-providers`, 'GET', null, token);
 };
 
 /**
@@ -128,7 +130,7 @@ export const createShippingProvider = (providerData, imageFile, token) => {
     if (imageFile) {
         formData.append('image', imageFile);
     }
-    return apiRequest(`${API_BASE_URL}/shipping-providers`, 'POST', formData, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/shipping-providers`, 'POST', formData, token);
 };
 
 /**
@@ -145,7 +147,7 @@ export const updateShippingProvider = (id, providerData, imageFile, token) => {
     if (imageFile) {
         formData.append('image', imageFile);
     }
-    return apiRequest(`${API_BASE_URL}/shipping-providers/${id}`, 'PUT', formData, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/shipping-providers/${id}`, 'PUT', formData, token);
 };
 
 /**
@@ -155,7 +157,7 @@ export const updateShippingProvider = (id, providerData, imageFile, token) => {
  * @returns {Promise<boolean>} คืนค่า true ถ้าลบสำเร็จ
  */
 export const deleteShippingProvider = (id, token) => {
-    return apiRequest(`${API_BASE_URL}/shipping-providers/${id}`, 'DELETE', null, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/shipping-providers/${id}`, 'DELETE', null, token);
 };
 
 /**
@@ -171,7 +173,7 @@ export const createBrand = (brandData, imageFile, token) => {
     if (imageFile) {
         formData.append('image', imageFile);
     }
-    return apiRequest(`${API_BASE_URL}/brands`, 'POST', formData, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/brands`, 'POST', formData, token);
 };
 
 /**
@@ -188,7 +190,7 @@ export const updateBrand = (id, brandData, imageFile, token) => {
     if (imageFile) {
         formData.append('image', imageFile);
     }
-    return apiRequest(`${API_BASE_URL}/brands/${id}`, 'PUT', formData, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/brands/${id}`, 'PUT', formData, token);
 };
 
 /**
@@ -198,5 +200,5 @@ export const updateBrand = (id, brandData, imageFile, token) => {
  * @returns {Promise<boolean>} คืนค่า true ถ้าลบสำเร็จ
  */
 export const deleteBrand = (id, token) => {
-    return apiRequest(`${API_BASE_URL}/brands/${id}`, 'DELETE', null, token);
+    return apiRequest(`${LOOKUPS_ENDPOINT}/brands/${id}`, 'DELETE', null, token);
 };

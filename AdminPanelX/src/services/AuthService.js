@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api';
+import { API_BASE_URL } from './apiConfig';
 
 /**
  * ทำการล็อกอินผู้ใช้และคืนค่า JWT token กลับมา
