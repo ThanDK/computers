@@ -4,6 +4,9 @@ FROM node:20-alpine AS build
 # Set the working directory inside the container
 WORKDIR /app
 
+ARG VITE_BACKEND_URL
+ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
+
 # Copy package manifests
 COPY package.json package-lock.json ./
 

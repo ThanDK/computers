@@ -1,5 +1,6 @@
 services:
 
+  # Backend API Service
   computers-api:
     build:
       context: ./computers
@@ -7,6 +8,7 @@ services:
     container_name: computers-api-container
     ports:
       - "8080:8080"
+    # This correctly provides all .env variables to the backend at RUNTIME
     env_file:
       - .env
     depends_on:
@@ -16,25 +18,33 @@ services:
     networks:
       - computers-network
 
-
+  # Admin Frontend Service
   admin-panel-frontend:
     build:
       context: ./AdminPanelX
       dockerfile: Dockerfile
+      # ADDED: This section was missing. It passes the backend URL to the 
+      # Admin Panel at BUILD TIME so it knows where the API is.
+      args:
+        - REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
     container_name: admin-panel-container
     ports:
-
       - "5173:80"
     restart: unless-stopped
     networks:
       - computers-network
 
+  # User Frontend Service
   user-frontend:
     build:
       context: ./User-ui
       dockerfile: Dockerfile
       args:
+        # This was already here and is correct.
         - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+        # ADDED: This was the missing variable. It passes the backend URL to the
+        # User UI at BUILD TIME so it knows where the API is.
+        - VITE_BACKEND_URL=${VITE_BACKEND_URL}
     container_name: user-frontend-container
     ports:
       - "5174:80"
