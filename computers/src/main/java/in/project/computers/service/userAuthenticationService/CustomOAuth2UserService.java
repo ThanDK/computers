@@ -49,6 +49,7 @@ public class CustomOAuth2UserService extends OidcUserService {
                     .email(email)
                     .name(name)
                     .role("ROLE_USER")
+
                     .password(null)
                     .build();
 

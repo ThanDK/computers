@@ -23,10 +23,9 @@ services:
     build:
       context: ./AdminPanelX
       dockerfile: Dockerfile
-      # ADDED: This section was missing. It passes the backend URL to the 
-      # Admin Panel at BUILD TIME so it knows where the API is.
+
       args:
-        - REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
+        - VITE_BACKEND_URL=${VITE_BACKEND_URL}
     container_name: admin-panel-container
     ports:
       - "5173:80"
@@ -40,10 +39,7 @@ services:
       context: ./User-ui
       dockerfile: Dockerfile
       args:
-        # This was already here and is correct.
         - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-        # ADDED: This was the missing variable. It passes the backend URL to the
-        # User UI at BUILD TIME so it knows where the API is.
         - VITE_BACKEND_URL=${VITE_BACKEND_URL}
     container_name: user-frontend-container
     ports:

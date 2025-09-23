@@ -1,14 +1,10 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Button, Form, InputGroup, Spinner, ListGroup } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaExclamationTriangle, FaPen, FaTrash } from 'react-icons/fa';
 import ComponentSelectorModal from '../../component/Product/ComponentSelectorModal';
-import axios from 'axios';
 import { useCart } from '../../context/CartContext';
-
-
-const API_BASE_URL = 'http://localhost:8080/api';
+import * as BuildService from '../../services/BuildService';
 
 const componentCategories = [
     { key: 'cpu', name: 'CPU', multiple: false, dbType: 'CPU' },
@@ -38,11 +34,8 @@ const PcBuilder = () => {
     const [isSelectorOpen, setIsSelectorOpen] = useState(false);
     const [selectingCategory, setSelectingCategory] = useState(null);
 
-
-    const checkCompatibility = useCallback(async (currentParts) => {
+    const checkCompatibilityCallback = useCallback(async (currentParts) => {
         setCheckingCompatibility(true);
-
-
         const getPartId = (part) => part?.id || part?._id || null;
         const getMultiPartIds = (partArray) =>
             (partArray || []).reduce((acc, item) => {
@@ -64,31 +57,16 @@ const PcBuilder = () => {
             storageDrives: getMultiPartIds(currentParts.storageDrives),
         };
 
-        try {
-
-            const response = await axios.post(`${API_BASE_URL}/builds/check-compatibility`, requestBody);
-            setCompatibility(response.data);
-        } catch (error) {
-            console.error("Compatibility check failed:", error);
-            setCompatibility({
-                errors: ['เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์เพื่อตรวจสอบความเข้ากันได้'],
-                warnings: [],
-                totalWattage: 0,
-                isCompatible: false
-            });
-        } finally {
-            setCheckingCompatibility(false);
-        }
+        const result = await BuildService.checkCompatibility(requestBody);
+        setCompatibility(result);
+        setCheckingCompatibility(false);
     }, []);
-
 
     useEffect(() => {
         if (isEditing) {
             const fetchBuild = async () => {
                 try {
-                    const response = await axios.get(`${API_BASE_URL}/builds/${buildId}`);
-                    const data = response.data;
-
+                    const data = await BuildService.getBuildById(buildId);
                     setBuildName(data.buildName);
                     const initialParts = {
                         cpu: data.cpu, motherboard: data.motherboard, ramKits: data.ramKits,
@@ -106,27 +84,24 @@ const PcBuilder = () => {
             };
             fetchBuild();
         } else {
-            checkCompatibility({});
+            checkCompatibilityCallback({});
         }
-    }, [buildId, isEditing, navigate, checkCompatibility]);
+    }, [buildId, isEditing, navigate, checkCompatibilityCallback]);
 
-   
     useEffect(() => {
         const calculateTotalPrice = (currentParts) => {
             let total = 0;
             componentCategories.forEach(category => {
                 const partData = currentParts[category.key];
-                if (!partData) return; 
+                if (!partData) return;
 
                 if (category.multiple) {
-                    
                     partData.forEach(item => {
                         const price = item.partDetails?.price || 0;
                         const quantity = item.quantity || 1;
                         total += price * quantity;
                     });
                 } else {
-                    
                     const price = partData.price || 0;
                     total += price;
                 }
@@ -137,11 +112,10 @@ const PcBuilder = () => {
         setTotalPrice(calculateTotalPrice(parts));
 
         if (!loading) {
-            checkCompatibility(parts);
+            checkCompatibilityCallback(parts);
         }
-    }, [parts, loading, checkCompatibility]);
+    }, [parts, loading, checkCompatibilityCallback]);
     
-
     const handleOpenSelector = (category) => {
         setSelectingCategory(category);
         setIsSelectorOpen(true);
@@ -160,7 +134,12 @@ const PcBuilder = () => {
 
             if (selectingCategory.multiple) {
                 const existing = newParts[categoryKey] ? [...newParts[categoryKey]] : [];
-                existing.push({ partDetails: selectedComponent, quantity: 1 });
+                const newItem = { 
+                    partDetails: selectedComponent, 
+                    quantity: 1,
+                    instanceId: Date.now() + Math.random()
+                };
+                existing.push(newItem);
                 newParts[categoryKey] = existing;
             } else {
                 newParts[categoryKey] = selectedComponent;
@@ -171,12 +150,12 @@ const PcBuilder = () => {
         setSelectingCategory(null);
     };
 
-    const handleRemoveComponent = (categoryKey, partId) => {
+    const handleRemoveComponent = (categoryKey, idToRemove) => {
         setParts(prev => {
             const newParts = { ...prev };
             const category = componentCategories.find(c => c.key === categoryKey);
             if (category.multiple) {
-                newParts[categoryKey] = (newParts[categoryKey] || []).filter(p => (p.partDetails.id || p.partDetails._id) !== partId);
+                newParts[categoryKey] = (newParts[categoryKey] || []).filter(p => p.instanceId !== idToRemove);
             } else {
                 newParts[categoryKey] = null;
             }
@@ -200,9 +179,9 @@ const PcBuilder = () => {
 
         try {
             if (isEditing) {
-                await axios.put(`${API_BASE_URL}/builds/${buildId}`, request);
+                await BuildService.updateExistingBuild(buildId, request);
             } else {
-                await axios.post(`${API_BASE_URL}/builds`, request);
+                await BuildService.saveNewBuild(request);
             }
             alert(isEditing ? 'อัปเดต Build สำเร็จ!' : 'สร้าง Build ใหม่สำเร็จ!');
             navigate('/builds');
@@ -226,7 +205,6 @@ const PcBuilder = () => {
             )}
             <h2 className="mb-4">จัดสเปคคอมพิวเตอร์ (Build your PC)</h2>
             
-            {}
             <div className="mb-4">
                 {checkingCompatibility ? (
                      <div className="p-3 rounded bg-secondary-subtle">
@@ -266,7 +244,6 @@ const PcBuilder = () => {
                     </>
                 )}
             </div>
-            {}
 
             <div className="bg-white border rounded">
                 <Row className="p-3 border-bottom m-0">
@@ -290,9 +267,9 @@ const PcBuilder = () => {
                                     multiple ? (
                                         <ListGroup variant="flush">
                                             {partData.map((item, index) => (
-                                                <ListGroup.Item key={`${item.partDetails.id || item.partDetails._id}-${index}`} className="d-flex justify-content-between align-items-center px-0 py-1 border-0">
+                                                <ListGroup.Item key={item.instanceId} className="d-flex justify-content-between align-items-center px-0 py-1 border-0">
                                                     <span>{item.quantity}x {item.partDetails.name}</span>
-                                                    <Button size="sm" variant="link" className="text-danger" onClick={() => handleRemoveComponent(key, item.partDetails.id || item.partDetails._id)}>
+                                                    <Button size="sm" variant="link" className="text-danger" onClick={() => handleRemoveComponent(key, item.instanceId)}>
                                                         Remove
                                                     </Button>
                                                 </ListGroup.Item>

@@ -1,16 +1,11 @@
-
-
 import { showConfirmation, handlePromise } from './NotificationService';
+import { API_BASE_URL } from '../services/apiConfig';
 
-const API_BASE_URL = 'http://localhost:8080/api/components';
-
-
-
-
+const COMPONENTS_ENDPOINT = `${API_BASE_URL}/components`;
 
 export async function fetchAllComponents() {
     
-    const response = await fetch(API_BASE_URL); 
+    const response = await fetch(COMPONENTS_ENDPOINT); 
     
     if (!response.ok) {
        
@@ -19,11 +14,8 @@ export async function fetchAllComponents() {
     return response.json();
 };
 
-
-
-
 export async function getComponentById(id, token) {
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
+    const response = await fetch(`${COMPONENTS_ENDPOINT}/${id}`, {
        
         headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -33,7 +25,6 @@ export async function getComponentById(id, token) {
     }
     return response.json();
 };
-
 
 export async function createComponent(componentData, imageFile, token) {
     const formData = new FormData();
@@ -46,7 +37,7 @@ export async function createComponent(componentData, imageFile, token) {
         formData.append('image', imageFile);
     }
     
-    const response = await fetch(API_BASE_URL, { 
+    const response = await fetch(COMPONENTS_ENDPOINT, { 
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`
@@ -62,7 +53,6 @@ export async function createComponent(componentData, imageFile, token) {
     return response.json();
 };
 
-
 export async function updateComponent(id, componentData, imageFile, removeImage, token) {
     const formData = new FormData();
     
@@ -74,7 +64,7 @@ export async function updateComponent(id, componentData, imageFile, removeImage,
         formData.append('image', imageFile);
     }
     
-    const url = `${API_BASE_URL}/${id}?removeImage=${removeImage}`;
+    const url = `${COMPONENTS_ENDPOINT}/${id}?removeImage=${removeImage}`;
 
     const response = await fetch(url, {
         method: 'PUT',
@@ -92,7 +82,6 @@ export async function updateComponent(id, componentData, imageFile, removeImage,
     return response.json();
 };
 
-
 export async function deleteComponent(component, token) {
     const isConfirmed = await showConfirmation(
         'Are you sure?',
@@ -101,7 +90,7 @@ export async function deleteComponent(component, token) {
 
     if (!isConfirmed) return false;
 
-    const promise = fetch(`${API_BASE_URL}/${component.id}`, {
+    const promise = fetch(`${COMPONENTS_ENDPOINT}/${component.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
     }).then(response => {
@@ -118,10 +107,9 @@ export async function deleteComponent(component, token) {
     return promise;
 };
 
-
 export async function updateComponentStock(componentId, quantityChange, token) {
   
-    const promise = fetch(`${API_BASE_URL}/stock/${componentId}`, {
+    const promise = fetch(`${COMPONENTS_ENDPOINT}/stock/${componentId}`, {
         method: 'PATCH',
         headers: {
             'Authorization': `Bearer ${token}`,
