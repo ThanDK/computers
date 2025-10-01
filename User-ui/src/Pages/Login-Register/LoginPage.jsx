@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axiosConfig';
 import './Auth.css'; 
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');

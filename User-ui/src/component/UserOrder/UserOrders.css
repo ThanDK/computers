@@ -1,40 +1,121 @@
+/* =============================================== */
+/*              User Orders Page Style             */
+/* =============================================== */
 
-
+/* --- Main Order Card Container --- */
 .order-item-card {
-    border: 1px solid #dee2e6;
-    border-left: 4px solid #6c757d; 
-    transition: box-shadow 0.2s ease-in-out;
-    border-radius: 0.375rem;
-    overflow: hidden; 
-}
-
-.order-item-card:not(:last-child) {
-    margin-bottom: 0.75rem !important;
+    /* ใช้ border-left เป็นตัวบอกสถานะแบบไดนามิก */
+    border: 1px solid #e9ecef;
+    border-left-width: 5px; /* ทำให้แถบสีหนาขึ้นเล็กน้อย */
+    border-radius: 0.5rem; /* เพิ่มความโค้งมน */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+    background-color: #fff;
+    margin-bottom: 1.5rem !important; /* เพิ่มระยะห่างระหว่างการ์ด */
 }
 
 .order-item-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transform: translateY(-3px);
 }
 
-.accordion-button {
-    padding: 1rem 1.25rem;
+/* --- Dynamic Status Border Colors --- */
+/* เราจะใช้ variant จาก Bootstrap มากำหนดสี */
+.order-item-card.status-success { border-left-color: var(--bs-success); }
+.order-item-card.status-danger { border-left-color: var(--bs-danger); }
+.order-item-card.status-warning { border-left-color: var(--bs-warning); }
+.order-item-card.status-info { border-left-color: var(--bs-info); }
+.order-item-card.status-primary { border-left-color: var(--bs-primary); }
+.order-item-card.status-secondary,
+.order-item-card.status-light { border-left-color: var(--bs-secondary); }
+
+
+/* --- Card Header & Footer Styling --- */
+.order-item-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 0.9rem;
     font-weight: 500;
 }
 
-.accordion-button:not(.collapsed) {
-    color: #0c63e4;
-    background-color: #e7f1ff;
-    box-shadow: none;
-}
-
-.accordion-body {
-    padding: 1.25rem;
+.order-item-card .card-footer {
     background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
 }
 
 
-.accordion-flush .accordion-item {
-    border-radius: 0;
-    border: none;
-    border-bottom: 1px solid rgba(0,0,0,.125);
+/* --- Line Item & Build Details Styling --- */
+.order-item-image-container {
+    width: 100%;
+    max-width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 5px;
+}
+
+.order-item-image-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.build-icon {
+    font-size: 2.5rem;
+    color: #495057;
+}
+
+.expand-toggle-button {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Component List (สำหรับ Build) */
+.component-list-container {
+    padding: 1rem;
+    margin-top: 1rem;
+    margin-left: calc(16.66666667% + 1rem); /* จัดเยื้องให้ตรงกับชื่อสินค้า */
+    border-left: 3px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+}
+
+.component-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    color: #495057;
+}
+.component-item:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.component-image-container {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    margin-right: 12px;
+    flex-shrink: 0;
+    padding: 4px;
+    background-color: #fff;
+}
+.component-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Responsive adjustment for component list */
+@media (max-width: 767.98px) {
+    .component-list-container {
+        margin-left: 0; /* ไม่ต้องเยื้องในจอขนาดเล็ก */
+    }
 }

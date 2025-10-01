@@ -4,6 +4,7 @@ import in.project.computers.DTO.user.userRequest.AuthenticationRequest;
 import in.project.computers.DTO.user.userResponse.AuthenticationResponse;
 import in.project.computers.service.userAuthenticationService.AppUserDetailsService;
 import in.project.computers.util.JwtUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,7 @@ public class AuthController {
      * @throws BadCredentialsException หากข้อมูลล็อกอินไม่ถูกต้อง ส่งผลให้เกิด HTTP 401 Unauthorized
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
+    public ResponseEntity<AuthenticationResponse> login(@Valid @RequestBody AuthenticationRequest request) {
         log.info("Authentication attempt for user: {}", request.getEmail());
         try {
             // ตรวจสอบ Credential กับ Spring Security

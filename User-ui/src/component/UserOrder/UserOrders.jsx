@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container, Card, Row, Col, Badge, Button, Spinner, Alert, Image, Tabs, Tab, Modal, Form } from 'react-bootstrap';
-import { FaBoxOpen, FaShippingFast, FaHistory, FaCreditCard, FaReceipt, FaExclamationTriangle, FaUndo, FaUpload } from 'react-icons/fa';
+import { FaBoxOpen, FaShippingFast, FaHistory, FaCreditCard, FaReceipt, FaExclamationTriangle, FaUndo, FaUpload, FaWrench, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { fetchMyOrders, cancelOrderByUser, retryPaypalPayment, resubmitSlip } from '../../services/OrderService';
 import { notifySuccess, notifyError } from '../../services/NotificationService';
 import { format } from 'date-fns';
 import './UserOrders.css';
 
+// ... getStatusBadge function is unchanged ...
 const getStatusBadge = (order) => {
     if (order.paymentDetails?.paymentMethod === 'BANK_TRANSFER' && order.orderStatus !== 'REJECTED_SLIP') {
         const paymentStatusMap = {
@@ -33,8 +34,8 @@ const getStatusBadge = (order) => {
     return statusMap[order.orderStatus] || { text: order.orderStatus, variant: 'light' };
 };
 
-
 const UserOrders = () => {
+    // ... all states and other functions are unchanged ...
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -49,11 +50,9 @@ const UserOrders = () => {
     const [newSlipFile, setNewSlipFile] = useState(null);
     const [isResubmitting, setIsResubmitting] = useState(false);
     const fileInputRef = useRef(null);
-
+    const [expandedItems, setExpandedItems] = useState(new Set());
 
     const loadUserOrders = useCallback(async () => {
-        // ไม่ตั้งค่า loading เป็น true ทุกครั้งเพื่อให้การรีเฟรชดูราบรื่น
-        // setLoading(true); 
         setError(null);
         try {
             const response = await fetchMyOrders();
@@ -66,29 +65,22 @@ const UserOrders = () => {
             const errorMessage = err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล';
             setError(errorMessage);
         } finally {
-            setLoading(false); // ปิด loading spinner หลังจากโหลดเสร็จ
+            setLoading(false);
         }
     }, []);
 
-    // โหลดข้อมูลครั้งแรกเมื่อ Component ถูกสร้าง
     useEffect(() => { 
         loadUserOrders(); 
     }, [loadUserOrders]);
 
-    // --- START: ADDED Auto-refresh functionality ---
-    // ตั้งค่า Interval เพื่อรีเฟรชข้อมูลทุก 3 วินาที
     useEffect(() => {
         const intervalId = setInterval(() => {
             loadUserOrders();
-        }, 3000); // 3000 milliseconds = 3 seconds
-
-        // Cleanup function: จะทำงานเมื่อ component ถูก unmount (ออกจากหน้านี้)
-        // เพื่อหยุดการรีเฟรช ป้องกัน memory leak
+        }, 3000); 
         return () => {
             clearInterval(intervalId);
         };
-    }, [loadUserOrders]); // Dependency array เพื่อให้ effect ทำงานสัมพันธ์กับ `loadUserOrders`
-    // --- END: ADDED Auto-refresh functionality ---
+    }, [loadUserOrders]); 
 
     const handleCancelOrder = async (orderId) => {
         if (window.confirm('คุณต้องการยกเลิกคำสั่งซื้อนี้ใช่หรือไม่?')) {
@@ -160,18 +152,27 @@ const UserOrders = () => {
             setIsResubmitting(false);
         }
     };
+    
+    const toggleItemExpansion = (lineItemId) => {
+        setExpandedItems(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(lineItemId)) {
+                newSet.delete(lineItemId);
+            } else {
+                newSet.add(lineItemId);
+            }
+            return newSet;
+        });
+    };
 
     const waitingStatuses = ['PENDING_PAYMENT', 'PROCESSING', 'REJECTED_SLIP', 'DELIVERY_FAILED', 'RETURNED_TO_SENDER'];
     const shippingStatuses = ['SHIPPED'];
     const historyStatuses = ['COMPLETED', 'CANCELLED', 'REFUNDED', 'REFUND_REQUESTED'];
     
-    // --- MODIFIED: ปรับปรุงเงื่อนไขการยกเลิกให้เข้มงวดขึ้น ---
     const isCancellable = (order) => {
-        // ถ้าเป็น Bank Transfer จะไม่สามารถยกเลิกผ่านหน้าเว็บได้เลย
         if (order.paymentDetails?.paymentMethod === 'BANK_TRANSFER') {
             return false;
         }
-        // สำหรับช่องทางอื่น (เช่น PayPal) จะยกเลิกได้เฉพาะตอนที่ยังไม่ได้จ่ายเงินเท่านั้น
         return order.orderStatus === 'PENDING_PAYMENT';
     };
     
@@ -192,8 +193,7 @@ const UserOrders = () => {
         historyStatuses.includes(order.orderStatus) || 
         (order.paymentDetails?.paymentMethod === 'BANK_TRANSFER' && order.paymentStatus === 'APPROVED' && !shippingStatuses.includes(order.orderStatus) && !waitingStatuses.includes(order.orderStatus))
     );
-
-
+    
     const renderOrderCard = (order) => {
         const orderId = order.id || order._id;
         if (!order || !orderId) return null;
@@ -202,7 +202,7 @@ const UserOrders = () => {
         const isBankTransfer = order.paymentDetails?.paymentMethod === 'BANK_TRANSFER';
 
         return (
-            <Card key={orderId} className="mb-3 order-item-card">
+            <Card key={orderId} className={`order-item-card status-${statusInfo.variant}`}>
                 <Card.Header className="d-flex justify-content-between align-items-center flex-wrap">
                     <div>
                         <strong>Order ID:</strong> #{(orderId.slice(-8).toUpperCase())}
@@ -216,6 +216,7 @@ const UserOrders = () => {
                         <strong>สั่งซื้อเมื่อ:</strong> {order.createdAt ? format(new Date(order.createdAt), 'dd MMM yyyy, HH:mm') : 'No Date'}
                     </div>
 
+                    {/* Other alerts are unchanged... */}
                     {order.orderStatus === 'SHIPPED' && order.shippingDetails && (
                          <Alert variant="info" className="small py-2 mt-2">
                             <strong className="d-block mb-1"><FaShippingFast className="me-2" />ข้อมูลการจัดส่ง</strong>
@@ -227,7 +228,6 @@ const UserOrders = () => {
                     {isBankTransfer && order.orderStatus === 'REJECTED_SLIP' && (
                         <Alert variant="danger" className="small">
                             <strong><FaExclamationTriangle className="me-1" /> เหตุผลที่ถูกปฏิเสธ:</strong> {order.paymentDetails?.slipRejectionReason || 'ไม่มีเหตุผลระบุ'}
-                            {/* --- MODIFIED: ตัดส่วน "หรือยกเลิก" ออก เพราะยกเลิกไม่ได้แล้ว --- */}
                             <p className="mb-0 mt-1">กรุณาตรวจสอบและส่งสลิปการชำระเงินใหม่อีกครั้ง</p>
                         </Alert>
                     )}
@@ -242,23 +242,80 @@ const UserOrders = () => {
                         </Alert>
                     )}
 
+
                     {order.lineItems && order.lineItems.length > 0 ? (
-                        order.lineItems.map((item, index) => (
-                            <Row key={item.id || item.productId || index} className="align-items-center my-2 border-bottom pb-2">
-                                <Col xs={3} md={2}><Image src={item.imageUrl || 'https://via.placeholder.com/150'} fluid rounded /></Col>
-                                <Col xs={9} md={10}>
-                                    <p className="mb-0 fw-bold">{item.name || item.productName || 'ไม่มีชื่อสินค้า'}</p>
-                                    <p className="text-muted small mb-0">
-                                        {Number(item.price || 0).toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} x {item.quantity}
-                                    </p>
-                                </Col>
-                            </Row>
-                        ))
+                        order.lineItems.map((item, index) => {
+                            const lineItemId = item.id || item.productId || `${orderId}-${index}`;
+                            const isBuild = item.itemType === 'BUILD';
+                            const isExpanded = expandedItems.has(lineItemId);
+
+                            return (
+                                <div key={lineItemId} className="border-bottom py-2">
+                                    <Row className="align-items-center">
+                                        <Col xs={3} sm={2}>
+                                            <div className="order-item-image-container">
+                                                {isBuild ? (
+                                                    <FaWrench className="build-icon" />
+                                                ) : (
+                                                    <Image src={item.imageUrl || 'https://via.placeholder.com/150'} fluid rounded />
+                                                )}
+                                            </div>
+                                        </Col>
+                                        <Col xs={9} sm={10}>
+                                            <Row>
+                                                <Col md={isBuild ? 8 : 12}>
+                                                    <p className="mb-0 fw-bold">{item.name || item.productName || 'ไม่มีชื่อสินค้า'}</p>
+                                                    <p className="text-muted small mb-0">
+                                                        {Number(item.price || item.unitPrice || 0).toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} x {item.quantity}
+                                                    </p>
+                                                </Col>
+                                                {isBuild && (
+                                                     <Col md={4} className="text-md-end mt-2 mt-md-0">
+                                                        <Button
+                                                            variant="link"
+                                                            size="sm"
+                                                            className="p-0 expand-toggle-button"
+                                                            onClick={() => toggleItemExpansion(lineItemId)}
+                                                        >
+                                                            รายละเอียด {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                                                        </Button>
+                                                    </Col>
+                                                )}
+                                            </Row>
+                                        </Col>
+                                    </Row>
+                                    
+                                    {/* ======================= THE FIX IS HERE ======================= */}
+                                    {isBuild && isExpanded && Array.isArray(item.containedItems) && item.containedItems.length > 0 && (
+                                        <div className="component-list-container mt-2">
+                                            {item.containedItems.map((component, compIndex) => (
+                                                <div key={component.componentId || compIndex} className="component-item">
+                                                    {/* จัดกลุ่มรูปภาพและชื่อไว้ด้วยกัน */}
+                                                    <div className="component-info">
+                                                        <div className="component-image-container">
+                                                            <Image src={component.imageUrl || 'https://via.placeholder.com/50'} className="component-image" />
+                                                        </div>
+                                                        <span className="small">{component.name}</span>
+                                                    </div>
+                                                    {/* แสดงราคาทางด้านขวา */}
+                                                    <span className="small component-price">
+                                                        {Number(component.priceAtTimeOfOrder || 0).toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {/* =============================================================== */}
+
+                                </div>
+                            );
+                        })
                     ) : (
                         <div className="text-center text-muted py-3">ไม่มีรายการสินค้า</div>
                     )}
                 </Card.Body>
-                <Card.Footer>
+                {/* ... Card.Footer is unchanged ... */}
+                 <Card.Footer>
                     <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <span className="fw-bold fs-5">
                             ยอดรวม: {Number(order.totalAmount).toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}
@@ -290,8 +347,9 @@ const UserOrders = () => {
             </Card>
         );
     };
-    
-    return (
+
+    // ... The main return block with Tabs and Modals is unchanged ...
+     return (
         <Container fluid>
             <h3 className="mb-4">คำสั่งซื้อของฉัน</h3>
             

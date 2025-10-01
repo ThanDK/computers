@@ -39,7 +39,8 @@ const ProductDetailPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
     
-    const { user } = useAuth();
+    // ดึงข้อมูลผู้ใช้และสถานะการโหลดจาก AuthContext
+    const { user, isLoading: authIsLoading } = useAuth();
     const { addToCart, isUpdating } = useCart();
 
     const [product, setProduct] = useState(null);
@@ -47,25 +48,44 @@ const ProductDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // useEffect สำหรับตรวจสอบการล็อกอิน
     useEffect(() => {
-        const fetchProduct = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await api.get(`/components/${productId}`);
-                setProduct(response.data);
-            } catch (err) {
-                console.error("Failed to fetch product details:", err);
-                setError("ไม่พบสินค้าที่คุณกำลังค้นหา หรือเกิดข้อผิดพลาด");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProduct();
-    }, [productId]);
+        // เมื่อการตรวจสอบสิทธิ์เสร็จสิ้นและไม่พบผู้ใช้
+        if (!authIsLoading && !user) {
+            alert('กรุณาเข้าสู่ระบบเพื่อดูรายละเอียดสินค้า');
+            // ส่งผู้ใช้ไปหน้า login และแทนที่ history ปัจจุบัน
+            navigate('/login', { replace: true });
+        }
+    }, [user, authIsLoading, navigate]);
+
+
+    useEffect(() => {
+        // ดึงข้อมูลสินค้าเฉพาะเมื่อผู้ใช้ล็อกอินแล้วเท่านั้น
+        // เพื่อป้องกันการเรียก API โดยไม่จำเป็น
+        if (user) {
+            const fetchProduct = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const response = await api.get(`/components/${productId}`);
+                    setProduct(response.data);
+                } catch (err) {
+                    console.error("Failed to fetch product details:", err);
+                    setError("ไม่พบสินค้าที่คุณกำลังค้นหา หรือเกิดข้อผิดพลาด");
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchProduct();
+        } else if (!authIsLoading && !user) {
+            // หากตรวจสอบแล้วว่าไม่ได้ล็อกอิน ให้หยุดการโหลด
+            setLoading(false);
+        }
+    }, [productId, user, authIsLoading]); // เพิ่ม user และ authIsLoading ใน dependency array
 
     
     const handleAddToCart = async () => {
+        // การตรวจสอบนี้ยังคงมีประโยชน์เพื่อความปลอดภัย แม้ว่าหน้านี้จะเข้าถึงได้เฉพาะผู้ที่ล็อกอินแล้ว
         if (!user) {
             alert('กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า');
             navigate('/login');
@@ -84,18 +104,23 @@ const ProductDetailPage = () => {
                 notifySuccess(`เพิ่ม '${product.name}' จำนวน ${quantity} ชิ้น ลงในตะกร้าแล้ว`);
             } catch (err) {
                 console.error("Failed to add to cart from detail page:", err);
-                
             }
         }
     };
 
-  
-    if (loading) {
+    // แสดง Spinner ขณะกำลังตรวจสอบสิทธิ์ หรือกำลังโหลดข้อมูลสินค้า
+    if (loading || authIsLoading) {
         return <Container className="text-center my-5"><Spinner animation="border" /></Container>;
     }
 
-    if (error || !product) {
-        return <Container className="my-5"><Alert variant="danger">{error || "ไม่พบข้อมูลสินค้า"}</Alert></Container>;
+    // หากไม่มีผู้ใช้ (กำลังจะถูก redirect) หรือไม่มีข้อมูลสินค้า ให้แสดงข้อความผิดพลาด
+    // การตรวจสอบ !user ช่วยป้องกันการแสดงผลหน้าเว็บเปล่าๆ ก่อนที่จะ redirect
+    if (!user || error || !product) {
+        return (
+            <Container className="my-5">
+                <Alert variant="danger">{error || "ไม่สามารถโหลดข้อมูลสินค้าได้"}</Alert>
+            </Container>
+        );
     }
     
     const productSpecsConfig = SPEC_CONFIG[product.type] || [];
