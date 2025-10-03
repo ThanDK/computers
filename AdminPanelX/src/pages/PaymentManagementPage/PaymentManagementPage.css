@@ -1,0 +1,68 @@
+/* --- Modal Style --- */
+.form-modal .modal-content {
+  background-color: var(--secondary-bg);
+  border: 1px solid #4a5a76;
+  border-radius: 12px;
+  color: var(--text-primary);
+}
+
+.form-modal .modal-header {
+  border-bottom: 1px solid #4a5a76;
+}
+
+.form-modal .modal-footer {
+  border-top: 1px solid #4a5a76;
+}
+
+.form-modal .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.form-modal .form-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.form-modal .form-control,
+.form-modal .form-select {
+  background-color: var(--primary-bg);
+  border: 1px solid #4a5a76;
+  color: var(--text-primary);
+}
+
+.form-modal .form-control:focus,
+.form-modal .form-select:focus {
+  background-color: var(--primary-bg);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(136, 132, 216, 0.25);
+  color: var(--text-primary);
+}
+
+/* --- Image Preview in Modal --- */
+.logo-preview {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  max-height: 150px;
+  max-width: 100%;
+  object-fit: contain;
+  padding: 5px;
+  width: auto;
+}
+
+/* --- Status Badge --- */
+.status-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4em 0.8em;
+}
+
+/* --- Table Action Buttons --- */
+.action-btn {
+  font-weight: 500;
+  min-width: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}

@@ -14,6 +14,7 @@ import OrdersPage from './pages/OrdersPage/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage/OrderDetailPage';
 import ShippingProvidersPage from './pages/ShippingProvidersPage/ShippingProvidersPage';
 import UsersPage from './pages/UsersPage/UsersPage';
+import PaymentManagementPage from './pages/PaymentManagementPage/PaymentManagementPage'; // <-- NEW IMPORT
 
 import AccessDeniedRedirect from './components/AccessDeniedRedirect/AccessDeniedRedirect';
 
@@ -59,6 +60,7 @@ const AppRouter = () => {
         <Route path="orders" element={<OrdersPage />} />
         <Route path="order-details/:orderId" element={<OrderDetailPage />} /> 
         <Route path="shipping-providers" element={<ShippingProvidersPage />} /> 
+        <Route path="payment-methods" element={<PaymentManagementPage />} /> 
         <Route path="users" element={<UsersPage />} /> 
       </Route>
 
@@ -66,6 +68,5 @@ const AppRouter = () => {
     </Routes>
   );
 };
-
 
 export default AppRouter;

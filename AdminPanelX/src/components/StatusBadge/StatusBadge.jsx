@@ -27,15 +27,50 @@ const paymentStatusConfig = {
     DEFAULT: { background: '#64748b', color: '#f8fafc' }
 };
 
-function StatusBadge({ status, type = 'order' }) {
-    const config = type === 'payment' ? paymentStatusConfig : orderStatusConfig;
-    const { background, color } = config[status] || config.DEFAULT;
+const genericStatusConfig = {
+    DEFAULT: { text: 'Default', background: '#16a34a', color: '#f0fdf4' },
+    ACTIVE: { text: 'Active', background: '#16a34a', color: '#f0fdf4' },
+    LOCKED: { text: 'Locked', background: '#dc2626', color: '#fef2f2' },
+    INACTIVE: { text: 'Inactive', background: '#64748b', color: '#f1f5f9' },
+};
 
-    const formattedStatus = status ? status.replace(/_/g, ' ').toLowerCase() : 'N/A';
+
+function StatusBadge({ status, type = 'order', children }) {
+    let config;
+    let effectiveStatus = status;
+    let displayText;
+
+    switch (type) {
+        case 'payment':
+            config = paymentStatusConfig;
+            break;
+        case 'generic':
+            config = genericStatusConfig;
+            if (status === true) {
+                effectiveStatus = 'DEFAULT';
+            }
+            break;
+        case 'order':
+        default:
+            config = orderStatusConfig;
+            break;
+    }
+
+    const styleConfig = config[effectiveStatus] || config.DEFAULT;
+    const { background, color, text } = styleConfig;
+
+
+    if (children) {
+        displayText = children;
+    } else if (text) {
+        displayText = text;
+    } else {
+        displayText = effectiveStatus ? String(effectiveStatus).replace(/_/g, ' ').toLowerCase() : 'N/A';
+    }
 
     return (
         <span className="status-badge" style={{ backgroundColor: background, color: color }}>
-            {formattedStatus}
+            {displayText}
         </span>
     );
 }

@@ -9,7 +9,8 @@ import {
   BsPeopleFill,
   BsJustify,
   BsTruck,
-  BsPersonCircle
+  BsPersonCircle,
+  BsCreditCard // <-- NEW ICON IMPORT
 } from 'react-icons/bs';
 import './Sidebar.css';
 
@@ -73,6 +74,10 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
         <NavLink to="/shipping-providers" className="sidebar-link">
           <BsTruck className='sidebar-link-icon' />
           <span className="sidebar-link-text">Shipping Providers</span>
+        </NavLink>
+        <NavLink to="/payment-methods" className="sidebar-link"> 
+          <BsCreditCard className='sidebar-link-icon' />
+          <span className="sidebar-link-text">Payment Methods</span>
         </NavLink>
 
         <div className="sidebar-divider" />
