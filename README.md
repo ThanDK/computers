@@ -1,6 +1,6 @@
 # 🖥️ PC Builder & Technical Showcase Platform
 
-โปรเจค Full-Stack นี้ถูกสร้างขึ้นเพื่อเป็น **"Technical Showcase"** สำหรับการสาธิตและฝึกฝนทักษะการพัฒนาซอฟต์แวร์ขั้นสูง โดยจำลองระบบจัดสเปคคอมพิวเตอร์ออนไลน์ที่มาพร้อมฟังก์ชันตรวจสอบความเข้ากันได้ของฮาร์ดแวร์แบบ Real-time ระบบถูกพัฒนาขึ้นโดยใช้ **Spring Boot (Java 21)** สำหรับ Backend API และ **React (Vite)** สำหรับส่วนติดต่อผู้ใช้ของผู้ดูแลระบบ
+โปรเจค Full-Stack นี้ถูกสร้างขึ้นเพื่อเป็น **"Technical Showcase"** สำหรับการสาธิตและฝึกฝนทักษะการพัฒนาซอฟต์แวร์ขั้นสูง โดยจำลองระบบจัดสเปคคอมพิวเตอร์ออนไลน์ที่มาพร้อมฟังก์ชันตรวจสอบความเข้ากันได้ของฮาร์ดแวร์แบบ Real-time ระบบถูกพัฒนาขึ้นโดยใช้ **Spring Boot (Java 21)** สำหรับ Backend API และ **React (Vite)** สำหรับส่วนติดต่อผู้ใช้สองส่วนคือ ส่วนของผู้ดูแลระบบ (Admin Panel) และส่วนของผู้ใช้งานทั่วไป (User Panel)
 
 > **หมายเหตุ:** โปรเจคนี้ไม่ใช่แพลตฟอร์ม E-commerce สำหรับการใช้งานจริง แต่เป็น **"Training Project"** ที่มุ่งเน้นการแก้ปัญหาทางเทคนิคที่ซับซ้อนและแสดงให้เห็นถึงความเข้าใจในสถาปัตยกรรมซอฟต์แวร์ที่ทันสมัย โดยให้ความสำคัญกับความสมบูรณ์ของฟังก์ชันและคุณภาพของโค้ด
 
@@ -8,9 +8,9 @@
 
 > **สถานะปัจจุบันของโปรเจค**
 >
-> 🚧 **Work in Progress**
+> ✅ **Core Features Completed**
 >
-> โปรเจคนี้กำลังอยู่ในระหว่างการพัฒนา โดยมีเป้าหมายเพื่อสร้างแพลตฟอร์มสาธิตทักษะทางเทคนิคที่สมบูรณ์แบบ ขณะนี้ โครงสร้างหลักของระบบฝั่ง Backend และส่วนจัดการสำหรับผู้ดูแลระบบ (Admin Panel) ได้ถูกพัฒนาจนเสร็จสมบูรณ์และพร้อมสำหรับการสาธิตการใช้งานแล้ว แต่ส่วนติดต่อสำหรับผู้ใช้ทั่วไป (User Panel) ยังอยู่ในขั้นตอนการพัฒนา
+> โปรเจคนี้ได้พัฒนาฟังก์ชันหลักที่จำเป็นสำหรับแพลตฟอร์มสาธิตทักษะทางเทคนิคเสร็จสมบูรณ์แล้ว ทั้งในส่วนของ Backend API, ส่วนจัดการสำหรับผู้ดูแลระบบ (Admin Panel), และส่วนติดต่อสำหรับผู้ใช้ทั่วไป (User Panel) พร้อมสำหรับการสาธิตการใช้งาน
 >
 > **สรุปสถานะของแต่ละส่วน:**
 >
@@ -38,14 +38,14 @@
 >
 > ---
 >
-> ### 📝 **3. User Panel (E-Commerce Frontend)** - **อยู่ระหว่างการพัฒนา**
+> ### ✅ **3. User Panel (E-Commerce Frontend)** - **ฟังก์ชันครบถ้วนและพร้อมใช้งาน**
 >
-> ส่วนติดต่อผู้ใช้สำหรับลูกค้าทั่วไปยังอยู่ในขั้นตอนการวางแผนและพัฒนา โดยฟีเจอร์ที่วางแผนไว้สำหรับส่วนนี้ประกอบด้วย:
-> - หน้าสำหรับเลือกดูและค้นหาสินค้า
-> - UI สำหรับการจัดสเปคคอมพิวเตอร์ที่จะเรียกใช้ Compatibility Engine
-> - ระบบตะกร้าสินค้า
-> - กระบวนการ Checkout และเลือกวิธีการชำระเงิน
-> - หน้าสำหรับดูประวัติการสั่งซื้อของตนเอง
+> ส่วนติดต่อผู้ใช้สำหรับลูกค้าทั่วไปได้พัฒนาเสร็จสมบูรณ์แล้ว โดยมีฟีเจอร์หลักดังนี้:
+> - **Product Browsing:** หน้าสำหรับเลือกดูและค้นหาสินค้า พร้อมระบบกรองและจัดเรียง
+> - **PC Builder UI:** ส่วนติดต่อผู้ใช้สำหรับการจัดสเปคคอมพิวเตอร์ ซึ่งจะเรียกใช้ Compatibility Engine แบบ Real-time เพื่อแสดงคำแนะนำและข้อผิดพลาด
+> - **Shopping Cart:** ระบบตะกร้าสินค้าสำหรับจัดการรายการที่เลือก
+> - **Checkout Process:** กระบวนการสั่งซื้อและเลือกวิธีการชำระเงินที่เชื่อมต่อกับ Backend
+> - **User Profile & Order History:** หน้าสำหรับให้ผู้ใช้ดูข้อมูลส่วนตัวและประวัติการสั่งซื้อของตนเอง
 
 ---
 
@@ -80,8 +80,9 @@
     - **Polymorphism:** ออกแบบ `Component` เป็น Abstract Class และมี Subclass สำหรับชิ้นส่วนแต่ละประเภท เพื่อให้ง่ายต่อการเพิ่มประเภทสินค้าใหม่ในอนาคต
     - **Separation of Concerns:** มีการแบ่งแยกหน้าที่ความรับผิดชอบของแต่ละคลาสอย่างชัดเจนตามหลักการออกแบบซอฟต์แวร์
 
-### Frontend (React Admin Panel)
+### Frontend (React Applications)
 
+#### 1. Admin Panel
 1.  **📊 แดชบอร์ดสรุปข้อมูล**
     - แสดงผลข้อมูลทางธุรกิจด้วยกราฟจาก `Recharts`
     - มีฟังก์ชันสำหรับกรองข้อมูลตามช่วงเวลาและ Export Report (หมายเหตุ: ฟังก์ชัน Export ยังอยู่ในระหว่างการพัฒนาและอาจทำงานได้ไม่สมบูรณ์)
@@ -101,6 +102,22 @@
     - สร้าง UI Components ที่สามารถนำกลับมาใช้ใหม่ได้ทั่วทั้งโปรเจค เช่น `ReusableTable`, `ConfirmationModal`, `PageHeader`, `StatusBadge`
     - **Dynamic Form Generation:** ใช้ Object Configuration (`COMPONENT_CONFIG`) ในการสร้างฟอร์มสำหรับชิ้นส่วนแต่ละประเภทโดยอัตโนมัติ เพื่อลดการเขียนโค้ดซ้ำซ้อน
 
+#### 2. User Panel
+1.  **🖥️ UI จัดสเปคคอมพิวเตอร์อัจฉริยะ**
+    - ส่วนติดต่อผู้ใช้ที่เรียบง่ายสำหรับการเลือกชิ้นส่วนคอมพิวเตอร์
+    - แสดงผลการตรวจสอบความเข้ากันได้แบบ Real-time โดยไฮไลต์ชิ้นส่วนที่เข้ากันไม่ได้และแสดงเหตุผล
+
+2.  **🔍 ระบบค้นหาและกรองสินค้า**
+    - ผู้ใช้สามารถค้นหาสินค้าตามชื่อ, กรองตามประเภท, ยี่ห้อ, และคุณสมบัติอื่นๆ
+    - จัดการสถานะการค้นหาด้วย `TanStack Query` เพื่อประสบการณ์การใช้งานที่รวดเร็ว
+
+3.  **🛒 ตะกร้าสินค้าและกระบวนการสั่งซื้อ**
+    - ระบบตะกร้าสินค้าที่ใช้งานง่าย
+    - กระบวนการ Checkout ที่ปลอดภัยซึ่งเชื่อมต่อกับช่องทางการชำระเงินต่างๆ ที่ Backend รองรับ
+
+4.  **👤 โปรไฟล์ผู้ใช้**
+    - หน้าสำหรับผู้ใช้ในการจัดการข้อมูลส่วนตัวและดูประวัติการสั่งซื้อทั้งหมด
+
 ---
 
 ## 🛠️ เทคโนโลยีที่ใช้
@@ -108,12 +125,12 @@
 | ส่วน | เทคโนโลยี | รายละเอียดและการใช้งาน |
 |---|---|---|
 | **Backend** | `Java 21`, `Spring Boot 3`, `Maven` | พัฒนา RESTful API และ Business Logic หลักของระบบ |
-| **Frontend** | `React (Vite)`, `React Router` | ส่วนติดต่อผู้ใช้สำหรับผู้ดูแลระบบในรูปแบบ Single Page Application |
+| **Frontend** | `React (Vite)`, `React Router` | ส่วนติดต่อผู้ใช้สำหรับ Admin Panel และ User Panel ในรูปแบบ Single Page Application |
 | **Database** | `MongoDB` | ฐานข้อมูล NoSQL สำหรับจัดเก็บข้อมูลสินค้า, ผู้ใช้, และคำสั่งซื้อ |
 | **Styling** | `React-Bootstrap`, `CSS Modules` | ออกแบบและจัดวางส่วนประกอบ UI |
 | **State Mgt.** | `TanStack Query`, `React Context API` | ใช้ **TanStack Query** สำหรับจัดการ Server State ทั้งหมด (Fetching, Caching, Mutations) และใช้ **Context API** สำหรับจัดการสถานะการล็อกอินของผู้ใช้ |
-| **Data Tables** | `Tanstack React Table` | สร้างตารางข้อมูลที่มีฟังก์ชันการทำงานขั้นสูง |
-| **Data Viz** | `Recharts` | แสดงผลข้อมูลในรูปแบบกราฟบนหน้า Dashboard |
+| **Data Tables** | `Tanstack React Table` | สร้างตารางข้อมูลที่มีฟังก์ชันการทำงานขั้นสูง (ใช้ใน Admin Panel) |
+| **Data Viz** | `Recharts` | แสดงผลข้อมูลในรูปแบบกราฟบนหน้า Dashboard (ใช้ใน Admin Panel) |
 | **Authentication** | `Spring Security`, `JWT`, `Google OAuth2` | จัดการการยืนยันตัวตนและกำหนดสิทธิ์การเข้าถึง (RBAC) |
 | **Cloud Storage** | `Amazon Web Services (AWS S3)` | จัดเก็บไฟล์รูปภาพและเอกสารต่างๆ |
 | **Payment** | `PayPal REST API` | เชื่อมต่อระบบการชำระเงินออนไลน์ |
@@ -165,6 +182,7 @@ GOOGLE_CLIENT_SECRET=รหัสกุญแจลับของ_Google_Client
     ```
     - **Backend API** จะทำงานที่ `http://localhost:8080`
     - **Admin Panel** จะทำงานที่ `http://localhost:5173`
+    - **User Panel** จะทำงานที่ `http://localhost:3000` (หรือพอร์ตอื่นที่กำหนดใน `docker-compose.yml`)
     - **MongoDB** จะทำงานภายใน Docker network
 
 ---
@@ -178,9 +196,17 @@ GOOGLE_CLIENT_SECRET=รหัสกุญแจลับของ_Google_Client
 │   └── src/
 │       ├── components/   # (Reusable UI Components)
 │       ├── context/      # (AuthContext for global state)
-│       ├── layouts/      # (AdminLayout)
 │       ├── pages/        # (Each page of the application)
 │       └── services/     # (API call functions)
+├── User-ui/              # Frontend (React) สำหรับ User
+│   ├── public/
+│   └── src/
+│       ├── api/          # (API call functions)
+│       ├── assets/       # (Static assets)
+│       ├── components/   # (Reusable UI Components)
+│       ├── context/      # (Global state management)
+│       ├── hook/         # (Custom hooks)
+│       └── pages/        # (Each page of the application)
 ├── computers/            # Backend (Spring Boot)
 │   └── src/main/java/in/project/computers/
 │       ├── config/       # (SecurityConfig, AWSConfig, etc.)
@@ -197,7 +223,6 @@ GOOGLE_CLIENT_SECRET=รหัสกุญแจลับของ_Google_Client
 
 ## 💡 สิ่งที่สามารถพัฒนาต่อได้
 
--   **[ ] User Panel (E-Commerce Frontend):** พัฒนาส่วนหน้าสำหรับลูกค้าทั่วไปเพื่อเลือกซื้อสินค้าและจัดสเปค
 -   **[ ] Unit & Integration Tests:** เพิ่มการทดสอบในส่วนต่างๆ ของ Backend เพื่อเพิ่มความเสถียรของระบบ
 -   **[ ] CI/CD Pipeline:** สร้าง Pipeline สำหรับการ Build และ Deploy อัตโนมัติเมื่อมีการ Push code
 -   **[ ] Elasticsearch Integration:** เพิ่มประสิทธิภาพการค้นหาสินค้าด้วย Elasticsearch
