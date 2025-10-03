@@ -122,9 +122,6 @@ public class OrderHelperServiceImpl implements OrderHelperService {
         return order;
     }
 
-    /**
-     * เมธอดภายในสำหรับตรวจสอบสต็อกสินค้าทั้งหมดในตะกร้า
-     */
     private void validateOverallStockFromCart(Cart cart) {
         // === [CREATE-3.3.1] รวบรวมจำนวนชิ้นส่วนทั้งหมดที่ต้องการจากทุกรายการในตะกร้า ===
         Map<String, Integer> requiredStock = new HashMap<>();
@@ -188,8 +185,6 @@ public class OrderHelperServiceImpl implements OrderHelperService {
             log.info("Stock successfully decremented for order ID: {}", order.getId());
         }
     }
-
-
 
     @Override
     public void incrementStockForOrder(Order order) {
@@ -281,6 +276,7 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                     .slipRejectionReason(detailsEntity.getSlipRejectionReason())
                     .payerId(detailsEntity.getPayerId())
                     .payerEmail(detailsEntity.getPayerEmail())
+                    .refundSlipUrl(detailsEntity.getRefundSlipUrl())
                     .build();
         }
 

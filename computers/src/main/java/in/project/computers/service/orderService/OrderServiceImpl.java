@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -235,28 +237,23 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse cancelOrder(String orderId) {
-        // === [CANCEL-1] ดึงข้อมูลผู้ใช้และออเดอร์ ===
-        String userId = userService.findByUserId();
+    public OrderResponse cancelOrderByUser(String orderId) {
+        String currentUserId = userService.findByUserId();
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found."));
-
-        // === [CANCEL-2] ตรวจสอบสิทธิ์และความถูกต้องของสถานะออเดอร์ ===
-        if (!order.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.");
+        log.info("User {} is attempting to cancel order {}", currentUserId, orderId);
+        if (!order.getUserId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied. You do not own this order.");
         }
         if (order.getPaymentStatus() != PaymentStatus.PENDING || order.getOrderStatus() != OrderStatus.PENDING_PAYMENT) {
-            log.warn("User {} attempted to cancel order {} with invalid status: Payment={}, Order={}", userId, orderId, order.getPaymentStatus(), order.getOrderStatus());
+            log.warn("User {} attempted to cancel order {} with invalid status: Payment={}, Order={}", currentUserId, orderId, order.getPaymentStatus(), order.getOrderStatus());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot cancel an order that is not pending payment.");
         }
-
-        // === [CANCEL-3] อัปเดตสถานะเป็น "ยกเลิก" ===
         order.setOrderStatus(OrderStatus.CANCELLED);
         order.setPaymentStatus(PaymentStatus.FAILED);
         order.setUpdatedAt(Instant.now());
         orderRepository.save(order);
-        log.info("Order ID {} has been cancelled by user {}.", orderId, userId);
-
+        log.info("Order ID {} has been successfully cancelled by user {}.", orderId, currentUserId);
         return orderHelper.entityToResponse(order);
     }
 
@@ -317,7 +314,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse approveRefund(String orderId) throws PayPalRESTException {
+    public OrderResponse approveRefund(String orderId, MultipartFile refundSlip) throws PayPalRESTException {
         // === [APPROVE-REFUND-1] ค้นหาออเดอร์ ===
         log.info("Admin is approving a user's refund request for order ID: {}", orderId);
         Order order = orderRepository.findById(orderId)
@@ -325,11 +322,11 @@ public class OrderServiceImpl implements OrderService {
 
         // === [APPROVE-REFUND-2] ตรวจสอบว่าออเดอร์อยู่ในสถานะที่รอการอนุมัติคืนเงินจริง ===
         if (order.getOrderStatus() != OrderStatus.REFUND_REQUESTED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This order is not awaiting a refund approval. Use 'force refund' for other statuses.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This order is not awaiting a refund approval.");
         }
 
         // === [APPROVE-REFUND-3] เรียกใช้เมธอดกลางเพื่อดำเนินการคืนเงิน ===
-        return processRefund(order);
+        return processRefund(order, refundSlip);
     }
 
     @Override
@@ -355,7 +352,47 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // === [FORCE-REFUND-3] เรียกใช้เมธอดกลางเพื่อดำเนินการคืนเงิน ===
-        return processRefund(order);
+        // Forcing a refund for a bank transfer order is not a standard flow,
+        // as it requires a slip. This action is primarily for PayPal.
+        // For bank transfers, the admin should follow the standard refund request flow.
+        if (order.getPaymentDetails().getPaymentMethod() == PaymentMethod.BANK_TRANSFER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot force refund a BANK_TRANSFER order. Please use the standard approval flow which requires a slip.");
+        }
+        return processRefund(order, null);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse updateRefundSlip(String orderId, MultipartFile newSlipImage) {
+        log.info("Admin is updating the refund slip for order ID: {}", orderId);
+        if (newSlipImage == null || newSlipImage.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A new refund slip image is required.");
+        }
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
+
+        if (order.getOrderStatus() != OrderStatus.REFUNDED || order.getPaymentDetails() == null || order.getPaymentDetails().getPaymentMethod() != PaymentMethod.BANK_TRANSFER) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot update refund slip for an order that is not in a refunded state via Bank Transfer.");
+        }
+
+        PaymentDetails details = order.getPaymentDetails();
+        String oldRefundSlipUrl = details.getRefundSlipUrl();
+        if (oldRefundSlipUrl != null && !oldRefundSlipUrl.isBlank()) {
+            try {
+                String oldKey = oldRefundSlipUrl.substring(oldRefundSlipUrl.lastIndexOf("/") + 1);
+                s3Service.deleteFileByKey(oldKey);
+                log.info("Deleted old refund slip from S3: {}", oldKey);
+            } catch (Exception e) {
+                log.error("Failed to delete old refund slip for order {}: {}", orderId, e.getMessage());
+            }
+        }
+
+        String newRefundSlipUrl = s3Service.uploadFile(newSlipImage);
+        details.setRefundSlipUrl(newRefundSlipUrl);
+        order.setUpdatedAt(Instant.now());
+        orderRepository.save(order);
+        log.info("Successfully updated refund slip for order ID: {}", orderId);
+        return orderHelper.entityToResponse(order);
     }
 
     @Override
@@ -498,9 +535,6 @@ public class OrderServiceImpl implements OrderService {
 
     // --- Private Helper Methods ---
 
-    /**
-     * เมธอดภายในสำหรับจัดการกระบวนการสร้าง Payment กับ PayPal และอัปเดตออเดอร์
-     */
     private CreateOrderResponse initiatePaypalPayment(Order order) throws PayPalRESTException {
         // === [INIT-PAYPAL-1] บันทึกออเดอร์เพื่อสร้าง ID หากยังไม่มี ===
         if (order.getId() == null) {
@@ -663,19 +697,13 @@ public class OrderServiceImpl implements OrderService {
         return orderHelper.entityToResponse(order);
     }
 
-    /**
-     * เมธอดภายในสำหรับเปลี่ยนสถานะออเดอร์เป็นสถานะที่หมายถึง "ชำระเงินเรียบร้อยแล้ว"
-     */
     private void updateOrderStatusToPaid(Order order) {
         order.setPaymentStatus(PaymentStatus.COMPLETED);
         order.setOrderStatus(OrderStatus.PROCESSING);
         order.setUpdatedAt(Instant.now());
     }
 
-    /**
-     * เมธอดกลางสำหรับจัดการกระบวนการคืนเงิน (Refund) ทั้ง PayPal และ Bank Transfer
-     */
-    private OrderResponse processRefund(Order order) throws PayPalRESTException {
+    private OrderResponse processRefund(Order order, MultipartFile refundSlip) throws PayPalRESTException {
         // === [PROCESS-REFUND-1] ตรวจสอบว่ามี PaymentDetails หรือไม่ ===
         PaymentDetails paymentDetails = order.getPaymentDetails();
         if (paymentDetails == null) {
@@ -685,13 +713,14 @@ public class OrderServiceImpl implements OrderService {
         // === [PROCESS-REFUND-2] แยกกระบวนการคืนเงินตาม Payment Method ===
         if (paymentDetails.getPaymentMethod() == PaymentMethod.PAYPAL) {
             orderHelper.processPaypalRefund(order, paymentDetails);
+            paymentDetails.setProviderStatus("REFUNDED_VIA_PAYPAL");
         } else if (paymentDetails.getPaymentMethod() == PaymentMethod.BANK_TRANSFER) {
-            // สำหรับ Bank Transfer เป็นการบันทึกสถานะว่าคืนเงินแล้ว (Admin ต้องจัดการคืนเงินเอง)
-            if (order.getOrderStatus() == OrderStatus.REFUND_REQUESTED) {
-                paymentDetails.setProviderStatus("MANUALLY_REFUNDED_APPROVED");
-            } else {
-                paymentDetails.setProviderStatus("MANUALLY_REFUNDED_BY_ADMIN");
+            if (refundSlip == null || refundSlip.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A refund slip is required for BANK_TRANSFER refunds.");
             }
+            String refundSlipUrl = s3Service.uploadFile(refundSlip);
+            paymentDetails.setRefundSlipUrl(refundSlipUrl);
+            paymentDetails.setProviderStatus("MANUALLY_REFUNDED_COMPLETED");
         } else {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unsupported payment method for refund.");
         }
@@ -710,19 +739,15 @@ public class OrderServiceImpl implements OrderService {
         return orderHelper.entityToResponse(order);
     }
 
-    /**
-     * กำหนด Logic ของการเปลี่ยนสถานะด้วยตนเองโดย Admin ว่าจากสถานะปัจจุบัน
-     * สามารถเปลี่ยนไปเป็นสถานะใดได้บ้าง
-     */
     private List<OrderStatus> getValidManualTransitionsFor(OrderStatus currentStatus) {
         return switch (currentStatus) {
-            case PENDING_PAYMENT, REJECTED_SLIP, PROCESSING -> List.of(OrderStatus.CANCELLED);
+            case PENDING_PAYMENT, REJECTED_SLIP -> List.of(OrderStatus.CANCELLED);
 
             case SHIPPED, DELIVERY_FAILED -> Stream.of(
-                            OrderStatus.PROCESSING,         // To correct an error and re-prepare for shipping
-                            OrderStatus.COMPLETED,          // Delivery was successful
-                            OrderStatus.DELIVERY_FAILED,    // Another delivery attempt failed
-                            OrderStatus.RETURNED_TO_SENDER  // Package is being returned
+                            OrderStatus.PROCESSING,
+                            OrderStatus.COMPLETED,
+                            OrderStatus.DELIVERY_FAILED,
+                            OrderStatus.RETURNED_TO_SENDER
                     )
                     .filter(status -> status != currentStatus)
                     .toList();

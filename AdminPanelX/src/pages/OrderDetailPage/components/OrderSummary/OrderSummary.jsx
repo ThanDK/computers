@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import {
     BsPerson, BsTelephone, BsGeoAlt, BsWallet2,
     BsBoxSeam, BsHash, BsCalendarPlus, BsCalendarCheck,
-    BsImage, BsSlashCircle
+    BsImage, BsSlashCircle, BsArrowClockwise
 } from 'react-icons/bs';
 import './OrderSummary.css';
 
@@ -53,6 +53,8 @@ function OrderSummary({ order }) {
     const slipUrl = (paymentDetails?.paymentMethod === 'BANK_TRANSFER' && paymentDetails?.slipImageUrl)
         ? paymentDetails.slipImageUrl
         : null;
+
+    const refundSlipUrl = paymentDetails?.refundSlipUrl || null;
     
     // กำหนดหน้าตาปุ่มดูสลิปตามสถานะ (ปกติ/ถูกปฏิเสธ)
     const isRejected = orderStatus === 'REJECTED_SLIP';
@@ -122,9 +124,9 @@ function OrderSummary({ order }) {
                     {updatedAt ? format(new Date(updatedAt), 'dd MMM yyyy, HH:mm') : 'N/A'}
                 </DetailRow>
 
-                {/* แสดงปุ่มดูสลิป ถ้ามี URL */}
-                {slipUrl && (
-                    <div className="mt-3 d-grid">
+                <div className="mt-3 d-grid gap-2">
+                    {/* แสดงปุ่มดูสลิป ถ้ามี URL */}
+                    {slipUrl && (
                         <Button
                             variant={buttonVariant}
                             href={slipUrl}
@@ -134,8 +136,21 @@ function OrderSummary({ order }) {
                         >
                             {buttonIcon} {buttonText}
                         </Button>
-                    </div>
-                )}
+                    )}
+
+                    {/* แสดงปุ่มดูสลิปคืนเงิน ถ้ามี URL */}
+                    {refundSlipUrl && (
+                         <Button
+                            variant="outline-success"
+                            href={refundSlipUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="d-flex align-items-center justify-content-center gap-2"
+                        >
+                            <BsArrowClockwise /> View Refund Slip
+                        </Button>
+                    )}
+                </div>
             </Card.Body>
         </Card>
     );

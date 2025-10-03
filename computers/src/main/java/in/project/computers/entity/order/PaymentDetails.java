@@ -11,22 +11,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PaymentDetails {
 
-
     private PaymentMethod paymentMethod;
-
     private String transactionId;
-
-
     private String slipImageUrl;
-
-
     private String slipRejectionReason;
-
-
     private String providerStatus;
-
     private String payerId;
-
-
     private String payerEmail;
+    private String refundSlipUrl;
 }

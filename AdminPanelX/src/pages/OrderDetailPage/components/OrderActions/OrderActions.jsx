@@ -1,20 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Button, Modal, Form, Spinner, Image } from 'react-bootstrap';
+import { Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { useAuth } from '../../../../context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     approveSlip, shipOrder, approveRefund, rejectRefund, fetchValidNextStatuses,
     updateOrderStatus, updateShippingDetails, rejectSlip, revertSlipApproval,
-    forceRefundByAdmin
+    forceRefundByAdmin, updateRefundSlip
 } from '../../../../services/OrderService';
 import { fetchAllShippingProviders } from '../../../../services/LookupService';
 import { notifySuccess, notifyError } from '../../../../services/NotificationService';
 import ConfirmationModal from '../../../../components/ConfirmationModal/ConfirmationModal';
 import ReasonModal from '../../../../components/ReasonModal/ReasonModal';
+import RefundSlipModal from '../../../../components/RefundSlipModal/RefundSlipModal';
 import {
     BsTruck, BsPencilSquare, BsCheckCircle, BsXCircle, BsArrowRepeat,
     BsShieldX, BsBackspaceReverseFill, BsInfoCircleFill, BsCurrencyExchange,
-    BsExclamationTriangleFill
+    BsExclamationTriangleFill, BsUpload
 } from 'react-icons/bs';
 import './OrderActions.css';
 
@@ -23,7 +24,7 @@ function OrderActions({ order }) {
     const queryClient = useQueryClient();
 
     // --- State Management ---
-    const [activeModal, setActiveModal] = useState(null); // State กลางสำหรับ Modal
+    const [activeModal, setActiveModal] = useState(null);
     const [shippingInfo, setShippingInfo] = useState({ shippingProvider: '', trackingNumber: '' });
     const [selectedStatus, setSelectedStatus] = useState('');
 
@@ -60,10 +61,11 @@ function OrderActions({ order }) {
     const revertSlipApprovalMutation = useActionMutation((reason) => revertSlipApproval(order.id, reason, token), 'Approval reverted and stock returned.');
     const shipOrderMutation = useActionMutation(() => shipOrder(order.id, shippingInfo, token), 'Order marked as shipped!');
     const updateShippingMutation = useActionMutation(() => updateShippingDetails(order.id, shippingInfo, token), 'Shipping details updated!');
-    const approveRefundMutation = useActionMutation(() => approveRefund(order.id, token), 'Refund request has been approved!');
+    const approveRefundMutation = useActionMutation((slipFile) => approveRefund(order.id, slipFile, token), 'Refund request has been approved and processed!');
     const rejectRefundMutation = useActionMutation(() => rejectRefund(order.id, token), 'Refund request has been rejected.');
     const forceRefundMutation = useActionMutation(() => forceRefundByAdmin(order.id, token), 'Order has been forcibly refunded!');
-    
+    const updateRefundSlipMutation = useActionMutation((slipFile) => updateRefundSlip(order.id, slipFile, token), 'Refund slip has been updated!');
+
     const updateStatusMutation = useMutation({
         mutationFn: (newStatus) => updateOrderStatus(order.id, newStatus, token),
         onSuccess: (data, newStatus) => {
@@ -89,19 +91,31 @@ function OrderActions({ order }) {
         if (selectedStatus) updateStatusMutation.mutate(selectedStatus);
     };
 
+    const handleApproveRefundSubmit = (slipFile) => {
+        approveRefundMutation.mutate(slipFile, {
+            onSuccess: () => closeModal()
+        });
+    };
+
+    const handleUpdateRefundSlipSubmit = (slipFile) => {
+        updateRefundSlipMutation.mutate(slipFile, {
+            onSuccess: () => closeModal()
+        });
+    };
+
     // --- Memoized Logic ---
     const isAnyActionPending = [
         approveSlipMutation, rejectSlipMutation, revertSlipApprovalMutation,
         shipOrderMutation, updateShippingMutation, approveRefundMutation,
-        rejectRefundMutation, forceRefundMutation, updateStatusMutation
+        rejectRefundMutation, forceRefundMutation, updateStatusMutation,
+        updateRefundSlipMutation
     ].some(m => m.isPending);
-    
-    // สร้างรายการ Action (ปุ่ม) ที่จะแสดงผลตามเงื่อนไข (อ่านง่ายขึ้น)
+
     const availableActions = useMemo(() => {
-        const { orderStatus, paymentStatus, paymentDetails } = order;
+        const { orderStatus, paymentDetails } = order;
         const actions = [];
 
-        if (paymentStatus === 'PENDING_APPROVAL') {
+        if (order.paymentStatus === 'PENDING_APPROVAL') {
             actions.push({
                 key: 'approve-slip', label: 'Approve Payment Slip', Icon: BsCheckCircle, variant: 'success',
                 onClick: () => openModal('confirm', { title: 'Approve Payment Slip?', body: 'This will approve the payment, mark as PROCESSING, and deduct stock. Are you sure?', onConfirm: approveSlipMutation.mutate, confirmVariant: 'success', confirmText: 'Yes, Approve' })
@@ -137,25 +151,43 @@ function OrderActions({ order }) {
             });
         }
         if (orderStatus === 'REFUND_REQUESTED') {
+            const isBankTransfer = paymentDetails?.paymentMethod === 'BANK_TRANSFER';
             actions.push({
                 key: 'approve-refund', label: 'Approve Refund Request', Icon: BsCheckCircle, variant: 'success',
-                onClick: () => openModal('confirm', { title: 'Approve Refund Request?', body: 'This will refund the customer and increment stock. This action cannot be undone. Are you sure?', onConfirm: approveRefundMutation.mutate, confirmVariant: 'success', confirmText: 'Yes, Approve Refund' })
+                onClick: () => {
+                    if (isBankTransfer) {
+                        openModal('approveBankTransferRefund');
+                    } else {
+                        openModal('confirm', {
+                            title: 'Approve PayPal Refund?',
+                            body: "This will automatically process the transaction via PayPal's API. This action cannot be undone.",
+                            onConfirm: () => approveRefundMutation.mutate(null),
+                            confirmVariant: 'success',
+                            confirmText: 'Yes, Approve Refund'
+                        });
+                    }
+                }
             });
             actions.push({
                 key: 'reject-refund', label: 'Reject Refund Request', Icon: BsXCircle, variant: 'danger',
                 onClick: () => openModal('confirm', { title: 'Reject Refund Request?', body: 'This will mark the refund request as rejected. The user will be notified. Are you sure?', onConfirm: rejectRefundMutation.mutate, confirmVariant: 'danger', confirmText: 'Yes, Reject' })
             });
         }
-        if (['PROCESSING', 'SHIPPED', 'COMPLETED', 'DELIVERY_FAILED', 'RETURNED_TO_SENDER', 'REFUND_REJECTED'].includes(orderStatus)) {
+        if (orderStatus === 'REFUNDED' && paymentDetails?.paymentMethod === 'BANK_TRANSFER') {
+            actions.push({
+                key: 'update-refund-slip', label: 'Update Refund Slip', Icon: BsUpload, variant: 'outline-info',
+                onClick: () => openModal('updateRefundSlip')
+            });
+        }
+        if (['PROCESSING', 'SHIPPED', 'COMPLETED', 'DELIVERY_FAILED', 'RETURNED_TO_SENDER', 'REFUND_REJECTED'].includes(orderStatus) && paymentDetails?.paymentMethod === 'PAYPAL') {
             actions.push({
                 key: 'force-refund', label: 'Force Refund', Icon: BsCurrencyExchange, variant: 'outline-danger',
-                onClick: () => openModal('confirm', { title: 'Force Refund This Order?', body: 'This will immediately process a refund and return stock. For admin-initiated refunds. Are you sure?', onConfirm: forceRefundMutation.mutate, confirmVariant: 'danger', confirmText: 'Yes, Force Refund' })
+                onClick: () => openModal('confirm', { title: 'Force Refund This Order?', body: 'This will immediately process a refund for this PayPal order and return stock. Are you sure?', onConfirm: forceRefundMutation.mutate, confirmVariant: 'danger', confirmText: 'Yes, Force Refund' })
             });
         }
         return actions;
-    }, [order, shippingProviders, approveSlipMutation, rejectSlipMutation, revertSlipApprovalMutation, approveRefundMutation, rejectRefundMutation, forceRefundMutation]);
+    }, [order, shippingProviders]);
 
-    // Logic สำหรับแสดงกล่องข้อความเตือน/ข้อมูล
     const getInfoBox = () => {
         if (order.orderStatus === 'REJECTED_SLIP') return <div className="action-warning-box"><BsExclamationTriangleFill className="warning-icon" /><span>The payment slip was rejected. The customer has been notified.</span></div>;
         if (order.orderStatus === 'REFUND_REJECTED') return <div className="action-warning-box"><BsShieldX className="warning-icon" /><span>Refund request rejected. You may force a refund if needed.</span></div>;
@@ -194,6 +226,24 @@ function OrderActions({ order }) {
 
             <ConfirmationModal show={activeModal?.type === 'confirm'} onHide={closeModal} {...activeModal?.props} onConfirm={() => { activeModal.props.onConfirm(); closeModal(); }} />
             <ReasonModal show={activeModal?.type === 'reason'} onHide={closeModal} {...activeModal?.props} onSubmit={(reason) => { activeModal.props.onSubmit(reason); closeModal(); }} />
+
+            <RefundSlipModal
+                show={activeModal?.type === 'approveBankTransferRefund'}
+                onHide={closeModal}
+                onSubmit={handleApproveRefundSubmit}
+                isSubmitting={approveRefundMutation.isPending}
+                title="Approve Bank Transfer Refund"
+                confirmText="Confirm Refund"
+            />
+
+            <RefundSlipModal
+                show={activeModal?.type === 'updateRefundSlip'}
+                onHide={closeModal}
+                onSubmit={handleUpdateRefundSlipSubmit}
+                isSubmitting={updateRefundSlipMutation.isPending}
+                title="Update Refund Slip"
+                confirmText="Update Slip"
+            />
 
             <Modal show={activeModal?.type === 'shipping'} onHide={closeModal} centered>
                 <Modal.Header closeButton><Modal.Title>{activeModal?.props.mode === 'create' ? 'Enter Shipping Details' : 'Update Shipping Details'}</Modal.Title></Modal.Header>

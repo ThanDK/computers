@@ -82,10 +82,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-                "http://15.164.231.119:5173",
-                "http://15.164.231.119:5174",
-                "http://ec2-15-164-231-119.ap-northeast-2.compute.amazonaws.com:5173",
-                "http://ec2-15-164-231-119.ap-northeast-2.compute.amazonaws.com:5174"
+                "http://localhost:5174",
+                "http://localhost:5173"
+
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));

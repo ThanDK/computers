@@ -35,6 +35,32 @@ async function apiRequest(url, method = 'GET', body = null, token) {
 }
 
 /**
+ * ฟังก์ชัน helper สำหรับส่ง request แบบ multipart/form-data (สำหรับไฟล์)
+ * @param {string} url - URL ปลายทาง
+ * @param {string} method - HTTP method
+ * @param {FormData} formData - FormData object ที่มีไฟล์และข้อมูลอื่นๆ
+ * @param {string} token - JWT token
+ * @returns {Promise<any>} ผลลัพธ์จาก API
+ * @throws {Error} หาก request ล้มเหลว
+ */
+async function apiMultipartRequest(url, method, formData, token) {
+    const options = {
+        method,
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+        cache: 'no-cache',
+        body: formData,
+    };
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `Request failed with status ${response.status}` }));
+        throw new Error(errorData.message || 'An unknown error occurred.');
+    }
+    return response.json();
+}
+
+/**
  * ดึงข้อมูลออเดอร์ทั้งหมด
  * @param {string} token - JWT token
  * @returns {Promise<Array>} Array ของ order object
@@ -86,11 +112,16 @@ export const shipOrder = (orderId, shippingData, token) => {
 /**
  * อนุมัติคำขอคืนเงิน
  * @param {string} orderId - ID ของออเดอร์
+ * @param {File} [refundSlip=null] - ไฟล์สลิปการคืนเงิน (จำเป็นสำหรับ Bank Transfer)
  * @param {string} token - JWT token
  * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
  */
-export const approveRefund = (orderId, token) => {
-    return apiRequest(`${ORDERS_ENDPOINT}/approve-refund/${orderId}`, 'POST', null, token);
+export const approveRefund = (orderId, refundSlip, token) => {
+    const formData = new FormData();
+    if (refundSlip) {
+        formData.append('refundSlip', refundSlip);
+    }
+    return apiMultipartRequest(`${ORDERS_ENDPOINT}/approve-refund/${orderId}`, 'POST', formData, token);
 };
 
 /**
@@ -165,4 +196,17 @@ export const revertSlipApproval = (orderId, reason, token) => {
  */
 export const forceRefundByAdmin = (orderId, token) => {
     return apiRequest(`${ORDERS_ENDPOINT}/force-refund/${orderId}`, 'POST', null, token);
+};
+
+/**
+ * อัปเดต/เปลี่ยนสลิปการคืนเงิน
+ * @param {string} orderId - ID ของออเดอร์
+ * @param {File} newSlipImage - ไฟล์สลิปการคืนเงินใหม่
+ * @param {string} token - JWT token
+ * @returns {Promise<object>} Order object ที่อัปเดตแล้ว
+ */
+export const updateRefundSlip = (orderId, newSlipImage, token) => {
+    const formData = new FormData();
+    formData.append('newSlipImage', newSlipImage);
+    return apiMultipartRequest(`${ORDERS_ENDPOINT}/update-refund-slip/${orderId}`, 'PUT', formData, token);
 };

@@ -5,9 +5,8 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { createOrder, submitSlip, getUserAddresses } from '../../services/OrderService';
 import NewAddressForm from '../../component/Address/NewAddressForm';
-// * 1. เพิ่มไอคอน FaWrench สำหรับใช้กับสินค้าประเภท Build
 import { FaPlus, FaMinus, FaTrash, FaUpload, FaCheckCircle, FaWrench } from 'react-icons/fa';
-import { BsCartX } from 'react-icons/bs'; // ไอคอนสำหรับตะกร้าว่าง
+import { BsCartX } from 'react-icons/bs';
 import styles from './CartPage.module.css';
 
 const initialAddressState = {
@@ -16,7 +15,6 @@ const initialAddressState = {
 };
 
 const CartPage = () => {
-    // ... (โค้ดส่วนอื่น ๆ เหมือนเดิมทั้งหมด) ...
     const { cartItems, removeFromCart, updateQuantity, totalAmount, clearCart, isLoading: isCartLoading, isUpdating, updatingItemId } = useCart();
     const { user, token, isLoading: isAuthLoading } = useAuth();
     const navigate = useNavigate();
@@ -33,7 +31,6 @@ const CartPage = () => {
     const [paymentSlip, setPaymentSlip] = useState(null);
     const fileInputRef = useRef(null);
 
-    // ... (useEffect และฟังก์ชัน handle ต่าง ๆ เหมือนเดิมทั้งหมด) ...
     useEffect(() => {
         const fetchAddresses = async () => {
             if (user && token) {
@@ -146,8 +143,6 @@ const CartPage = () => {
         if (fileInputRef.current) fileInputRef.current.value = null;
     };
 
-    // --- RENDER FUNCTIONS ---
-    // ... (renderStepIndicator, renderEmptyCart, renderOrderSummaryCard เหมือนเดิม) ...
     const renderStepIndicator = () => (
         <div className={styles.stepIndicator}>
             <div className={`${styles.stepButton} ${styles.firstStep} ${step >= 1 ? styles.active : ''}`}>1. ตะกร้าสินค้า</div>
@@ -201,7 +196,6 @@ const CartPage = () => {
                             <Row className="align-items-center g-3">
                                 <Col xs={3} md={2}>
                                     <div className={styles.imageContainer}>
-                                        {/* // * 2. เพิ่มเงื่อนไขในการแสดงผลรูปภาพหรือไอคอน */}
                                         {item.itemType === 'BUILD' ? (
                                             <FaWrench className={styles.buildIcon} />
                                         ) : (
@@ -262,7 +256,6 @@ const CartPage = () => {
         </Row>
     );
   
-    // ... (โค้ดส่วน renderDetailsStep, renderPaymentStep และส่วน return เหมือนเดิมทั้งหมด) ...
     const renderDetailsStep = () => (
         <Row>
             <Col lg={7}>
