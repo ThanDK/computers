@@ -5,7 +5,8 @@ import com.paypal.api.payments.Refund;
 import com.paypal.api.payments.Sale;
 import com.paypal.base.rest.APIContext;
 import com.paypal.base.rest.PayPalRESTException;
-import in.project.computers.DTO.address.AddressDTO;
+import in.project.computers.DTO.address.AddressRequest;
+import in.project.computers.DTO.address.AddressResponse;
 import in.project.computers.DTO.order.orderRequest.CreateOrderRequest;
 import in.project.computers.DTO.order.orderResponse.OrderResponse;
 import in.project.computers.DTO.order.orderResponse.PaymentDetailsResponse;
@@ -249,13 +250,13 @@ public class OrderHelperServiceImpl implements OrderHelperService {
         // === [CREATE-3.2.1] กรณีใช้ที่อยู่ที่บันทึกไว้ ===
         if (request.getSavedAddressId() != null && !request.getSavedAddressId().isBlank()) {
             log.info("Resolving address using savedAddressId: {}", request.getSavedAddressId());
-            AddressDTO savedAddressDto = addressService.getAddressById(user.getId(), request.getSavedAddressId());
-            return addressConverter.convertDtoToEntity(savedAddressDto);
+            AddressResponse savedAddressResponse = addressService.getAddressById(user.getId(), request.getSavedAddressId());
+            return addressConverter.convertResponseToEntity(savedAddressResponse);
             // === [CREATE-3.2.2] กรณีใช้ที่อยู่ใหม่ที่กรอกเข้ามา ===
         } else if (request.getNewAddress() != null) {
             log.info("Resolving address using newAddress object.");
-            AddressDTO newAddrDTO = request.getNewAddress();
-            return addressConverter.convertDtoToEntity(newAddrDTO);
+            AddressRequest newAddrRequest = request.getNewAddress();
+            return addressConverter.convertRequestToEntity(newAddrRequest);
             // === [CREATE-3.2.3] กรณีไม่ระบุที่อยู่ ===
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A shipping address is required. Please provide either a savedAddressId or a newAddress object.");
@@ -280,14 +281,14 @@ public class OrderHelperServiceImpl implements OrderHelperService {
                     .build();
         }
 
-        // === [RESPONSE-MAPPER-2] แปลง Address entity เป็น AddressDTO ===
-        AddressDTO shippingAddressDto = addressConverter.convertEntityToDto(order.getShippingAddress());
+        // === [RESPONSE-MAPPER-2] แปลง Address entity เป็น AddressResponse ===
+        AddressResponse shippingAddressResponse = addressConverter.convertEntityToResponse(order.getShippingAddress());
 
         // === [RESPONSE-MAPPER-3] สร้าง OrderResponse DTO หลักและประกอบข้อมูลทั้งหมด ===
         return OrderResponse.builder()
                 .id(order.getId())
                 .userId(order.getUserId())
-                .shippingAddress(shippingAddressDto)
+                .shippingAddress(shippingAddressResponse)
                 .email(order.getEmail())
                 .lineItems(order.getLineItems())
                 .totalAmount(order.getTotalAmount())

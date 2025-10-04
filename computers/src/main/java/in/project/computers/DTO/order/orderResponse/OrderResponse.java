@@ -1,6 +1,6 @@
 package in.project.computers.DTO.order.orderResponse;
 
-import in.project.computers.DTO.address.AddressDTO;
+import in.project.computers.DTO.address.AddressResponse; // UPDATED IMPORT
 import in.project.computers.entity.order.*;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +13,7 @@ import java.util.List;
 public class OrderResponse {
     private String id;
     private String userId;
-    private AddressDTO shippingAddress;
+    private AddressResponse shippingAddress; // UPDATED TYPE
     private String email;
     private List<OrderLineItem> lineItems;
     private BigDecimal totalAmount;

@@ -1,13 +1,29 @@
-
-
+/* Original rules preserved for other components */
 .list-group-item.active {
     color: #fff;
     background-color: #0d6efd; 
     font-weight: bold;
 }
 
-
 .list-group-item.active .badge {
     color: #0d6efd;
     background-color: #fff !important;
+}
+
+/* 
+  ====================================================================
+  Style for the new Default Address Card
+  ====================================================================
+  This rule applies a green border to the dedicated card for the 
+  default shipping address, making it stand out.
+*/
+.default-address-card {
+    border-color: #198754;
+    border-width: 1.5px;
+}
+
+.default-address-card .card-header {
+    color: #0a3622;
+    background-color: #d1e7dd;
+    font-weight: 500;
 }

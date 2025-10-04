@@ -1,6 +1,6 @@
 package in.project.computers.DTO.order.orderRequest;
 
-import in.project.computers.DTO.address.AddressDTO;
+import in.project.computers.DTO.address.AddressRequest;
 import in.project.computers.entity.order.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -18,7 +18,7 @@ public class CreateOrderRequest {
     private String savedAddressId;
 
     @Valid
-    private AddressDTO newAddress;
+    private AddressRequest newAddress;
 
     @NotNull(message = "Payment method must be specified")
     private PaymentMethod paymentMethod;

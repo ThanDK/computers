@@ -1,6 +1,7 @@
 package in.project.computers.controller.userController;
 
-import in.project.computers.DTO.address.AddressDTO;
+import in.project.computers.DTO.address.AddressRequest;
+import in.project.computers.DTO.address.AddressResponse;
 import in.project.computers.service.addressService.AddressService;
 import in.project.computers.service.userAuthenticationService.UserService;
 import jakarta.validation.Valid;
@@ -28,13 +29,13 @@ public class UserAddressController {
      * <p>
      * Endpoint นี้สำหรับให้ผู้ใช้ที่ล็อกอินแล้ว ดึงข้อมูลที่อยู่สำหรับจัดส่งทั้งหมดที่เคยบันทึกไว้ในบัญชีของตนเอง
      * </p>
-     * @return ResponseEntity ที่มี List ของ {@link AddressDTO} และสถานะ 200 OK
+     * @return ResponseEntity ที่มี List ของ {@link AddressResponse} และสถานะ 200 OK
      */
     @GetMapping
-    public ResponseEntity<List<AddressDTO>> getUserAddresses() {
+    public ResponseEntity<List<AddressResponse>> getUserAddresses() {
         String userId = userService.findByUserId();
         log.info("Authenticated user ({}) is fetching their addresses.", userId);
-        List<AddressDTO> addresses = addressService.getUserAddresses(userId);
+        List<AddressResponse> addresses = addressService.getUserAddresses(userId);
         return ResponseEntity.ok(addresses);
     }
 
@@ -43,14 +44,14 @@ public class UserAddressController {
      * <p>
      * Endpoint นี้อนุญาตให้ผู้ใช้ที่ล็อกอินแล้ว เพิ่มที่อยู่สำหรับจัดส่งใหม่เข้าไปในบัญชีของตนเอง
      * </p>
-     * @param request อ็อบเจกต์ {@link AddressDTO} ที่มีข้อมูลที่อยู่ใหม่ที่ต้องการเพิ่ม
-     * @return ResponseEntity ที่มีข้อมูล {@link AddressDTO} ของที่อยู่ที่สร้างใหม่และสถานะ 201 Created
+     * @param request อ็อบเจกต์ {@link AddressRequest} ที่มีข้อมูลที่อยู่ใหม่ที่ต้องการเพิ่ม
+     * @return ResponseEntity ที่มีข้อมูล {@link AddressResponse} ของที่อยู่ที่สร้างใหม่และสถานะ 201 Created
      */
     @PostMapping
-    public ResponseEntity<AddressDTO> addAddress(@Valid @RequestBody AddressDTO request) {
+    public ResponseEntity<AddressResponse> addAddress(@Valid @RequestBody AddressRequest request) {
         String userId = userService.findByUserId();
         log.info("User {} is adding a new address.", userId);
-        AddressDTO newAddress = addressService.addAddress(userId, request);
+        AddressResponse newAddress = addressService.addAddress(userId, request);
         return new ResponseEntity<>(newAddress, HttpStatus.CREATED);
     }
 
@@ -60,14 +61,14 @@ public class UserAddressController {
      * Endpoint นี้ใช้สำหรับแก้ไขข้อมูลที่อยู่สำหรับจัดส่งที่ผู้ใช้เคยบันทึกไว้แล้ว ระบบจะตรวจสอบความเป็นเจ้าของก่อนทำการอัปเดต
      * </p>
      * @param addressId ID ของที่อยู่ที่จะอัปเดต (จาก Path Variable)
-     * @param request อ็อบเจกต์ {@link AddressDTO} ที่มีข้อมูลที่อยู่ใหม่
-     * @return ResponseEntity ที่มีข้อมูล {@link AddressDTO} ที่อัปเดตแล้วและสถานะ 200 OK
+     * @param request อ็อบเจกต์ {@link AddressRequest} ที่มีข้อมูลที่อยู่ใหม่
+     * @return ResponseEntity ที่มีข้อมูล {@link AddressResponse} ที่อัปเดตแล้วและสถานะ 200 OK
      */
     @PutMapping("/{addressId}")
-    public ResponseEntity<AddressDTO> updateAddress(@PathVariable String addressId, @Valid @RequestBody AddressDTO request) {
+    public ResponseEntity<AddressResponse> updateAddress(@PathVariable String addressId, @Valid @RequestBody AddressRequest request) {
         String userId = userService.findByUserId();
         log.info("User {} is updating address ID: {}", userId, addressId);
-        AddressDTO updatedAddress = addressService.updateAddress(userId, addressId, request);
+        AddressResponse updatedAddress = addressService.updateAddress(userId, addressId, request);
         return ResponseEntity.ok(updatedAddress);
     }
 

@@ -1,17 +1,23 @@
 package in.project.computers.service.addressService;
 
-import in.project.computers.DTO.address.AddressDTO;
+import in.project.computers.DTO.address.AddressRequest;
+import in.project.computers.DTO.address.AddressResponse;
 import in.project.computers.entity.user.Address;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AddressConverter {
 
-    public AddressDTO convertEntityToDto(Address entity) {
+    /**
+     * Converts an Address database entity into an AddressResponse DTO for sending to the client.
+     * @param entity The Address entity from the database.
+     * @return An AddressResponse object.
+     */
+    public AddressResponse convertEntityToResponse(Address entity) {
         if (entity == null) {
             return null;
         }
-        return AddressDTO.builder()
+        return AddressResponse.builder()
                 .id(entity.getId())
                 .contactName(entity.getContactName())
                 .phoneNumber(entity.getPhoneNumber())
@@ -26,37 +32,71 @@ public class AddressConverter {
                 .build();
     }
 
-    public Address convertDtoToEntity(AddressDTO dto) {
-        if (dto == null) {
+    /**
+     * Converts an AddressRequest DTO from the client into a new Address database entity.
+     * @param request The AddressRequest object from the client.
+     * @return A new Address entity.
+     */
+    public Address convertRequestToEntity(AddressRequest request) {
+        if (request == null) {
             return null;
         }
         return Address.builder()
-                .id(dto.getId())
-                .contactName(dto.getContactName())
-                .phoneNumber(dto.getPhoneNumber())
-                .line1(dto.getLine1())
-                .line2(dto.getLine2())
-                .subdistrict(dto.getSubdistrict())
-                .district(dto.getDistrict())
-                .province(dto.getProvince())
-                .zipCode(dto.getZipCode())
-                .country(dto.getCountry() != null && !dto.getCountry().isBlank() ? dto.getCountry() : "Thailand") // Default to Thailand if empty
-                .isDefault(dto.isDefault())
+                .id(request.getId())
+                .contactName(request.getContactName())
+                .phoneNumber(request.getPhoneNumber())
+                .line1(request.getLine1())
+                .line2(request.getLine2())
+                .subdistrict(request.getSubdistrict())
+                .district(request.getDistrict())
+                .province(request.getProvince())
+                .zipCode(request.getZipCode())
+                .country(request.getCountry() != null && !request.getCountry().isBlank() ? request.getCountry() : "Thailand") // Default to Thailand if empty
+                .isDefault(request.isDefault())
                 .build();
     }
 
-    public void updateEntityFromDto(Address entity, AddressDTO dto) {
-        entity.setContactName(dto.getContactName());
-        entity.setPhoneNumber(dto.getPhoneNumber());
-        entity.setLine1(dto.getLine1());
-        entity.setLine2(dto.getLine2());
-        entity.setSubdistrict(dto.getSubdistrict());
-        entity.setDistrict(dto.getDistrict());
-        entity.setProvince(dto.getProvince());
-        entity.setZipCode(dto.getZipCode());
-        if (dto.getCountry() != null && !dto.getCountry().isBlank()) {
-            entity.setCountry(dto.getCountry());
+    /**
+     * Updates an existing Address entity with data from an AddressRequest DTO.
+     * @param entity The existing Address entity to update.
+     * @param request The AddressRequest object containing new data.
+     */
+    public void updateEntityFromRequest(Address entity, AddressRequest request) {
+        entity.setContactName(request.getContactName());
+        entity.setPhoneNumber(request.getPhoneNumber());
+        entity.setLine1(request.getLine1());
+        entity.setLine2(request.getLine2());
+        entity.setSubdistrict(request.getSubdistrict());
+        entity.setDistrict(request.getDistrict());
+        entity.setProvince(request.getProvince());
+        entity.setZipCode(request.getZipCode());
+        if (request.getCountry() != null && !request.getCountry().isBlank()) {
+            entity.setCountry(request.getCountry());
         }
-        entity.setDefault(dto.isDefault());
+        entity.setDefault(request.isDefault());
+    }
+
+    /**
+     * Converts an AddressResponse DTO back into an Address database entity.
+     * @param response The AddressResponse object.
+     * @return An Address entity.
+     */
+    public Address convertResponseToEntity(AddressResponse response) {
+        if (response == null) {
+            return null;
+        }
+        return Address.builder()
+                .id(response.getId())
+                .contactName(response.getContactName())
+                .phoneNumber(response.getPhoneNumber())
+                .line1(response.getLine1())
+                .line2(response.getLine2())
+                .subdistrict(response.getSubdistrict())
+                .district(response.getDistrict())
+                .province(response.getProvince())
+                .zipCode(response.getZipCode())
+                .country(response.getCountry())
+                .isDefault(response.isDefault())
+                .build();
     }
 }

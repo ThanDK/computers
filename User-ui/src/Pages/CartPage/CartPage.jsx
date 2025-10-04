@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Image, Form, Spinner, Alert, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Image, Form, Spinner, Alert, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { createOrder, submitSlip, fetchDefaultPaymentMethod } from '../../services/OrderService';
 import { getUserAddresses, createAddress, updateAddress } from '../../services/AddressService';
+import { notifySuccess, notifyError } from '../../services/NotificationService';
 import AddressModal from '../../component/Address/AddressModal';
 import { FaPlus, FaMinus, FaTrash, FaUpload, FaCheckCircle, FaWrench, FaPlusCircle, FaEdit } from 'react-icons/fa';
 import { BsCartX } from 'react-icons/bs';
@@ -37,6 +38,9 @@ const CartPage = () => {
                 setIsAddressLoading(true);
                 const response = await getUserAddresses();
                 const addresses = response.data;
+
+                addresses.sort((a, b) => b.isDefault - a.isDefault);
+
                 setUserAddresses(addresses);
 
                 if (selectAddressId) {
@@ -44,13 +48,10 @@ const CartPage = () => {
                     return;
                 }
                 
-                const defaultAddress = addresses.find(addr => addr.isDefault);
-                if (defaultAddress) {
-                    setSavedAddressId(defaultAddress.id);
-                } else if (addresses.length > 0) {
+                if (addresses.length > 0) {
                     setSavedAddressId(addresses[0].id);
                 } else {
-                    setSavedAddressId(''); // No address selected if list is empty
+                    setSavedAddressId('');
                 }
             } catch (error) {
                 console.error("Failed to fetch addresses:", error);
@@ -61,7 +62,7 @@ const CartPage = () => {
             setIsAddressLoading(false);
         }
     };
-
+    
     useEffect(() => {
         if (step === 2 && !isAuthLoading) {
             fetchAddresses();
@@ -86,6 +87,7 @@ const CartPage = () => {
         loadBankDetails();
     }, [step, paymentMethod]);
 
+
     const handleOpenAddressModal = (addressToEdit = null) => {
         setEditingAddress(addressToEdit);
         setShowAddressModal(true);
@@ -97,9 +99,11 @@ const CartPage = () => {
             if (editingAddress) {
                 const response = await updateAddress(editingAddress.id, addressData);
                 savedAddress = response.data;
+                notifySuccess("Address updated successfully!");
             } else {
                 const response = await createAddress(addressData);
                 savedAddress = response.data;
+                notifySuccess("New address added successfully!");
             }
             setShowAddressModal(false);
             setEditingAddress(null);
@@ -108,7 +112,14 @@ const CartPage = () => {
 
         } catch (error) {
             console.error("Failed to save address:", error);
-            alert(`เกิดข้อผิดพลาดในการบันทึกที่อยู่: ${error.response?.data?.message || error.message}`);
+            const errorMessage = error.response?.data?.message || "An error occurred while saving the address.";
+            notifyError(errorMessage);
+        }
+    };
+
+    const handleStepClick = (targetStep) => {
+        if (targetStep < step) {
+            setStep(targetStep);
         }
     };
 
@@ -154,9 +165,8 @@ const CartPage = () => {
                 
                 await submitSlip(orderId, paymentSlip);
                 
-                alert(`สร้างคำสั่งซื้อ ${orderId} และส่งสลิปสำเร็จ!`);
                 await clearCart();
-                navigate('/profile/orders');
+                navigate('/profile/orders', { state: { message: `สร้างคำสั่งซื้อ ${orderId} และส่งสลิปสำเร็จ!` } });
             }
         } catch (error) {
             console.error('Failed to process order:', error);
@@ -168,21 +178,22 @@ const CartPage = () => {
     };
 
     const handleFileUploadClick = () => fileInputRef.current.click();
-    const handleFileChange = (e) => {
-        if (e.target.files?.[0]) setPaymentSlip(e.target.files[0]);
-    };
-    const removePaymentSlip = () => {
-        setPaymentSlip(null);
-        if (fileInputRef.current) fileInputRef.current.value = null;
-    };
+    const handleFileChange = (e) => { if (e.target.files?.[0]) setPaymentSlip(e.target.files[0]); };
+    const removePaymentSlip = () => { setPaymentSlip(null); if (fileInputRef.current) fileInputRef.current.value = null; };
 
     const isStep3ButtonDisabled = !savedAddressId;
 
     const renderStepIndicator = () => (
         <div className={styles.stepIndicator}>
-            <div className={`${styles.stepButton} ${styles.firstStep} ${step >= 1 ? styles.active : ''}`}>1. ตะกร้าสินค้า</div>
-            <div className={`${styles.stepButton} ${step >= 2 ? styles.active : ''}`}>2. รายละเอียด</div>
-            <div className={`${styles.stepButton} ${styles.lastStep} ${step >= 3 ? styles.active : ''}`}>3. ชำระเงิน</div>
+            <div className={`${styles.stepButton} ${styles.firstStep} ${step >= 1 ? styles.active : ''} ${step > 1 ? styles.clickable : ''}`} onClick={() => handleStepClick(1)}>
+                1. ตะกร้าสินค้า
+            </div>
+            <div className={`${styles.stepButton} ${step >= 2 ? styles.active : ''} ${step > 2 ? styles.clickable : ''}`} onClick={() => handleStepClick(2)}>
+                2. รายละเอียด
+            </div>
+            <div className={`${styles.stepButton} ${styles.lastStep} ${step >= 3 ? styles.active : ''}`}>
+                3. ชำระเงิน
+            </div>
         </div>
     );
     
@@ -291,97 +302,100 @@ const CartPage = () => {
         </Row>
     );
   
-    const renderDetailsStep = () => (
-        <>
-            <Row>
-                <Col lg={7}>
-                    <Card className="p-4">
-                        <div className={styles.formSection}>
-                            <h5>ช่องทางการชำระเงิน</h5>
-                            <Form>
-                                <Form.Check type="radio" id="paypal" label="PayPal / บัตรเครดิต" value="PAYPAL" checked={paymentMethod === 'PAYPAL'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                                <Form.Check type="radio" id="bank-transfer" label="โอนจ่ายผ่านบัญชีธนาคาร" value="BANK_TRANSFER" checked={paymentMethod === 'BANK_TRANSFER'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                            </Form>
-                        </div>
-                        <div className={styles.formSection}>
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                <h5>ที่อยู่จัดส่ง</h5>
-                                <Button variant="outline-primary" size="sm" onClick={() => handleOpenAddressModal(null)}>
-                                    <FaPlusCircle className="me-2"/>เพิ่มที่อยู่ใหม่
-                                </Button>
+    const renderDetailsStep = () => {
+        const getAddressCardClasses = (addr) => {
+            const classes = [styles.addressCard];
+            if (savedAddressId === addr.id) {
+                classes.push(styles.selected);
+                if (addr.isDefault) {
+                    classes.push(styles.defaultAndSelected);
+                }
+            }
+            return classes.join(' ');
+        };
+    
+        return (
+            <>
+                <Row>
+                    <Col lg={7}>
+                        <Card className="p-4">
+                            <div className={styles.formSection}>
+                                <h5>ช่องทางการชำระเงิน</h5>
+                                <Form>
+                                    <Form.Check type="radio" id="paypal" label="PayPal / บัตรเครดิต" value="PAYPAL" checked={paymentMethod === 'PAYPAL'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                                    <Form.Check type="radio" id="bank-transfer" label="โอนจ่ายผ่านบัญชีธนาคาร" value="BANK_TRANSFER" checked={paymentMethod === 'BANK_TRANSFER'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                                </Form>
                             </div>
-                            {isAddressLoading ? (
-                                <div className="text-center p-3"><Spinner animation="border" size="sm" /></div>
-                            ) : (
-                                <div className="mt-2">
-                                    {userAddresses.length === 0 ? (
-                                        <Alert variant="info">กรุณาเพิ่มที่อยู่สำหรับจัดส่ง</Alert>
-                                    ) : (
-                                        userAddresses.map(addr => (
-                                            <div key={addr.id} className={`${styles.addressCard} ${savedAddressId === addr.id ? styles.selected : ''}`} onClick={() => setSavedAddressId(addr.id)}>
-                                                {savedAddressId === addr.id && ( <FaCheckCircle className={styles.checkIcon} /> )}
-                                                <div className="d-flex justify-content-between align-items-start">
-                                                    <strong>{addr.contactName}</strong>
-                                                    {addr.isDefault && <Badge bg="success">ที่อยู่หลัก</Badge>}
-                                                </div>
-                                                <p className="text-muted small mb-1">{addr.phoneNumber}</p>
-                                                <p className="small mb-0">{`${addr.line1}${addr.line2 ? `, ${addr.line2}` : ''}`}</p>
-                                                <p className="small mb-0">{`${addr.subdistrict}, ${addr.district}, ${addr.province} ${addr.zipCode}`}</p>
-                                                <Button variant="link" size="sm" className="p-0 mt-1" onClick={(e) => { e.stopPropagation(); handleOpenAddressModal(addr); }}>
-                                                    <FaEdit className="me-1" /> แก้ไข
-                                                </Button>
-                                            </div>
-                                        ))
-                                    )}
+                            <div className={styles.formSection}>
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <h5>ที่อยู่จัดส่ง</h5>
+                                    <Button variant="outline-primary" size="sm" onClick={() => handleOpenAddressModal(null)}>
+                                        <FaPlusCircle className="me-2"/>เพิ่มที่อยู่ใหม่
+                                    </Button>
                                 </div>
-                            )}
-                        </div>
-                    </Card>
-                </Col>
-                <Col lg={5}>
-                    {renderOrderSummaryCard()}
-                    {submitError && <Alert variant="danger" className="mt-3">{submitError}</Alert>}
-
-                    <OverlayTrigger
-                        placement="top"
-                        overlay={
-                            isStep3ButtonDisabled ? (
-                                <Tooltip id="tooltip-disabled">กรุณาเลือกที่อยู่สำหรับจัดส่ง</Tooltip>
-                            ) : (
-                                <span /> 
-                            )
-                        }
-                    >
-                        <span className="d-grid w-100 mt-3">
-                            <Button 
-                                variant="primary" 
-                                size="lg" 
-                                onClick={handleProceedToStep3} 
-                                disabled={isStep3ButtonDisabled}
-                                style={isStep3ButtonDisabled ? { pointerEvents: 'none' } : {}}
-                            >
-                                ดำเนินการต่อ
-                            </Button>
-                        </span>
-                    </OverlayTrigger>
-
-                </Col>
-            </Row>
-
-            <AddressModal
-                show={showAddressModal}
-                handleClose={() => setShowAddressModal(false)}
-                handleSave={handleSaveAddress}
-                address={editingAddress}
-            />
-        </>
-    );
+                                {isAddressLoading ? (
+                                    <div className="text-center p-3"><Spinner animation="border" size="sm" /></div>
+                                ) : (
+                                    <div className="mt-2">
+                                        {userAddresses.length === 0 ? (
+                                            <Alert variant="info">กรุณาเพิ่มที่อยู่สำหรับจัดส่ง</Alert>
+                                        ) : (
+                                            userAddresses.map(addr => (
+                                                <div key={addr.id} className={getAddressCardClasses(addr)} onClick={() => setSavedAddressId(addr.id)}>
+                                                    {savedAddressId === addr.id && ( <FaCheckCircle className={styles.checkIcon} /> )}
+                                                    <div>
+                                                        <strong>{addr.contactName}</strong>
+                                                        <p className="text-muted small mb-1">{addr.phoneNumber}</p>
+                                                        <p className="small mb-0">{`${addr.line1}${addr.line2 ? `, ${addr.line2}` : ''}`}</p>
+                                                        <p className="small mb-0">{`${addr.subdistrict}, ${addr.district}, ${addr.province} ${addr.zipCode}`}</p>
+                                                        <Button variant="link" size="sm" className="p-0 mt-1" onClick={(e) => { e.stopPropagation(); handleOpenAddressModal(addr); }}>
+                                                            <FaEdit className="me-1" /> แก้ไข
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+                    </Col>
+                    <Col lg={5}>
+                        {renderOrderSummaryCard()}
+                        {submitError && <Alert variant="danger" className="mt-3">{submitError}</Alert>}
+                        <OverlayTrigger
+                            placement="top"
+                            overlay={isStep3ButtonDisabled ? ( <Tooltip id="tooltip-disabled">กรุณาเลือกที่อยู่สำหรับจัดส่ง</Tooltip> ) : ( <span /> )}
+                        >
+                            <span className="d-grid w-100 mt-3">
+                                <Button
+                                    variant="primary"
+                                    size="lg"
+                                    onClick={handleProceedToStep3}
+                                    disabled={isStep3ButtonDisabled}
+                                    style={isStep3ButtonDisabled ? { pointerEvents: 'none' } : {}}
+                                >
+                                    ดำเนินการต่อ
+                                </Button>
+                            </span>
+                        </OverlayTrigger>
+                    </Col>
+                </Row>
+                <AddressModal
+                    show={showAddressModal}
+                    handleClose={() => setShowAddressModal(false)}
+                    handleSave={handleSaveAddress}
+                    address={editingAddress}
+                />
+            </>
+        );
+    };
 
     const renderPaymentStep = () => (
-         <Row>
+        <Row>
             {paymentMethod === 'BANK_TRANSFER' ? (
                 <Col lg={7}>
-                     <Card className="p-4">
+                    <Card className="p-4">
                         {isBankDetailsLoading ? (
                             <div className="text-center p-5"><Spinner animation="border" /></div>
                         ) : !bankDetails ? (
@@ -402,7 +416,6 @@ const CartPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
                                 <div>
                                     <p className="fw-bold mt-4">แจ้งการชำระเงิน</p>
                                     <p className='text-muted small'>กรุณาอัปโหลดสลิปเพื่อยืนยันการชำระเงิน</p>
@@ -417,16 +430,16 @@ const CartPage = () => {
                                 </div>
                             </div>
                         )}
-                     </Card>
+                    </Card>
                 </Col>
             ) : (
-                 <Col lg={7}>
-                     <Card className="p-4 text-center">
+                <Col lg={7}>
+                    <Card className="p-4 text-center">
                         <h5 className="mb-3">ดำเนินการต่อด้วย PayPal</h5>
                         <p>คุณจะถูกส่งไปยังหน้าเว็บไซต์ของ PayPal เพื่อทำการชำระเงินให้เสร็จสิ้น</p>
                         <Image src="https://www.paypalobjects.com/webstatic/mktg/logo/AM_SbyPP_mc_vs_dc_ae.jpg" fluid style={{maxWidth: '300px'}} />
-                     </Card>
-                 </Col>
+                    </Card>
+                </Col>
             )}
             <Col lg={5}>
                 {renderOrderSummaryCard()}

@@ -1,5 +1,6 @@
 package in.project.computers.DTO.address;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddressDTO {
+public class AddressRequest {
 
     private String id;
 
@@ -59,5 +60,6 @@ public class AddressDTO {
     @Pattern(regexp = "^[\\p{L}\\s-]*$", message = "Country contains invalid characters")
     private String country;
 
+    @JsonProperty("isDefault")
     private boolean isDefault;
 }

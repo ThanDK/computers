@@ -15,3 +15,4 @@ public class PaymentMethodResponse {
     @JsonProperty("isDefault")
     private boolean isDefault;
 }
+
