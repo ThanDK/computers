@@ -1,14 +1,10 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaPlus, FaWrench, FaTrash, FaShoppingCart } from 'react-icons/fa';
 import api from '../../api/api';
-
-
-
 import { useCart } from '../../context/CartContext';
+import { notifySuccess, notifyError, showConfirmation } from '../../services/NotificationService';
 
 const MyBuilds = () => {
     const [builds, setBuilds] = useState([]);
@@ -30,11 +26,13 @@ const MyBuilds = () => {
             } catch (err) {
                
                 if (err.response && err.response.status === 404) {
-                    console.warn("API endpoint '/builds/my-builds' not found (404). Displaying an empty list for now.");
+                    console.warn("API endpoint '/builds' not found (404), which is unexpected. Displaying an empty list.");
                     setBuilds([]); 
                     setError(null); 
                 } else {
-                    setError('Failed to load your saved builds. Please try again later.');
+                    const errorMessage = 'Failed to load your saved builds. Please try again later.';
+                    setError(errorMessage);
+                    notifyError(errorMessage); // Use notification for visible error
                     console.error("An error occurred while fetching builds:", err);
                 }
             } finally {
@@ -45,18 +43,22 @@ const MyBuilds = () => {
     }, []);
 
     const handleDelete = async (buildId, buildName) => {
-        if (window.confirm(`Are you sure you want to delete the build "${buildName}"?`)) {
+        const isConfirmed = await showConfirmation(
+            'Confirm Deletion',
+            `Are you sure you want to delete the build "${buildName}"? This action cannot be undone.`
+        );
+
+        if (isConfirmed) {
             try {
                 await api.delete(`/builds/${buildId}`);
                 setBuilds(currentBuilds => currentBuilds.filter(b => b.id !== buildId));
-                alert(`Build "${buildName}" has been deleted.`);
+                notifySuccess(`Build "${buildName}" has been deleted.`);
             } catch (err) {
-                alert('Failed to delete the build.');
+                notifyError('Failed to delete the build.');
                 console.error(err);
             }
         }
     };
-
 
     const handleAddToCart = async (build) => {
         try {
@@ -66,9 +68,10 @@ const MyBuilds = () => {
                 quantity: 1
             };
             await addToCart(itemData);
-            alert(`"${build.buildName}" has been added to your cart!`);
+            notifySuccess(`"${build.buildName}" has been added to your cart!`);
             navigate('/cart');
         } catch (error) {
+            notifyError('There was an issue adding the build to your cart.');
             console.error("Add to cart failed from MyBuilds page:", error);
         }
     };

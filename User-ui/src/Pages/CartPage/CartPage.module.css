@@ -1,29 +1,10 @@
-/*
-============================================
---- General Page & Layout Styles ---
-============================================
-*/
-
+/* --- General Page Styles --- */
 .pageContainer {
     padding: 2rem 1rem;
     background-color: #f8f9fa;
 }
 
-/* A dashed line for separating sections within a component */
-.componentDivider {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    border-top: 1px dashed #ced4da;
-}
-
-
-/*
-============================================
---- Checkout Step Indicator ---
-============================================
-*/
-
-/* The main container for the step progress bar */
+/* --- Step Indicator --- */
 .stepIndicator {
     display: flex;
     justify-content: center;
@@ -36,8 +17,6 @@
     margin-left: auto;
     margin-right: auto;
 }
-
-/* Individual step button/label */
 .stepButton {
     flex: 1;
     padding: 0.75rem 1rem;
@@ -49,21 +28,14 @@
     position: relative;
     cursor: default;
 }
-
-/* Style for past/completed steps that are clickable */
 .stepButton.clickable {
     cursor: pointer;
 }
-
 .stepButton.clickable:not(.active):hover {
     background-color: #dee2e6;
 }
-
-/* Rounded corners for the first and last steps */
 .stepButton.firstStep { border-radius: 25px 0 0 25px; }
 .stepButton.lastStep { border-radius: 0 25px 25px 0; }
-
-/* Style for the current, active step */
 .stepButton.active {
     background-color: var(--bs-primary);
     color: white;
@@ -71,31 +43,33 @@
     box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4);
 }
 
+/* --- Empty Cart State --- */
+.emptyCartCard {
+    max-width: 500px;
+    margin: auto;
+    border: none;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.emptyCartIcon {
+    font-size: 5rem;
+    color: var(--bs-primary);
+}
 
-/*
-============================================
---- Shopping Cart & Products ---
-============================================
-*/
 
-/* --- Main Cart Card (for each product) --- */
+/* --- Cart Item Card --- */
 .cartCard {
     border: 1px solid #e9ecef;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     transition: box-shadow 0.2s ease-in-out, opacity 0.3s ease;
 }
-
 .cartCard:hover {
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
-
-/* Visual feedback while updating quantity or removing item */
 .cartCard.updating {
     opacity: 0.6;
     pointer-events: none;
 }
 
-/* --- Product Image in Cart --- */
 .imageContainer {
     width: 100%;
     height: 100px;
@@ -107,26 +81,38 @@
     padding: 5px;
     border: 1px solid #e9ecef;
 }
-
 .productImage {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
+.buildIcon {
+    font-size: 3.5rem;
+    color: #495057;
+}
 
-/* --- Product Components List (e.g., for custom PCs) --- */
+.lineTotal {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--bs-dark);
+}
+
+/* --- Build Components Section --- */
+.componentDivider {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-top: 1px dashed #ced4da;
+}
 .componentList {
     padding-left: 15px;
     border-left: 3px solid #f0f2f5;
 }
-
 .componentItem {
     display: flex;
     align-items: center;
     color: #495057;
     margin-bottom: 10px;
 }
-
 .componentImageContainer {
     width: 45px;
     height: 45px;
@@ -139,14 +125,28 @@
     flex-shrink: 0;
     padding: 4px;
 }
-
 .componentImage {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
+.componentName {
+    flex-grow: 1;
+}
+.componentPrice {
+    font-weight: 500;
+}
 
-/* --- Quantity Controls (+/- buttons) --- */
+
+/* --- Summary Card --- */
+.summaryCard {
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    position: sticky;
+    top: 20px;
+}
+
+/* --- Quantity Controls --- */
 .quantityControl {
     display: flex;
     align-items: center;
@@ -157,7 +157,6 @@
     width: 110px;
     margin: 0 auto;
 }
-
 .quantityButton {
     background-color: #f8f9fa;
     border: none;
@@ -166,63 +165,23 @@
     cursor: pointer;
     transition: background-color 0.2s;
 }
-
 .quantityButton:hover:not(:disabled) {
     background-color: #e9ecef;
 }
-
 .quantityButton:disabled {
     color: #adb5bd;
     cursor: not-allowed;
 }
-
 .quantityDisplay {
     font-weight: 500;
     padding: 0 0.5rem;
     font-size: 1rem;
 }
 
-/* --- Totals & Empty State --- */
-.lineTotal {
-    font-weight: bold;
-    font-size: 1.1rem;
-    color: var(--bs-dark);
+/* --- Step 2 & 3 Styles --- */
+.formSection {
+    margin-bottom: 2rem;
 }
-
-.emptyCartCard {
-    max-width: 500px;
-    margin: auto;
-    border: none;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.emptyCartIcon {
-    font-size: 5rem;
-    color: var(--bs-primary);
-}
-
-
-/*
-============================================
---- Order Summary Card ---
-============================================
-*/
-
-/* The sticky card on the side summarizing the order total */
-.summaryCard {
-    border: 1px solid #e9ecef;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    position: sticky;
-    top: 20px;
-}
-
-
-/*
-============================================
---- Address Selection ---
-============================================
-*/
-
 .addressCard {
     border: 1px solid #dee2e6;
     border-radius: 0.375rem;
@@ -232,20 +191,14 @@
     position: relative;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
-
-/* Style for the currently selected address */
 .addressCard.selected {
     border-color: var(--bs-primary);
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
-
-/* Special override style when the selected address is ALSO the default address */
 .addressCard.defaultAndSelected {
-    border-color: #198754; /* Bootstrap success green */
+    border-color: #198754;
     box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
 }
-
-/* The checkmark icon on the selected address card */
 .checkIcon {
     position: absolute;
     top: 1rem;
@@ -253,33 +206,11 @@
     color: var(--bs-primary);
     font-size: 1.25rem;
 }
-
-/* Changes the checkmark color to green for the default address */
 .addressCard.defaultAndSelected .checkIcon {
     color: #198754;
 }
 
-
-/*
-============================================
---- Forms & Inputs ---
-============================================
-*/
-
-.formSection {
-    margin-bottom: 2rem;
-}
-
-.hiddenInput {
-    display: none;
-}
-
-
-/*
-============================================
---- Payment Slip / QR Code ---
-============================================
-*/
+.hiddenInput { display: none; }
 
 .paymentSlipContainer {
     background-color: #fff;
@@ -289,7 +220,6 @@
     max-width: 400px;
     margin: 0 auto 2rem auto;
 }
-
 .slipHeader {
     background-color: #1d3557;
     color: white;
@@ -298,12 +228,10 @@
     font-weight: bold;
     font-size: 1.2rem;
 }
-
 .slipBody {
     padding: 1.5rem;
     text-align: center;
 }
-
 .promptPayText {
     font-weight: bold;
     color: #1d3557;
@@ -314,13 +242,11 @@
     padding: 0.25rem 0.5rem;
     display: inline-block;
 }
-
 .qrImage {
     max-width: 250px;
     width: 100%;
     margin-bottom: 1.5rem;
 }
-
 .slipDetails {
     text-align: left;
     font-size: 0.9rem;
@@ -329,25 +255,15 @@
     padding-top: 1rem;
     margin-top: 1rem;
 }
-
 .slipDetails p {
     margin-bottom: 0.5rem;
     display: flex;
     justify-content: space-between;
 }
-
 .slipDetails strong {
     color: #1d3557;
 }
 
-
-/*
-============================================
---- Responsive Media Queries ---
-============================================
-*/
-
-/* For tablets and smaller devices */
 @media (max-width: 991.98px) {
     .summaryCard {
         position: static;
@@ -355,8 +271,6 @@
         margin-top: 0;
     }
 }
-
-/* For mobile devices */
 @media (max-width: 767.98px) {
     .lineTotal {
         text-align: right;

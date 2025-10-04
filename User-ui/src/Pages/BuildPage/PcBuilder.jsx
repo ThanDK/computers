@@ -5,6 +5,7 @@ import { FaCheckCircle, FaExclamationTriangle, FaPen, FaTrash } from 'react-icon
 import ComponentSelectorModal from '../../component/Product/ComponentSelectorModal';
 import { useCart } from '../../context/CartContext';
 import * as BuildService from '../../services/BuildService';
+import { notifySuccess, notifyError } from '../../services/NotificationService';
 
 const componentCategories = [
     { key: 'cpu', name: 'CPU', multiple: false, dbType: 'CPU' },
@@ -76,7 +77,7 @@ const PcBuilder = () => {
                     setParts(initialParts);
                 } catch (error) {
                     console.error("Failed to fetch build details:", error);
-                    alert('ไม่พบ Build หรือคุณไม่มีสิทธิ์เข้าถึง');
+                    notifyError('Could not find the requested build or you do not have permission to view it.');
                     navigate('/builds');
                 } finally {
                     setLoading(false);
@@ -183,12 +184,12 @@ const PcBuilder = () => {
             } else {
                 await BuildService.saveNewBuild(request);
             }
-            alert(isEditing ? 'อัปเดต Build สำเร็จ!' : 'สร้าง Build ใหม่สำเร็จ!');
+            notifySuccess(isEditing ? 'Build updated successfully!' : 'New build saved successfully!');
             navigate('/builds');
         } catch (error) {
             console.error("Failed to save build:", error);
-            const errorMessage = error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึก Build';
-            alert(errorMessage);
+            const errorMessage = error.response?.data?.message || 'An error occurred while saving the build.';
+            notifyError(errorMessage);
         } finally {
             setSaving(false);
         }

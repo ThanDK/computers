@@ -7,7 +7,7 @@ export const checkCompatibility = async (requestBody) => {
     } catch (error) {
         console.error("Compatibility check failed:", error);
         return {
-            errors: ['เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์เพื่อตรวจสอบความเข้ากันได้'],
+            errors: ['An error occurred while connecting to the server for a compatibility check.'],
             warnings: [],
             totalWattage: 0,
             isCompatible: false
@@ -21,9 +21,19 @@ export const getBuildById = async (buildId) => {
 };
 
 export const saveNewBuild = async (request) => {
-    return await api.post('/builds', request);
+    const response = await api.post('/builds', request);
+    return response.data; // Return data for consistency
 };
 
 export const updateExistingBuild = async (buildId, request) => {
-    return await api.put(`/builds/${buildId}`, request);
+    const response = await api.put(`/builds/${buildId}`, request);
+    return response.data; // Return data for consistency
+};
+
+/**
+ * Fetches all saved builds for the current user.
+ */
+export const getSavedBuilds = async () => {
+    const response = await api.get('/builds');
+    return response.data;
 };

@@ -45,10 +45,7 @@ const CartPage = () => {
 
                 if (selectAddressId) {
                     setSavedAddressId(selectAddressId);
-                    return;
-                }
-                
-                if (addresses.length > 0) {
+                } else if (addresses.length > 0) {
                     setSavedAddressId(addresses[0].id);
                 } else {
                     setSavedAddressId('');
@@ -144,7 +141,6 @@ const CartPage = () => {
         setIsSubmitting(true);
         setSubmitError(null);
 
-        // This flag will prevent the finally block from re-enabling the button during redirection.
         let isRedirecting = false;
 
         const payload = {
@@ -157,7 +153,7 @@ const CartPage = () => {
                 const response = await createOrder(payload);
                 const { approvalLink, orderId } = response.data;
                 sessionStorage.setItem('pendingOrderId', orderId);
-                isRedirecting = true; // Set flag to true before redirecting.
+                isRedirecting = true;
                 window.location.href = approvalLink;
             } else if (paymentMethod === 'BANK_TRANSFER') {
                 const createOrderResponse = await createOrder(payload);
@@ -177,7 +173,6 @@ const CartPage = () => {
             const errorMessage = error.response?.data?.message || 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ';
             setSubmitError(errorMessage);
         } finally {
-            // Only re-enable the button if we are not redirecting to an external site.
             if (!isRedirecting) {
                 setIsSubmitting(false);
             }
@@ -280,16 +275,19 @@ const CartPage = () => {
                                     </Row>
                                 </Col>
                             </Row>
-                            {item.itemType === 'BUILD' && item.containedItemsSnapshot && (
+                            {item.itemType === 'BUILD' && item.containedItemsSnapshot && item.containedItemsSnapshot.length > 0 && (
                                 <>
                                     <hr className={styles.componentDivider} />
                                     <div className={styles.componentList}>
-                                        {item.containedItemsSnapshot.map(component => (
-                                            <div key={component.componentId || component.name} className={styles.componentItem}>
+                                        {item.containedItemsSnapshot.map((component, index) => (
+                                            <div key={component.componentId || index} className={styles.componentItem}>
                                                 <div className={styles.componentImageContainer}>
                                                     <Image src={component.imageUrl || 'https://via.placeholder.com/50'} className={styles.componentImage} />
                                                 </div>
-                                                <span className="small">{component.name}</span>
+                                                <span className={`${styles.componentName} small`}>{component.name}</span>
+                                                <span className={`${styles.componentPrice} small ms-auto`}>
+                                                    ฿{component.priceAtTimeOfOrder?.toLocaleString() || 'N/A'}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
