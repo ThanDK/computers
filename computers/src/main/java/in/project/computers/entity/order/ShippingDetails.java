@@ -10,6 +10,8 @@ public class ShippingDetails {
 
     private String shippingProvider;
 
+    private String shippingProviderLogoUrl; // NEW FIELD
+
     private String trackingNumber;
 
     private Instant shippedAt;

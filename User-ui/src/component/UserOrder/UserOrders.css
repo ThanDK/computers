@@ -2,16 +2,14 @@
 /*              User Orders Page Style             */
 /* =============================================== */
 
-/* --- Main Order Card Container --- */
 .order-item-card {
-    /* ใช้ border-left เป็นตัวบอกสถานะแบบไดนามิก */
     border: 1px solid #e9ecef;
-    border-left-width: 5px; /* ทำให้แถบสีหนาขึ้นเล็กน้อย */
-    border-radius: 0.5rem; /* เพิ่มความโค้งมน */
+    border-left-width: 5px;
+    border-radius: 0.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
     background-color: #fff;
-    margin-bottom: 1.5rem !important; /* เพิ่มระยะห่างระหว่างการ์ด */
+    margin-bottom: 1.5rem !important;
 }
 
 .order-item-card:hover {
@@ -19,8 +17,6 @@
     transform: translateY(-3px);
 }
 
-/* --- Dynamic Status Border Colors --- */
-/* เราจะใช้ variant จาก Bootstrap มากำหนดสี */
 .order-item-card.status-success { border-left-color: var(--bs-success); }
 .order-item-card.status-danger { border-left-color: var(--bs-danger); }
 .order-item-card.status-warning { border-left-color: var(--bs-warning); }
@@ -29,8 +25,6 @@
 .order-item-card.status-secondary,
 .order-item-card.status-light { border-left-color: var(--bs-secondary); }
 
-
-/* --- Card Header & Footer Styling --- */
 .order-item-card .card-header {
     background-color: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
@@ -43,8 +37,6 @@
     border-top: 1px solid #e9ecef;
 }
 
-
-/* --- Line Item & Build Details Styling --- */
 .order-item-image-container {
     width: 100%;
     max-width: 80px;
@@ -74,11 +66,10 @@
     font-weight: 500;
 }
 
-/* Component List (สำหรับ Build) */
 .component-list-container {
     padding: 1rem;
     margin-top: 1rem;
-    margin-left: calc(16.66666667% + 1rem); /* จัดเยื้องให้ตรงกับชื่อสินค้า */
+    margin-left: calc(16.66666667% + 1rem);
     border-left: 3px solid #e9ecef;
     background-color: #f8f9fa;
     border-radius: 0.375rem;
@@ -113,9 +104,55 @@
     object-fit: contain;
 }
 
-/* Responsive adjustment for component list */
+/* --- Button Readability Fixes --- */
+.btn-outline-warning.btn-request-refund {
+    color: #664d03 !important;
+}
+
+.btn-outline-warning.btn-request-refund:hover {
+    color: #fff !important;
+}
+
+.btn-outline-secondary.btn-view-slip {
+    color: #495057 !important;
+}
+
+.btn-outline-secondary.btn-view-slip:hover {
+    color: #fff !important;
+}
+
+.btn-outline-info.btn-view-refund-slip {
+    color: #087990 !important;
+}
+
+.btn-outline-info.btn-view-refund-slip:hover {
+    color: #fff !important;
+}
+
+/* --- Shipping Details Logo --- */
+.shipping-logo-container {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 0.25rem;
+    padding: 5px;
+}
+.shipping-logo {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.shipping-logo-placeholder {
+    font-size: 2rem;
+    color: #087990;
+}
+
+
 @media (max-width: 767.98px) {
     .component-list-container {
-        margin-left: 0; /* ไม่ต้องเยื้องในจอขนาดเล็ก */
+        margin-left: 0;
     }
 }

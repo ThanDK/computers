@@ -7,10 +7,12 @@ import in.project.computers.DTO.order.orderRequest.CreateOrderRequest;
 import in.project.computers.DTO.order.orderResponse.CreateOrderResponse;
 import in.project.computers.DTO.order.orderResponse.OrderResponse;
 import in.project.computers.DTO.order.orderRequest.ShipOrderRequest;
+import in.project.computers.entity.lookup.ShippingProvider;
 import in.project.computers.entity.order.*;
 import in.project.computers.entity.user.UserEntity;
 import in.project.computers.repository.generalReposiroty.OrderRepository;
 import in.project.computers.repository.generalReposiroty.UserRepository;
+import in.project.computers.repository.lookupRepository.ShippingProviderRepository;
 import in.project.computers.service.awsS3Bucket.S3Service;
 import in.project.computers.service.cartService.CartService;
 import in.project.computers.service.paypalService.PaypalService;
@@ -19,8 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +43,7 @@ public class OrderServiceImpl implements OrderService {
     private final S3Service s3Service;
     private final PaypalService paypalService;
     private final CartService cartService;
+    private final ShippingProviderRepository shippingProviderRepository; // NEW DEPENDENCY
 
     @Value("${paypal.payment.cancelUrl}")
     private String cancelUrl;
@@ -411,8 +412,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // === [SHIP-3] สร้างอ็อบเจกต์ ShippingDetails จากข้อมูลที่ได้รับ ===
+        // LOGIC CHANGE: Look up provider to get its logo URL
+        ShippingProvider provider = shippingProviderRepository.findByName(request.getShippingProvider())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shipping Provider not found: " + request.getShippingProvider()));
+
         ShippingDetails shippingDetails = ShippingDetails.builder()
-                .shippingProvider(request.getShippingProvider())
+                .shippingProvider(provider.getName())
+                .shippingProviderLogoUrl(provider.getImageUrl())
                 .trackingNumber(request.getTrackingNumber())
                 .shippedAt(Instant.now())
                 .build();
@@ -455,8 +461,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // === [SHIP-UPDATE-4] อัปเดตข้อมูลการจัดส่ง ===
+        // LOGIC CHANGE: Look up provider to get its logo URL
+        ShippingProvider provider = shippingProviderRepository.findByName(request.getShippingProvider())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shipping Provider not found: " + request.getShippingProvider()));
+
         ShippingDetails shippingDetails = order.getShippingDetails();
-        shippingDetails.setShippingProvider(request.getShippingProvider());
+        shippingDetails.setShippingProvider(provider.getName());
+        shippingDetails.setShippingProviderLogoUrl(provider.getImageUrl());
         shippingDetails.setTrackingNumber(request.getTrackingNumber());
         order.setUpdatedAt(Instant.now());
 
@@ -742,24 +753,11 @@ public class OrderServiceImpl implements OrderService {
     private List<OrderStatus> getValidManualTransitionsFor(OrderStatus currentStatus) {
         return switch (currentStatus) {
             case PENDING_PAYMENT, REJECTED_SLIP -> List.of(OrderStatus.CANCELLED);
-
-            case SHIPPED, DELIVERY_FAILED -> Stream.of(
-                            OrderStatus.PROCESSING,
-                            OrderStatus.COMPLETED,
-                            OrderStatus.DELIVERY_FAILED,
-                            OrderStatus.RETURNED_TO_SENDER
-                    )
+            case SHIPPED, DELIVERY_FAILED -> Stream.of(OrderStatus.PROCESSING, OrderStatus.COMPLETED, OrderStatus.DELIVERY_FAILED, OrderStatus.RETURNED_TO_SENDER)
                     .filter(status -> status != currentStatus)
                     .toList();
-
-            case RETURNED_TO_SENDER -> List.of(
-                    OrderStatus.PROCESSING
-            );
-
-            case REFUND_REJECTED -> List.of(
-                    OrderStatus.COMPLETED,
-                    OrderStatus.PROCESSING
-            );
+            case RETURNED_TO_SENDER -> List.of(OrderStatus.PROCESSING);
+            case REFUND_REJECTED -> List.of(OrderStatus.COMPLETED, OrderStatus.PROCESSING);
             default -> List.of();
         };
     }

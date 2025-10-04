@@ -144,6 +144,9 @@ const CartPage = () => {
         setIsSubmitting(true);
         setSubmitError(null);
 
+        // This flag will prevent the finally block from re-enabling the button during redirection.
+        let isRedirecting = false;
+
         const payload = {
             paymentMethod,
             savedAddressId,
@@ -154,6 +157,7 @@ const CartPage = () => {
                 const response = await createOrder(payload);
                 const { approvalLink, orderId } = response.data;
                 sessionStorage.setItem('pendingOrderId', orderId);
+                isRedirecting = true; // Set flag to true before redirecting.
                 window.location.href = approvalLink;
             } else if (paymentMethod === 'BANK_TRANSFER') {
                 const createOrderResponse = await createOrder(payload);
@@ -173,7 +177,10 @@ const CartPage = () => {
             const errorMessage = error.response?.data?.message || 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ';
             setSubmitError(errorMessage);
         } finally {
-            setIsSubmitting(false);
+            // Only re-enable the button if we are not redirecting to an external site.
+            if (!isRedirecting) {
+                setIsSubmitting(false);
+            }
         }
     };
 
