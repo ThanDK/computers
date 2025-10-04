@@ -1,4 +1,4 @@
-import api from '../api/api.jsx'; 
+import api from '../api/api.jsx'; // Corrected import path
 
 /**
  * 
@@ -14,7 +14,7 @@ export const fetchMyOrders = () => {
  * @returns {Promise<AxiosResponse<any>>} 
  */
 export const cancelOrderByUser = (orderId) => {
-    return api.post(`/orders/cancel-by-user/${orderId}`);
+    return api.post(`/orders/cancel/${orderId}`);
 };
 
 /**
@@ -57,9 +57,8 @@ export const submitSlip = (orderId, slipFile) => {
 
 export const resubmitSlip = async (orderId, slipFile) => {
   const formData = new FormData();
-  formData.append('slipImage', slipFile); // ***สำคัญ***: ชื่อ field ('slipImage') ต้องตรงกับที่ Backend คาดหวังใน Controller
+  formData.append('slipImage', slipFile);
 
-  // เรียก endpoint เดิมที่ใช้ส่งสลิป
   return api.post(`/orders/submit-slip/${orderId}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -83,4 +82,12 @@ export const getUserAddresses = () => {
  */
 export const getOrderById = (orderId) => {
     return api.get(`/orders/${orderId}`);
+};
+
+/**
+ * (Public) Fetches the default payment method details.
+ * @returns {Promise<AxiosResponse<any>>}
+ */
+export const fetchDefaultPaymentMethod = () => {
+    return api.get('/payment-methods/default');
 };

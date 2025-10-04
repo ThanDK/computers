@@ -1,18 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Image, Form, Spinner, Alert, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Image, Form, Spinner, Alert, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { createOrder, submitSlip, getUserAddresses } from '../../services/OrderService';
-import NewAddressForm from '../../component/Address/NewAddressForm';
-import { FaPlus, FaMinus, FaTrash, FaUpload, FaCheckCircle, FaWrench } from 'react-icons/fa';
+import { createOrder, submitSlip, fetchDefaultPaymentMethod } from '../../services/OrderService';
+import { getUserAddresses, createAddress, updateAddress } from '../../services/AddressService';
+import AddressModal from '../../component/Address/AddressModal';
+import { FaPlus, FaMinus, FaTrash, FaUpload, FaCheckCircle, FaWrench, FaPlusCircle, FaEdit } from 'react-icons/fa';
 import { BsCartX } from 'react-icons/bs';
 import styles from './CartPage.module.css';
-
-const initialAddressState = {
-    contactName: '', phoneNumber: '', line1: '', line2: '',
-    subdistrict: '', district: '', province: '', zipCode: '', country: 'Thailand'
-};
 
 const CartPage = () => {
     const { cartItems, removeFromCart, updateQuantity, totalAmount, clearCart, isLoading: isCartLoading, isUpdating, updatingItemId } = useCart();
@@ -22,65 +18,102 @@ const CartPage = () => {
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
-    const [addressSelection, setAddressSelection] = useState('saved');
     const [savedAddressId, setSavedAddressId] = useState('');
-    const [newAddress, setNewAddress] = useState(initialAddressState);
     const [userAddresses, setUserAddresses] = useState([]);
     const [isAddressLoading, setIsAddressLoading] = useState(true);
     const [paymentMethod, setPaymentMethod] = useState('PAYPAL');
     const [paymentSlip, setPaymentSlip] = useState(null);
     const fileInputRef = useRef(null);
 
-    useEffect(() => {
-        const fetchAddresses = async () => {
-            if (user && token) {
-                try {
-                    setIsAddressLoading(true);
-                    const response = await getUserAddresses();
-                    const addresses = response.data;
-                    setUserAddresses(addresses);
-                    const defaultAddress = addresses.find(addr => addr.isDefault);
-                    if (defaultAddress) {
-                        setSavedAddressId(defaultAddress.id);
-                        setAddressSelection('saved');
-                    } else if (addresses.length > 0) {
-                        setSavedAddressId(addresses[0].id);
-                        setAddressSelection('saved');
-                    } else {
-                        setAddressSelection('new');
-                    }
-                } catch (error) {
-                    console.error("Failed to fetch addresses:", error);
-                    setAddressSelection('new');
-                } finally {
-                    setIsAddressLoading(false);
+    const [bankDetails, setBankDetails] = useState(null);
+    const [isBankDetailsLoading, setIsBankDetailsLoading] = useState(false);
+    
+    const [showAddressModal, setShowAddressModal] = useState(false);
+    const [editingAddress, setEditingAddress] = useState(null);
+
+    const fetchAddresses = async (selectAddressId = null) => {
+        if (user && token) {
+            try {
+                setIsAddressLoading(true);
+                const response = await getUserAddresses();
+                const addresses = response.data;
+                setUserAddresses(addresses);
+
+                if (selectAddressId) {
+                    setSavedAddressId(selectAddressId);
+                    return;
                 }
-            } else {
-                setAddressSelection('new');
+                
+                const defaultAddress = addresses.find(addr => addr.isDefault);
+                if (defaultAddress) {
+                    setSavedAddressId(defaultAddress.id);
+                } else if (addresses.length > 0) {
+                    setSavedAddressId(addresses[0].id);
+                } else {
+                    setSavedAddressId(''); // No address selected if list is empty
+                }
+            } catch (error) {
+                console.error("Failed to fetch addresses:", error);
+            } finally {
                 setIsAddressLoading(false);
             }
-        };
+        } else {
+            setIsAddressLoading(false);
+        }
+    };
 
+    useEffect(() => {
         if (step === 2 && !isAuthLoading) {
             fetchAddresses();
         }
     }, [step, user, token, isAuthLoading]);
+    
+    useEffect(() => {
+        const loadBankDetails = async () => {
+            if (step === 3 && paymentMethod === 'BANK_TRANSFER') {
+                setIsBankDetailsLoading(true);
+                try {
+                    const response = await fetchDefaultPaymentMethod();
+                    setBankDetails(response.data);
+                } catch (error) {
+                    console.error("Failed to fetch bank details:", error);
+                    setSubmitError("Could not load payment details. Please try again later.");
+                } finally {
+                    setIsBankDetailsLoading(false);
+                }
+            }
+        };
+        loadBankDetails();
+    }, [step, paymentMethod]);
+
+    const handleOpenAddressModal = (addressToEdit = null) => {
+        setEditingAddress(addressToEdit);
+        setShowAddressModal(true);
+    };
+
+    const handleSaveAddress = async (addressData) => {
+        try {
+            let savedAddress;
+            if (editingAddress) {
+                const response = await updateAddress(editingAddress.id, addressData);
+                savedAddress = response.data;
+            } else {
+                const response = await createAddress(addressData);
+                savedAddress = response.data;
+            }
+            setShowAddressModal(false);
+            setEditingAddress(null);
+            
+            await fetchAddresses(savedAddress.id);
+
+        } catch (error) {
+            console.error("Failed to save address:", error);
+            alert(`เกิดข้อผิดพลาดในการบันทึกที่อยู่: ${error.response?.data?.message || error.message}`);
+        }
+    };
 
     const handleProceedToStep2 = () => setStep(2);
     const handleProceedToStep3 = () => {
-        if (!user) {
-            alert('กรุณาเข้าสู่ระบบก่อนดำเนินการต่อ');
-            navigate('/login');
-            return;
-        }
-        if (addressSelection === 'saved' && !savedAddressId) {
-            setSubmitError('กรุณาเลือกที่อยู่สำหรับจัดส่ง');
-            return;
-        }
-        if (addressSelection === 'new' && (!newAddress.contactName || !newAddress.line1 || !newAddress.province || !newAddress.zipCode)) {
-            setSubmitError('กรุณากรอกข้อมูลที่อยู่ใหม่ให้ครบถ้วน');
-            return;
-        }
         setSubmitError(null);
         setStep(3);
     };
@@ -102,7 +135,7 @@ const CartPage = () => {
 
         const payload = {
             paymentMethod,
-            ...(addressSelection === 'saved' ? { savedAddressId } : { newAddress }),
+            savedAddressId,
         };
         
         try {
@@ -142,6 +175,8 @@ const CartPage = () => {
         setPaymentSlip(null);
         if (fileInputRef.current) fileInputRef.current.value = null;
     };
+
+    const isStep3ButtonDisabled = !savedAddressId;
 
     const renderStepIndicator = () => (
         <div className={styles.stepIndicator}>
@@ -257,28 +292,32 @@ const CartPage = () => {
     );
   
     const renderDetailsStep = () => (
-        <Row>
-            <Col lg={7}>
-                <Card className="p-4">
-                    <div className={styles.formSection}>
-                        <h5>ช่องทางการชำระเงิน</h5>
-                        <Form>
-                            <Form.Check type="radio" id="paypal" label="PayPal / บัตรเครดิต" value="PAYPAL" checked={paymentMethod === 'PAYPAL'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                            <Form.Check type="radio" id="bank-transfer" label="โอนจ่ายผ่านบัญชีธนาคาร" value="BANK_TRANSFER" checked={paymentMethod === 'BANK_TRANSFER'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                        </Form>
-                    </div>
-                    <div className={styles.formSection}>
-                        <h5>ที่อยู่จัดส่ง</h5>
-                        {isAddressLoading ? (
-                            <div className="text-center p-3"><Spinner animation="border" size="sm" /> กำลังโหลดข้อมูลที่อยู่...</div>
-                        ) : (
+        <>
+            <Row>
+                <Col lg={7}>
+                    <Card className="p-4">
+                        <div className={styles.formSection}>
+                            <h5>ช่องทางการชำระเงิน</h5>
                             <Form>
-                                {userAddresses.length > 0 && user && (
-                                    <Form.Check type="radio" id="saved-address" label="เลือกจากที่อยู่ที่บันทึกไว้" value="saved" checked={addressSelection === 'saved'} onChange={(e) => setAddressSelection(e.target.value)} />
-                                )}
-                                {addressSelection === 'saved' && userAddresses.length > 0 && (
-                                    <div className="mt-2">
-                                        {userAddresses.map(addr => (
+                                <Form.Check type="radio" id="paypal" label="PayPal / บัตรเครดิต" value="PAYPAL" checked={paymentMethod === 'PAYPAL'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                                <Form.Check type="radio" id="bank-transfer" label="โอนจ่ายผ่านบัญชีธนาคาร" value="BANK_TRANSFER" checked={paymentMethod === 'BANK_TRANSFER'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                            </Form>
+                        </div>
+                        <div className={styles.formSection}>
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <h5>ที่อยู่จัดส่ง</h5>
+                                <Button variant="outline-primary" size="sm" onClick={() => handleOpenAddressModal(null)}>
+                                    <FaPlusCircle className="me-2"/>เพิ่มที่อยู่ใหม่
+                                </Button>
+                            </div>
+                            {isAddressLoading ? (
+                                <div className="text-center p-3"><Spinner animation="border" size="sm" /></div>
+                            ) : (
+                                <div className="mt-2">
+                                    {userAddresses.length === 0 ? (
+                                        <Alert variant="info">กรุณาเพิ่มที่อยู่สำหรับจัดส่ง</Alert>
+                                    ) : (
+                                        userAddresses.map(addr => (
                                             <div key={addr.id} className={`${styles.addressCard} ${savedAddressId === addr.id ? styles.selected : ''}`} onClick={() => setSavedAddressId(addr.id)}>
                                                 {savedAddressId === addr.id && ( <FaCheckCircle className={styles.checkIcon} /> )}
                                                 <div className="d-flex justify-content-between align-items-start">
@@ -288,25 +327,54 @@ const CartPage = () => {
                                                 <p className="text-muted small mb-1">{addr.phoneNumber}</p>
                                                 <p className="small mb-0">{`${addr.line1}${addr.line2 ? `, ${addr.line2}` : ''}`}</p>
                                                 <p className="small mb-0">{`${addr.subdistrict}, ${addr.district}, ${addr.province} ${addr.zipCode}`}</p>
+                                                <Button variant="link" size="sm" className="p-0 mt-1" onClick={(e) => { e.stopPropagation(); handleOpenAddressModal(addr); }}>
+                                                    <FaEdit className="me-1" /> แก้ไข
+                                                </Button>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                                <Form.Check type="radio" id="new-address" label="เพิ่มที่อยู่ใหม่" value="new" checked={addressSelection === 'new'} onChange={(e) => setAddressSelection(e.target.value)} className={userAddresses.length > 0 ? 'mt-3' : ''}/>
-                                {addressSelection === 'new' && (
-                                    <NewAddressForm address={newAddress} onChange={setNewAddress} />
-                                )}
-                            </Form>
-                        )}
-                    </div>
-                </Card>
-            </Col>
-            <Col lg={5}>
-                {renderOrderSummaryCard()}
-                {submitError && <Alert variant="danger" className="mt-3">{submitError}</Alert>}
-                <Button variant="primary" size="lg" className="w-100 mt-3" onClick={handleProceedToStep3}>ดำเนินการต่อ</Button>
-            </Col>
-        </Row>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                </Col>
+                <Col lg={5}>
+                    {renderOrderSummaryCard()}
+                    {submitError && <Alert variant="danger" className="mt-3">{submitError}</Alert>}
+
+                    <OverlayTrigger
+                        placement="top"
+                        overlay={
+                            isStep3ButtonDisabled ? (
+                                <Tooltip id="tooltip-disabled">กรุณาเลือกที่อยู่สำหรับจัดส่ง</Tooltip>
+                            ) : (
+                                <span /> 
+                            )
+                        }
+                    >
+                        <span className="d-grid w-100 mt-3">
+                            <Button 
+                                variant="primary" 
+                                size="lg" 
+                                onClick={handleProceedToStep3} 
+                                disabled={isStep3ButtonDisabled}
+                                style={isStep3ButtonDisabled ? { pointerEvents: 'none' } : {}}
+                            >
+                                ดำเนินการต่อ
+                            </Button>
+                        </span>
+                    </OverlayTrigger>
+
+                </Col>
+            </Row>
+
+            <AddressModal
+                show={showAddressModal}
+                handleClose={() => setShowAddressModal(false)}
+                handleSave={handleSaveAddress}
+                address={editingAddress}
+            />
+        </>
     );
 
     const renderPaymentStep = () => (
@@ -314,36 +382,41 @@ const CartPage = () => {
             {paymentMethod === 'BANK_TRANSFER' ? (
                 <Col lg={7}>
                      <Card className="p-4">
-                        <h5>โอนจ่ายผ่านบัญชี</h5>
-                        <p>กรุณาชำระเงินและอัปโหลดสลิปภายใน 24 ชั่วโมง</p>
-                         <Row>
-                            <Col md={6} className="text-center">
-                                <p className="fw-bold">Thai QR Payment</p>
-                                <Image src={`https://promptpay.io/0812345678/${totalAmount}.png`} fluid className={styles.qrImage}/>
-                                <p>สแกนเพื่อจ่าย</p>
-                            </Col>
-                            <Col md={6}>
-                                <p className="fw-bold">โอนเงินเข้าบัญชี</p>
-                                <Image src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/K-Bank_logo.svg/2560px-K-Bank_logo.svg.png" fluid className={styles.bankLogo}/>
-                                <p className="mb-1 small">ธนาคาร: กสิกรไทย</p>
-                                <p className="mb-1 small">ชื่อบัญชี: IT SHOP</p>
-                                <p className="mb-1 small">เลขที่บัญชี: 123-4-56789-0</p>
-                                <hr/>
-                                <p className="mb-1 small fw-bold">ยอดที่ต้องชำระ: ฿{totalAmount.toLocaleString()}</p>
-                            </Col>
-                        </Row>
-                        <hr />
-                        <div>
-                            <p className="fw-bold">แจ้งการชำระเงิน</p>
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className={styles.hiddenInput} accept="image/*,.pdf" />
-                            <Button variant="outline-primary" onClick={handleFileUploadClick}><FaUpload className="me-2" /> อัปโหลดสลิป</Button>
-                            {paymentSlip && (
-                                <div className="mt-2 d-flex align-items-center">
-                                    <span className="me-2 text-success">{paymentSlip.name}</span>
-                                    <Button variant="link" className="text-danger p-0" onClick={removePaymentSlip}><FaTrash /></Button>
+                        {isBankDetailsLoading ? (
+                            <div className="text-center p-5"><Spinner animation="border" /></div>
+                        ) : !bankDetails ? (
+                            <Alert variant="warning">ไม่สามารถโหลดข้อมูลการชำระเงินได้ในขณะนี้</Alert>
+                        ) : (
+                            <div>
+                                <div className={styles.paymentSlipContainer}>
+                                    <div className={styles.slipHeader}>THAI QR PAYMENT</div>
+                                    <div className={styles.slipBody}>
+                                        <div className={styles.promptPayText}>PromptPay</div>
+                                        <Image src={bankDetails.qrCodeImageUrl} fluid className={styles.qrImage}/>
+                                        <div className={styles.slipDetails}>
+                                            <p><span>Account Name:</span> <strong>{bankDetails.accountName}</strong></p>
+                                            <p><span>Bank:</span> <strong>{bankDetails.bankName}</strong></p>
+                                            <p><span>Account No:</span> <strong>{bankDetails.accountNumber}</strong></p>
+                                            <hr />
+                                            <p className="fs-6"><span>Amount:</span> <strong className="fs-5">฿{totalAmount.toLocaleString()}</strong></p>
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
+                                
+                                <div>
+                                    <p className="fw-bold mt-4">แจ้งการชำระเงิน</p>
+                                    <p className='text-muted small'>กรุณาอัปโหลดสลิปเพื่อยืนยันการชำระเงิน</p>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className={styles.hiddenInput} accept="image/*,.pdf" />
+                                    <Button variant="outline-primary" onClick={handleFileUploadClick}><FaUpload className="me-2" /> อัปโหลดสลิป</Button>
+                                    {paymentSlip && (
+                                        <div className="mt-2 d-flex align-items-center">
+                                            <span className="me-2 text-success">{paymentSlip.name}</span>
+                                            <Button variant="link" className="text-danger p-0" onClick={removePaymentSlip}><FaTrash /></Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                      </Card>
                 </Col>
             ) : (

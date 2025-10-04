@@ -189,15 +189,66 @@
 
 /* Other styles */
 .hiddenInput { display: none; }
-.qrImage { max-width: 180px; margin-bottom: 1rem; }
-.bankLogo { max-height: 40px; margin-bottom: 1rem; }
+
+/* --- New PromptPay Slip Design --- */
+.paymentSlipContainer {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+    max-width: 400px;
+    margin: 0 auto 2rem auto;
+}
+.slipHeader {
+    background-color: #1d3557;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+.slipBody {
+    padding: 1.5rem;
+    text-align: center;
+}
+.promptPayText {
+    font-weight: bold;
+    color: #1d3557;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    border: 2px solid #a8dadc;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    display: inline-block;
+}
+.qrImage {
+    max-width: 250px;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+.slipDetails {
+    text-align: left;
+    font-size: 0.9rem;
+    color: #495057;
+    border-top: 1px solid #e9ecef;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+.slipDetails p {
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+}
+.slipDetails strong {
+    color: #1d3557;
+}
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 991.98px) {
     .summaryCard {
         position: static;
         top: auto;
-        margin-top: 0; /* No margin needed when stacked */
+        margin-top: 0;
     }
 }
 @media (max-width: 767.98px) {
