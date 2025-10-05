@@ -228,7 +228,7 @@ const MyBuilds = () => {
     };
 
     return (
-        <Container className="py-5">
+        <Container className="py-4">
             <Row className="mb-4 align-items-center">
                 <Col className="d-flex align-items-center">
                     <h1 className="mb-0 me-3">My Computer Builds</h1>
@@ -251,8 +251,8 @@ const MyBuilds = () => {
             </Row>
 
             {builds.length > 0 && (
-                <Row className="mb-4 p-3 bg-light border rounded">
-                    <Col md={8}>
+                <Row className="mb-4 p-3 bg-light border rounded align-items-end">
+                    <Col md={5}>
                         <Form.Group>
                             <Form.Label>ค้นหาตามชื่อ Build</Form.Label>
                             <InputGroup>
@@ -266,7 +266,7 @@ const MyBuilds = () => {
                             </InputGroup>
                         </Form.Group>
                     </Col>
-                    <Col md={4}>
+                    <Col md={3}>
                         <Form.Group>
                             <Form.Label>จัดเรียงตาม</Form.Label>
                             <Form.Select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
