@@ -9,41 +9,14 @@ import { notifySuccess } from '../../services/NotificationService';
 import { getCategoryNameBySlug } from '../../component/Product/categories';
 import { componentCategories } from '../../config/componentCategories';
 import { FaPlus } from 'react-icons/fa';
-
-
-const arrayFormatter = (arr) => arr && arr.length > 0 ? arr.join(', ') : 'N/A';
-const SPEC_CONFIG = {
-    case: [
-        { key: 'mpn', label: 'MPN' },
-        { key: 'supportedFormFactors', label: 'Supported Form Factors', formatter: arrayFormatter },
-        { key: 'supportedPsuFormFactors', label: 'Supported PSU Form Factors', formatter: arrayFormatter },
-        { key: 'max_gpu_length_mm', label: 'Max GPU Length', unit: ' mm' },
-        { key: 'max_cooler_height_mm', label: 'Max CPU Cooler Height', unit: ' mm' },
-        { key: 'bays_2_5_inch', label: '2.5" Bays' },
-        { key: 'bays_3_5_inch', label: '3.5" Bays' },
-        { key: 'supportedRadiatorSizesMm', label: 'Supported Radiator Sizes (mm)', formatter: arrayFormatter }
-    ],
-    cooler: [
-        { key: 'mpn', label: 'MPN' },
-        { key: 'wattage', label: 'Recommended Wattage', unit: ' W' },
-        { key: 'supportedSockets', label: 'Supported Sockets', formatter: arrayFormatter },
-        { key: 'height_mm', label: 'Height', unit: ' mm' },
-        { key: 'radiatorSize_mm', label: 'Radiator Size', unit: ' mm' }
-    ],
-    cpu: [
-        { key: 'mpn', label: 'MPN' },
-        { key: 'wattage', label: 'TDP', unit: ' W' },
-        { key: 'socket', label: 'Socket', formatter: (socketObj) => socketObj?.name || 'N/A' }
-    ],
-    
-};
+import ProductSpecifications from '../../component/Product/ProductSpecifications';
 
 const ProductDetailPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
     
-    const { user, isLoading: authIsloading } = useAuth();
+    const { user, loading: authIsLoading } = useAuth(); // Renamed for clarity
     const { addToCart, updatingProductId } = useCart();
     const { addComponentToBuild } = useBuild();
 
@@ -54,37 +27,41 @@ const ProductDetailPage = () => {
 
     const queryParams = new URLSearchParams(location.search);
     const isBuilderMode = queryParams.get('source') === 'builder';
-    const buildIdFromUrl = queryParams.get('buildId'); // Added: Get buildId from URL
+    const buildIdFromUrl = queryParams.get('buildId');
 
+    // CORRECTED: useEffect logic is now more robust to prevent race conditions.
     useEffect(() => {
-        if (!authIsloading && !user) {
+        // First, wait for the authentication process to complete.
+        if (authIsLoading) {
+            return;
+        }
+
+        // After auth is resolved, if there is no user, redirect to login.
+        if (!user) {
             alert('กรุณาเข้าสู่ระบบเพื่อดูรายละเอียดสินค้า');
             navigate('/login', { replace: true });
+            return;
         }
-    }, [user, authIsloading, navigate]);
 
+        // If a user exists, proceed to fetch the product data.
+        const fetchProduct = async () => {
+            // Only set loading to true when we are actually about to fetch.
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await api.get(`/components/${productId}`);
+                setProduct(response.data);
+            } catch (err) {
+                console.error("Failed to fetch product details:", err);
+                setError("ไม่พบสินค้าที่คุณกำลังค้นหา หรือเกิดข้อผิดพลาด");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    useEffect(() => {
-        if (user) {
-            const fetchProduct = async () => {
-                setLoading(true);
-                setError(null);
-                try {
-                    const response = await api.get(`/components/${productId}`);
-                    setProduct(response.data);
-                } catch (err) {
-                    console.error("Failed to fetch product details:", err);
-                    setError("ไม่พบสินค้าที่คุณกำลังค้นหา หรือเกิดข้อผิดพลาด");
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchProduct();
-        } else if (!authIsloading && !user) {
-            setLoading(false);
-        }
-    }, [productId, user, authIsloading]); 
+        fetchProduct();
 
+    }, [authIsLoading, user, productId, navigate]);
     
     const handleAddToCart = async () => {
         if (!user) {
@@ -116,7 +93,6 @@ const ProductDetailPage = () => {
                 addComponentToBuild(category, product);
                 notifySuccess(`เพิ่ม '${product.name}' ลงใน Build ของคุณแล้ว`);
                 
-                // CHANGED: Navigation logic is now robust and context-aware
                 if (buildIdFromUrl) {
                     navigate(`/build/${buildIdFromUrl}`);
                 } else {
@@ -129,11 +105,11 @@ const ProductDetailPage = () => {
         }
     };
 
-    if (loading || authIsloading) {
+    if (authIsLoading || loading) {
         return <Container className="text-center my-5"><Spinner animation="border" /></Container>;
     }
 
-    if (!user || error || !product) {
+    if (error || !product) {
         return (
             <Container className="my-5">
                 <Alert variant="danger">{error || "ไม่สามารถโหลดข้อมูลสินค้าได้"}</Alert>
@@ -141,8 +117,6 @@ const ProductDetailPage = () => {
         );
     }
     
-    const productSpecsConfig = SPEC_CONFIG[product.type] || [];
-
     const renderActionButton = () => {
         if (isBuilderMode) {
             return (
@@ -220,31 +194,11 @@ const ProductDetailPage = () => {
                 </Col>
             </Row>
 
-            {productSpecsConfig.length > 0 && (
-                <Row className="mt-5">
-                    <Col>
-                        <Card>
-                            <Card.Header as="h5">Specifications</Card.Header>
-                            <ListGroup variant="flush">
-                                {productSpecsConfig.map(spec => {
-                                    const value = product[spec.key];
-                                    if (value === null || value === undefined || value === '') return null;
-
-                                    const displayValue = spec.formatter ? spec.formatter(value) : value;
-                                    const unit = spec.unit || '';
-
-                                    return (
-                                        <ListGroup.Item key={spec.key} className="d-flex justify-content-between">
-                                            <strong>{spec.label}</strong>
-                                            <span>{displayValue}{unit}</span>
-                                        </ListGroup.Item>
-                                    );
-                                })}
-                            </ListGroup>
-                        </Card>
-                    </Col>
-                </Row>
-            )}
+            <Row className="mt-5">
+                <Col>
+                    <ProductSpecifications product={product} />
+                </Col>
+            </Row>
         </Container>
     );
 };

@@ -1,14 +1,11 @@
-
 .main-content {
-    padding-top: 40px;
+    padding-top: 24px;
     padding-bottom: 40px;
 }
-
 
 .filter-bar {
     margin-bottom: 30px;
 }
-
 
 .category-filters button {
     margin-right: 10px;
@@ -32,4 +29,3 @@
     background-color: #eee;
     border-color: #bbb;
 }
-

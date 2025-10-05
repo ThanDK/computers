@@ -1,0 +1,37 @@
+.specCard {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+.specBody {
+    padding: 0; 
+}
+
+.specRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem; 
+    border-bottom: 1px solid #e9ecef; 
+}
+
+.specRow:last-child {
+    border-bottom: none; 
+}
+
+.specRow:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.specLabel {
+    color: #212529; 
+    flex-basis: 40%;
+    padding-right: 1rem;
+    font-weight: 600; 
+}
+
+.specValue {
+    color: #495057;
+    text-align: right;
+    flex-basis: 60%;
+}
