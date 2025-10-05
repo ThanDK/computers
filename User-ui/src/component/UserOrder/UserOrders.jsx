@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container, Card, Row, Col, Badge, Button, Spinner, Alert, Image, Tabs, Tab, Modal, Form } from 'react-bootstrap';
-import { FaBoxOpen, FaShippingFast, FaHistory, FaCreditCard, FaReceipt, FaExclamationTriangle, FaUndo, FaUpload, FaWrench, FaChevronDown, FaChevronUp, FaQuestionCircle } from 'react-icons/fa';
+import { FaBoxOpen, FaShippingFast, FaHistory, FaCreditCard, FaReceipt, FaExclamationTriangle, FaUndo, FaUpload, FaWrench, FaChevronDown, FaChevronUp, FaQuestionCircle, FaSync } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { fetchMyOrders, cancelOrderByUser, retryPaypalPayment, resubmitSlip, requestRefund } from '../../services/OrderService';
+import { fetchMyOrders, cancelOrderByUser, retryPaypalPayment, resubmitSlip, requestRefund, fetchDefaultPaymentMethod } from '../../services/OrderService';
 import { notifySuccess, notifyError, showConfirmation } from '../../services/NotificationService';
 import { format } from 'date-fns';
 import './UserOrders.css';
@@ -48,7 +48,20 @@ const UserOrders = () => {
     const fileInputRef = useRef(null);
     const [expandedItems, setExpandedItems] = useState(new Set());
 
-    const loadUserOrders = useCallback(async () => {
+    const [bankDetails, setBankDetails] = useState(null);
+    const [isBankDetailsLoading, setIsBankDetailsLoading] = useState(false);
+    const [bankDetailsError, setBankDetailsError] = useState(null);
+
+
+    // FIX: Accept a parameter to differentiate between manual and background refresh
+    const loadUserOrders = useCallback(async (isManualRefresh = false) => {
+        // FIX: Only show the main loading spinner for the initial load or a manual refresh
+        if (isManualRefresh) {
+            setLoading(true);
+        } else if (orders.length === 0) { // Keep spinner for very first load
+             setLoading(true);
+        }
+        
         setError(null);
         try {
             const response = await fetchMyOrders();
@@ -63,15 +76,16 @@ const UserOrders = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [orders.length]); // Add dependency to re-evaluate the function if orders length changes
 
     useEffect(() => { 
         loadUserOrders(); 
-    }, [loadUserOrders]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Run only once on mount for initial load
 
     useEffect(() => {
         const intervalId = setInterval(() => {
-            loadUserOrders();
+            loadUserOrders(false); // Call with false for silent background refresh
         }, 30000);
         return () => {
             clearInterval(intervalId);
@@ -84,7 +98,7 @@ const UserOrders = () => {
             try {
                 await cancelOrderByUser(orderId);
                 notifySuccess('ยกเลิกคำสั่งซื้อสำเร็จ');
-                loadUserOrders();
+                loadUserOrders(true); // Manually refresh after action
             } catch (err) {
                 notifyError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการยกเลิก');
             }
@@ -111,7 +125,7 @@ const UserOrders = () => {
             try {
                 await requestRefund(orderId);
                 notifySuccess('ส่งคำขอคืนเงินสำเร็จ');
-                loadUserOrders();
+                loadUserOrders(true); // Manually refresh after action
             } catch (err) {
                 notifyError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการส่งคำขอคืนเงิน');
             }
@@ -124,9 +138,23 @@ const UserOrders = () => {
         setShowSlipModal(true);
     };
 
+    const fetchBankDetailsForModal = async () => {
+        setIsBankDetailsLoading(true);
+        setBankDetailsError(null);
+        try {
+            const response = await fetchDefaultPaymentMethod();
+            setBankDetails(response.data);
+        } catch (err) {
+            setBankDetailsError("ไม่สามารถโหลดข้อมูลการชำระเงินได้");
+        } finally {
+            setIsBankDetailsLoading(false);
+        }
+    };
+    
     const handleOpenResubmitModal = (order) => {
         setSelectedOrder(order);
         setShowResubmitModal(true);
+        fetchBankDetailsForModal();
     };
 
     const handleCloseResubmitModal = () => {
@@ -134,6 +162,9 @@ const UserOrders = () => {
         setSelectedOrder(null);
         setNewSlipFile(null);
         setIsResubmitting(false);
+        setBankDetails(null);
+        setBankDetailsError(null);
+        setIsBankDetailsLoading(false);
         if (fileInputRef.current) {
             fileInputRef.current.value = null;
         }
@@ -156,7 +187,7 @@ const UserOrders = () => {
             await resubmitSlip(orderId, newSlipFile);
             notifySuccess('ส่งสลิปใหม่สำเร็จ กำลังรอการตรวจสอบ');
             handleCloseResubmitModal();
-            loadUserOrders();
+            loadUserOrders(true); // Manually refresh after action
         } catch (err) {
             notifyError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการส่งสลิป');
         } finally {
@@ -294,13 +325,35 @@ const UserOrders = () => {
 
      return (
         <Container fluid>
-            <h3 className="mb-4">คำสั่งซื้อของฉัน</h3>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h3 className="mb-0">คำสั่งซื้อของฉัน</h3>
+                <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => loadUserOrders(true)} // FIX: Call with true for manual refresh
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <>
+                            <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                            กำลังโหลด...
+                        </>
+                    ) : (
+                        <>
+                            <FaSync className="me-2" />
+                            รีเฟรช
+                        </>
+                    )}
+                </Button>
+            </div>
             
-            {loading && <div className="text-center my-5"><Spinner animation="border" /></div>}
-            {!loading && error && <Alert variant="danger">{error}</Alert>}
-            {!loading && !error && orders.length === 0 && <Alert variant="info">คุณยังไม่มีคำสั่งซื้อ</Alert>}
-
-            {!loading && !error && orders.length > 0 && (
+            {loading ? ( // Display main spinner only on loading state
+                <div className="text-center my-5"><Spinner animation="border" /></div>
+            ) : error ? (
+                <Alert variant="danger">{error}</Alert>
+            ) : orders.length === 0 ? (
+                <Alert variant="info">คุณยังไม่มีคำสั่งซื้อ</Alert>
+            ) : (
                  <Tabs id="user-orders-tabs" activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-3" fill>
                     <Tab 
                         eventKey="action" 
@@ -337,11 +390,29 @@ const UserOrders = () => {
             <Modal show={showResubmitModal} onHide={handleCloseResubmitModal} centered>
                 <Modal.Header closeButton><Modal.Title>ส่งสลิปการชำระเงินใหม่</Modal.Title></Modal.Header>
                 <Modal.Body>
+                    {isBankDetailsLoading ? (
+                        <div className="text-center p-4"><Spinner animation="border" /></div>
+                    ) : bankDetailsError ? (
+                        <Alert variant="danger">{bankDetailsError}</Alert>
+                    ) : bankDetails && (
+                        <div className="payment-details-modal mb-3">
+                            <div className="payment-details-header">THAI QR PAYMENT</div>
+                            <div className="payment-details-body">
+                                <Image src={bankDetails.qrCodeImageUrl} fluid className="qr-modal-image" />
+                                <div className="bank-info-modal">
+                                    <p><span>Account Name:</span> <strong>{bankDetails.accountName}</strong></p>
+                                    <p><span>Bank:</span> <strong>{bankDetails.bankName}</strong></p>
+                                    <p><span>Account No:</span> <strong>{bankDetails.accountNumber}</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
                     {selectedOrder && (
                         <>
-                            <p><strong>Order ID:</strong> #{(selectedOrder.id || selectedOrder._id).slice(-8).toUpperCase()}</p>
+                            <hr />
+                            <p className="mt-3"><strong>Order ID:</strong> #{(selectedOrder.id || selectedOrder._id).slice(-8).toUpperCase()}</p>
                             <p><strong>ยอดที่ต้องชำระ:</strong> {Number(selectedOrder.totalAmount).toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</p>
-                            <hr/>
                             <Form.Group controlId="formFile" className="mb-3">
                                 <Form.Label>อัปโหลดสลิปใหม่</Form.Label>
                                 <Form.Control type="file" accept="image/*,.pdf" onChange={handleFileChange} ref={fileInputRef}/>

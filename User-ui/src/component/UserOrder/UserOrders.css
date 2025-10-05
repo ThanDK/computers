@@ -156,3 +156,52 @@
         margin-left: 0;
     }
 }
+
+/* --- Styles for Resubmit Slip Modal Payment Details --- */
+
+.payment-details-modal {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.payment-details-header {
+    background-color: #212529;
+    color: white;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.payment-details-body {
+    padding: 1rem;
+    text-align: center;
+    background-color: #fff;
+}
+
+.qr-modal-image {
+    max-width: 200px; 
+    margin: 0 auto 1rem auto;
+    display: block;
+}
+
+.bank-info-modal {
+    font-size: 0.9rem;
+    text-align: left;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+.bank-info-modal p {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center; /* Vertically align text */
+}
+
+.bank-info-modal p span {
+    color: #6c757d;
+    margin-right: 1rem;   /* Adds a fixed space between label and value */
+    min-width: 110px;     /* Ensures labels align vertically */
+    text-align: right;    /* Aligns the label text to the right */
+}

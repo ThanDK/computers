@@ -83,7 +83,11 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:5174",
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "http://13.124.0.133:5173",
+                "http://13.124.0.133:5174",
+                "http://ec2-13-124-0-133.ap-northeast-2.compute.amazonaws.com:5173",
+                "http://ec2-13-124-0-133.ap-northeast-2.compute.amazonaws.com:5174"
 
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

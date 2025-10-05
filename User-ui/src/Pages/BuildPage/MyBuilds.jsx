@@ -84,7 +84,7 @@ const MyBuilds = () => {
             return <Alert variant="danger">{error}</Alert>;
         }
         if (builds.length === 0) {
-            return <Alert variant="info">You have no saved builds yet. Start creating one now!</Alert>;
+            return <Alert variant="info">คุณยังไม่มีได้เริ่มประกอบ Build คอมพิวเตอร์ของคุณ เริ่มสร้างโดยกดปุ่ม 'สร้าง Build ใหม่'</Alert>;
         }
         return builds.map(build => (
             <Col md={6} lg={4} key={build.id} className="mb-4">
