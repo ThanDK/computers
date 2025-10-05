@@ -4,15 +4,11 @@ import App from './App.jsx';
 import './index.css';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'sweetalert2/dist/sweetalert2.min.css'; // BUG FIX: Import sweetalert2 styles
+import 'sweetalert2/dist/sweetalert2.min.css';
 
-import { AuthProvider } from './context/AuthContext'; 
-
+// AuthProvider has been removed from here as it's already handled inside App.jsx
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {}
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <App />
   </React.StrictMode>,
 )

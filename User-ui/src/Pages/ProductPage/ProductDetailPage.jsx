@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Image, Button, Spinner, Alert, Form, Breadcrumb, ListGroup } from 'react-bootstrap';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useBuild } from '../../context/BuildContext';
 import { notifySuccess } from '../../services/NotificationService';
 import { getCategoryNameBySlug } from '../../component/Product/categories';
+import { componentCategories } from '../../config/componentCategories';
+import { FaPlus } from 'react-icons/fa';
 
 
 const arrayFormatter = (arr) => arr && arr.length > 0 ? arr.join(', ') : 'N/A';
@@ -38,30 +41,30 @@ const SPEC_CONFIG = {
 const ProductDetailPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     
-    // ดึงข้อมูลผู้ใช้และสถานะการโหลดจาก AuthContext
-    const { user, isLoading: authIsLoading } = useAuth();
-    const { addToCart, isUpdating } = useCart();
+    const { user, isLoading: authIsloading } = useAuth();
+    const { addToCart, updatingProductId } = useCart();
+    const { addComponentToBuild } = useBuild();
 
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // useEffect สำหรับตรวจสอบการล็อกอิน
+    const queryParams = new URLSearchParams(location.search);
+    const isBuilderMode = queryParams.get('source') === 'builder';
+    const buildIdFromUrl = queryParams.get('buildId'); // Added: Get buildId from URL
+
     useEffect(() => {
-        // เมื่อการตรวจสอบสิทธิ์เสร็จสิ้นและไม่พบผู้ใช้
-        if (!authIsLoading && !user) {
+        if (!authIsloading && !user) {
             alert('กรุณาเข้าสู่ระบบเพื่อดูรายละเอียดสินค้า');
-            // ส่งผู้ใช้ไปหน้า login และแทนที่ history ปัจจุบัน
             navigate('/login', { replace: true });
         }
-    }, [user, authIsLoading, navigate]);
+    }, [user, authIsloading, navigate]);
 
 
     useEffect(() => {
-        // ดึงข้อมูลสินค้าเฉพาะเมื่อผู้ใช้ล็อกอินแล้วเท่านั้น
-        // เพื่อป้องกันการเรียก API โดยไม่จำเป็น
         if (user) {
             const fetchProduct = async () => {
                 setLoading(true);
@@ -77,15 +80,13 @@ const ProductDetailPage = () => {
                 }
             };
             fetchProduct();
-        } else if (!authIsLoading && !user) {
-            // หากตรวจสอบแล้วว่าไม่ได้ล็อกอิน ให้หยุดการโหลด
+        } else if (!authIsloading && !user) {
             setLoading(false);
         }
-    }, [productId, user, authIsLoading]); // เพิ่ม user และ authIsLoading ใน dependency array
+    }, [productId, user, authIsloading]); 
 
     
     const handleAddToCart = async () => {
-        // การตรวจสอบนี้ยังคงมีประโยชน์เพื่อความปลอดภัย แม้ว่าหน้านี้จะเข้าถึงได้เฉพาะผู้ที่ล็อกอินแล้ว
         if (!user) {
             alert('กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า');
             navigate('/login');
@@ -108,13 +109,30 @@ const ProductDetailPage = () => {
         }
     };
 
-    // แสดง Spinner ขณะกำลังตรวจสอบสิทธิ์ หรือกำลังโหลดข้อมูลสินค้า
-    if (loading || authIsLoading) {
+    const handleAddToBuild = () => {
+        if (product) {
+            const category = componentCategories.find(c => c.dbType.toLowerCase() === product.type.toLowerCase());
+            if (category) {
+                addComponentToBuild(category, product);
+                notifySuccess(`เพิ่ม '${product.name}' ลงใน Build ของคุณแล้ว`);
+                
+                // CHANGED: Navigation logic is now robust and context-aware
+                if (buildIdFromUrl) {
+                    navigate(`/build/${buildIdFromUrl}`);
+                } else {
+                    navigate('/build/new');
+                }
+                
+            } else {
+                console.error(`Could not find a matching category for product type: ${product.type}`);
+            }
+        }
+    };
+
+    if (loading || authIsloading) {
         return <Container className="text-center my-5"><Spinner animation="border" /></Container>;
     }
 
-    // หากไม่มีผู้ใช้ (กำลังจะถูก redirect) หรือไม่มีข้อมูลสินค้า ให้แสดงข้อความผิดพลาด
-    // การตรวจสอบ !user ช่วยป้องกันการแสดงผลหน้าเว็บเปล่าๆ ก่อนที่จะ redirect
     if (!user || error || !product) {
         return (
             <Container className="my-5">
@@ -124,6 +142,33 @@ const ProductDetailPage = () => {
     }
     
     const productSpecsConfig = SPEC_CONFIG[product.type] || [];
+
+    const renderActionButton = () => {
+        if (isBuilderMode) {
+            return (
+                <Button 
+                    variant="primary"
+                    size="lg" 
+                    className="mt-4 w-100"
+                    onClick={handleAddToBuild}
+                >
+                    <FaPlus className="me-2" />
+                    เพิ่มลงใน Build
+                </Button>
+            );
+        }
+        return (
+            <Button 
+                variant="danger" 
+                size="lg" 
+                className="mt-4 w-100"
+                onClick={handleAddToCart}
+                disabled={!!updatingProductId}
+            >
+                {updatingProductId === product.id ? 'กำลังเพิ่ม...' : 'เพิ่มลงตะกร้า'}
+            </Button>
+        );
+    };
 
     return (
         <Container className="my-5">
@@ -152,30 +197,24 @@ const ProductDetailPage = () => {
                                 </span>
                             </div>
                             
-                            <Row className="align-items-center">
-                                <Col xs="auto">
-                                    <Form.Label htmlFor="quantity-input" className="mb-0">จำนวน:</Form.Label>
-                                </Col>
-                                <Col xs={4} sm={3}>
-                                    <Form.Control 
-                                        id="quantity-input"
-                                        type="number" 
-                                        value={quantity}
-                                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                                        min="1"
-                                    />
-                                </Col>
-                            </Row>
+                            {!isBuilderMode && (
+                                <Row className="align-items-center">
+                                    <Col xs="auto">
+                                        <Form.Label htmlFor="quantity-input" className="mb-0">จำนวน:</Form.Label>
+                                    </Col>
+                                    <Col xs={4} sm={3}>
+                                        <Form.Control 
+                                            id="quantity-input"
+                                            type="number" 
+                                            value={quantity}
+                                            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                                            min="1"
+                                        />
+                                    </Col>
+                                </Row>
+                            )}
 
-                            <Button 
-                                variant="danger" 
-                                size="lg" 
-                                className="mt-4 w-100"
-                                onClick={handleAddToCart}
-                                disabled={isUpdating}
-                            >
-                                {isUpdating ? 'กำลังเพิ่ม...' : 'เพิ่มลงตะกร้า'}
-                            </Button>
+                            {renderActionButton()}
                         </Card.Body>
                     </Card>
                 </Col>

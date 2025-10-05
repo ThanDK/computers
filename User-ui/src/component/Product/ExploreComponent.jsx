@@ -7,9 +7,10 @@ import ProductCard from './ProductCard';
 import { fetchAllComponents } from '../../services/ComponentService'; 
 import { notifySuccess } from '../../services/NotificationService';
 
-const ExploreComponent = ({ category = 'All', searchQuery = '', onProductSelect }) => {
+// Changed: The component now accepts `onSelectComponent` to handle builder mode selections.
+const ExploreComponent = ({ category = 'All', searchQuery = '', onSelectComponent }) => {
     const { user } = useAuth();
-    const { addToCart, isUpdating } = useCart();
+    const { addToCart, updatingProductId } = useCart();
     const navigate = useNavigate();
 
     const [allProducts, setAllProducts] = useState([]);
@@ -102,9 +103,8 @@ const ExploreComponent = ({ category = 'All', searchQuery = '', onProductSelect 
                         <ProductCard 
                             product={product} 
                             onAddToCart={handleAddToCart}
-                            onSelect={onProductSelect}
-                            
-                            isAdding={isUpdating} 
+                            onSelect={onSelectComponent}
+                            isAdding={updatingProductId === (product._id || product.id)} 
                         />
                     </Col>
                 ))}

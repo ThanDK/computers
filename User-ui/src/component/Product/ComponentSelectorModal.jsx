@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Modal, Form, InputGroup } from 'react-bootstrap';
 import ExploreComponent from './ExploreComponent'; 
@@ -25,11 +24,11 @@ const ComponentSelectorModal = ({ show, onHide, category, onSelect }) => {
                     />
                 </InputGroup>
                 
-                {}
                 <ExploreComponent 
                     category={category.dbType} 
                     searchQuery={searchQuery} 
-                    onProductSelect={handleSelect} 
+
+                    onSelectComponent={handleSelect} 
                 />
             </Modal.Body>
         </Modal>

@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -8,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 // --- Context Providers ---
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { BuildProvider } from './context/BuildContext'; // Added new BuildProvider
 
 // --- Layout & Helper Components ---
 import Header from './component/Header-Footer/Header';
@@ -18,7 +17,7 @@ import ProtectedRoute from './component/Profilesidebar/ProtectedRoute';
 import HomePage from './Pages/HomePage/HomePage';
 import LoginPage from './Pages/Login-Register/LoginPage';
 import RegisterPage from './Pages/Login-Register/RegisterPage';
-import LoginSuccessPage from './Pages/Login-Register/LoginSuccessPage'; 
+import LoginSuccessPage from './Pages/Login-Register/LoginSuccessPage';
 import ProductPage from './Pages/ProductPage/ProductPage';
 import ProductDetailPage from './Pages/ProductPage/ProductDetailPage';
 import CartPage from './Pages/CartPage/CartPage';
@@ -64,55 +63,57 @@ function App() {
     <GoogleOAuthProvider clientId={googleClientId || ""}>
       <AuthProvider>
         <CartProvider>
-          <Toaster 
-            position="bottom-right"
-            toastOptions={{
-              className: '',
-              style: {
-                border: '1px solid #713200',
-                padding: '16px',
-                color: '#713200',
-              },
-              success: { duration: 3000 },
-            }}
-          />
-          <Router>
-            <Routes>
-              {/* === Routes ที่ใช้ MainLayout  */}
-              <Route element={<MainLayout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/products/category/:categoryName" element={<ProductPage />} />
-                <Route path="/products/:productId" element={<ProductDetailPage />} />
-                <Route path="/search" element={<SearchResultsPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/builds" element={<ProtectedRoute><MyBuilds /></ProtectedRoute>} />
-                <Route path="/build/new" element={<ProtectedRoute><PcBuilder /></ProtectedRoute>} />
-                <Route path="/build/:buildId" element={<ProtectedRoute><PcBuilder /></ProtectedRoute>} />
-                <Route path="/payment-successful" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
-                <Route path="/payment-cancelled" element={<ProtectedRoute><PaymentCancelPage /></ProtectedRoute>} />
-                <Route path="/payment-failed" element={<PaymentFailedPage />} />
-                <Route
-                  path="/profile"
-                  element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
-                >
-                  <Route index element={<ProfileInfo />} />
-                  <Route path="edit" element={<ProfileEdit />} />
-                  <Route path="orders" element={<UserOrders />} />
-                  <Route path="address" element={<AddressPage />} />
-                  <Route path="builds" element={<MyBuilds />} /> 
+          <BuildProvider> {/* BuildProvider is placed here to wrap the Router */}
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                className: '',
+                style: {
+                  border: '1px solid #713200',
+                  padding: '16px',
+                  color: '#713200',
+                },
+                success: { duration: 3000 },
+              }}
+            />
+            <Router>
+              <Routes>
+                {/* === Routes ที่ใช้ MainLayout  */}
+                <Route element={<MainLayout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/products/category/:categoryName" element={<ProductPage />} />
+                  <Route path="/products/:productId" element={<ProductDetailPage />} />
+                  <Route path="/search" element={<SearchResultsPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/builds" element={<ProtectedRoute><MyBuilds /></ProtectedRoute>} />
+                  <Route path="/build/new" element={<ProtectedRoute><PcBuilder /></ProtectedRoute>} />
+                  <Route path="/build/:buildId" element={<ProtectedRoute><PcBuilder /></ProtectedRoute>} />
+                  <Route path="/payment-successful" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
+                  <Route path="/payment-cancelled" element={<ProtectedRoute><PaymentCancelPage /></ProtectedRoute>} />
+                  <Route path="/payment-failed" element={<PaymentFailedPage />} />
+                  <Route
+                    path="/profile"
+                    element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
+                  >
+                    <Route index element={<ProfileInfo />} />
+                    <Route path="edit" element={<ProfileEdit />} />
+                    <Route path="orders" element={<UserOrders />} />
+                    <Route path="address" element={<AddressPage />} />
+                    <Route path="builds" element={<MyBuilds />} />
+                  </Route>
                 </Route>
-              </Route>
 
-              {/* === Standalone Routes  */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              {/* Route สำหรับจัดการเมื่อ Google Login สำเร็จ  */}
-              <Route path="/login-success" element={<LoginSuccessPage />} />
-              
-              {/* --- 404 Not Found Route --- */}
-              <Route path="*" element={<NotFoundPage />} /> 
-            </Routes>
-          </Router>
+                {/* === Standalone Routes  */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                {/* Route สำหรับจัดการเมื่อ Google Login สำเร็จ  */}
+                <Route path="/login-success" element={<LoginSuccessPage />} />
+
+                {/* --- 404 Not Found Route --- */}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Router>
+          </BuildProvider>
         </CartProvider>
       </AuthProvider>
     </GoogleOAuthProvider>

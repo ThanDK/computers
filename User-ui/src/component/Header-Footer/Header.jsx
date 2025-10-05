@@ -1,21 +1,13 @@
 import React, { useState } from 'react';
 import { Container, Navbar, Nav, Form, InputGroup, Button, Badge, NavDropdown } from 'react-bootstrap';
-import { FaSearch, FaUser, FaUserPlus, FaShoppingCart, FaSignOutAlt, FaCog } from 'react-icons/fa'; 
+import { FaSearch, FaUser, FaUserPlus, FaShoppingCart, FaSignOutAlt, FaCog } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext'; 
+import { useCart } from '../../context/CartContext';
+import { categoriesData as categories } from '../Product/categories'; // Changed: Import from single source of truth
 import './Header.css';
 
-const categories = [
-    { name: 'CPU / หน่วยประมวลผล', slug: 'cpu' },
-    { name: 'Mainboard / เมนบอร์ด', slug: 'motherboard' }, 
-    { name: 'RAM / หน่วยความจำ', slug: 'ram' },
-    { name: 'VGA / การ์ดจอ', slug: 'gpu' },
-    { name: 'SSD / อุปกรณ์จัดเก็บข้อมูล', slug: 'storage' },
-    { name: 'Power Supply / พาวเวอร์ซัพพลาย', slug: 'psu' },
-    { name: 'Case / เคส', slug: 'case' }, 
-    { name: 'Cooler / ชุดระบายความร้อน', slug: 'cooler' } 
-];
+// The hardcoded 'categories' constant has been removed.
 
 const Header = () => {
     

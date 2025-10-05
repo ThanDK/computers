@@ -3,35 +3,22 @@ import { Container, Row, Col, Button, Form, InputGroup, Spinner, ListGroup } fro
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaExclamationTriangle, FaPen, FaTrash } from 'react-icons/fa';
 import ComponentSelectorModal from '../../component/Product/ComponentSelectorModal';
-import { useCart } from '../../context/CartContext';
+import { useBuild } from '../../context/BuildContext';
 import * as BuildService from '../../services/BuildService';
 import { notifySuccess, notifyError } from '../../services/NotificationService';
-
-const componentCategories = [
-    { key: 'cpu', name: 'CPU', multiple: false, dbType: 'CPU' },
-    { key: 'cooler', name: 'CPU Cooler', multiple: false, dbType: 'Cooler' },
-    { key: 'motherboard', name: 'Motherboard', multiple: false, dbType: 'Motherboard' },
-    { key: 'ramKits', name: 'RAM', multiple: true, dbType: 'RAM' },
-    { key: 'gpus', name: 'Video Card', multiple: true, dbType: 'GPU' },
-    { key: 'storageDrives', name: 'Storage', multiple: true, dbType: 'Storage' },
-    { key: 'caseDetail', name: 'Case', multiple: false, dbType: 'Case' },
-    { key: 'psu', name: 'Power Supply', multiple: false, dbType: 'PSU' },
-];
+import { componentCategories } from '../../config/componentCategories';
 
 const PcBuilder = () => {
     const { buildId } = useParams();
     const navigate = useNavigate();
     const isEditing = !!buildId;
 
-    const { addToCart, isUpdating: isCartUpdating } = useCart();
+    const { build, setBuild, setBuildName, addComponentToBuild, removeComponentFromBuild, loadBuildForEdit } = useBuild();
+    const { buildName, parts, compatibility, totalPrice } = build;
 
-    const [buildName, setBuildName] = useState('My Awesome PC Build');
-    const [parts, setParts] = useState({});
     const [loading, setLoading] = useState(isEditing);
     const [saving, setSaving] = useState(false);
     const [checkingCompatibility, setCheckingCompatibility] = useState(true);
-    const [compatibility, setCompatibility] = useState({ errors: [], warnings: [], totalWattage: 0, isCompatible: true });
-    const [totalPrice, setTotalPrice] = useState(0);
     const [isSelectorOpen, setIsSelectorOpen] = useState(false);
     const [selectingCategory, setSelectingCategory] = useState(null);
 
@@ -59,35 +46,42 @@ const PcBuilder = () => {
         };
 
         const result = await BuildService.checkCompatibility(requestBody);
-        setCompatibility(result);
+        setBuild(prev => ({ ...prev, compatibility: result }));
         setCheckingCompatibility(false);
-    }, []);
+    }, [setBuild]);
 
     useEffect(() => {
+        // This effect should only trigger when the page's identity (buildId) changes.
         if (isEditing) {
-            const fetchBuild = async () => {
-                try {
-                    const data = await BuildService.getBuildById(buildId);
-                    setBuildName(data.buildName);
-                    const initialParts = {
-                        cpu: data.cpu, motherboard: data.motherboard, ramKits: data.ramKits,
-                        gpus: data.gpus, storageDrives: data.storageDrives, psu: data.psu,
-                        caseDetail: data.caseDetail, cooler: data.cooler
-                    };
-                    setParts(initialParts);
-                } catch (error) {
-                    console.error("Failed to fetch build details:", error);
-                    notifyError('Could not find the requested build or you do not have permission to view it.');
-                    navigate('/builds');
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchBuild();
+            // We use a separate function to check if a fetch is needed to keep the effect clean.
+            const shouldFetch = build.id !== buildId;
+            if (shouldFetch) {
+                setLoading(true);
+                const fetchBuild = async () => {
+                    try {
+                        const data = await BuildService.getBuildById(buildId);
+                        loadBuildForEdit(buildId, data);
+                    } catch (error) {
+                        console.error("Failed to fetch build details:", error);
+                        notifyError('Could not find the requested build or you do not have permission to view it.');
+                        navigate('/builds');
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+                fetchBuild();
+            } else {
+                 // If we are not fetching (because the data is already in context),
+                 // ensure the loading state is false.
+                setLoading(false);
+            }
         } else {
-            checkCompatibilityCallback({});
+            // For new builds, ensure loading is always false.
+            setLoading(false);
         }
-    }, [buildId, isEditing, navigate, checkCompatibilityCallback]);
+    // CHANGED: The dependency array is simplified to only include external dependencies that define the page's identity.
+    // This prevents the infinite loop caused by `build.id` updating.
+    }, [buildId, isEditing, navigate]);
 
     useEffect(() => {
         const calculateTotalPrice = (currentParts) => {
@@ -97,7 +91,7 @@ const PcBuilder = () => {
                 if (!partData) return;
 
                 if (category.multiple) {
-                    partData.forEach(item => {
+                    (partData || []).forEach(item => {
                         const price = item.partDetails?.price || 0;
                         const quantity = item.quantity || 1;
                         total += price * quantity;
@@ -110,12 +104,15 @@ const PcBuilder = () => {
             return total;
         };
         
-        setTotalPrice(calculateTotalPrice(parts));
+        const newTotalPrice = calculateTotalPrice(parts);
+        if (newTotalPrice !== totalPrice) {
+            setBuild(prev => ({...prev, totalPrice: newTotalPrice}));
+        }
 
         if (!loading) {
             checkCompatibilityCallback(parts);
         }
-    }, [parts, loading, checkCompatibilityCallback]);
+    }, [parts, loading, checkCompatibilityCallback, setBuild, totalPrice]);
     
     const handleOpenSelector = (category) => {
         setSelectingCategory(category);
@@ -127,41 +124,13 @@ const PcBuilder = () => {
             console.error("Selected component is invalid:", selectedComponent);
             return;
         }
-
-        setParts(prev => {
-            const newParts = { ...prev };
-            const categoryKey = selectingCategory.key;
-            if (selectedComponent._id && !selectedComponent.id) selectedComponent.id = selectedComponent._id;
-
-            if (selectingCategory.multiple) {
-                const existing = newParts[categoryKey] ? [...newParts[categoryKey]] : [];
-                const newItem = { 
-                    partDetails: selectedComponent, 
-                    quantity: 1,
-                    instanceId: Date.now() + Math.random()
-                };
-                existing.push(newItem);
-                newParts[categoryKey] = existing;
-            } else {
-                newParts[categoryKey] = selectedComponent;
-            }
-            return newParts;
-        });
+        addComponentToBuild(selectingCategory, selectedComponent);
         setIsSelectorOpen(false);
         setSelectingCategory(null);
     };
 
     const handleRemoveComponent = (categoryKey, idToRemove) => {
-        setParts(prev => {
-            const newParts = { ...prev };
-            const category = componentCategories.find(c => c.key === categoryKey);
-            if (category.multiple) {
-                newParts[categoryKey] = (newParts[categoryKey] || []).filter(p => p.instanceId !== idToRemove);
-            } else {
-                newParts[categoryKey] = null;
-            }
-            return newParts;
-        });
+        removeComponentFromBuild(categoryKey, idToRemove, componentCategories);
     };
 
     const handleSave = async () => {
@@ -267,7 +236,7 @@ const PcBuilder = () => {
                                 {hasPart ? (
                                     multiple ? (
                                         <ListGroup variant="flush">
-                                            {partData.map((item, index) => (
+                                            {partData.map((item) => (
                                                 <ListGroup.Item key={item.instanceId} className="d-flex justify-content-between align-items-center px-0 py-1 border-0">
                                                     <span>{item.quantity}x {item.partDetails.name}</span>
                                                     <Button size="sm" variant="link" className="text-danger" onClick={() => handleRemoveComponent(key, item.instanceId)}>
@@ -302,7 +271,6 @@ const PcBuilder = () => {
                         <Button variant="success" className="me-2" onClick={handleSave} disabled={saving || compatibility.errors.length > 0 || checkingCompatibility}>
                             {saving ? <><Spinner size="sm" /> Saving...</> : (isEditing ? 'บันทึกการแก้ไข' : 'บันทึก Build ใหม่')}
                         </Button>
-                        
                     </Col>
                 </Row>
             </div>

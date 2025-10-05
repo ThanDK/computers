@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaWrench, FaTrash, FaShoppingCart } from 'react-icons/fa';
 import api from '../../api/api';
 import { useCart } from '../../context/CartContext';
+import { useBuild } from '../../context/BuildContext'; // Added: Import useBuild
 import { notifySuccess, notifyError, showConfirmation } from '../../services/NotificationService';
 
 const MyBuilds = () => {
@@ -12,8 +13,8 @@ const MyBuilds = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    
-    const { addToCart, isUpdating } = useCart();
+    const { addToCart, updatingProductId } = useCart();
+    const { clearBuild } = useBuild(); 
 
     useEffect(() => {
         const fetchBuilds = async () => {
@@ -32,7 +33,7 @@ const MyBuilds = () => {
                 } else {
                     const errorMessage = 'Failed to load your saved builds. Please try again later.';
                     setError(errorMessage);
-                    notifyError(errorMessage); // Use notification for visible error
+                    notifyError(errorMessage);
                     console.error("An error occurred while fetching builds:", err);
                 }
             } finally {
@@ -76,6 +77,12 @@ const MyBuilds = () => {
         }
     };
 
+    // Added: New handler for creating a new build
+    const handleCreateNewBuild = () => {
+        clearBuild(); // Explicitly clear the build state
+        navigate('/build/new'); // Then navigate to the new build page
+    };
+
     const renderBuilds = () => {
         if (loading) {
             return <div className="text-center p-5"><Spinner animation="border" /> <p className="mt-2">Loading your builds...</p></div>;
@@ -106,17 +113,16 @@ const MyBuilds = () => {
                                 variant="success"
                                 size="sm"
                                 onClick={() => handleAddToCart(build)}
-                                
-                                disabled={isUpdating}
+                                disabled={!!updatingProductId}
                             >
-                                {isUpdating ? (
+                                {updatingProductId === build.id ? (
                                     <Spinner as="span" animation="border" size="sm" />
                                 ) : (
                                     <FaShoppingCart className="me-1" />
                                 )}
                                 Add to Cart
                             </Button>
-                            <Button variant="outline-danger" size="sm" className="ms-auto" onClick={() => handleDelete(build.id, build.buildName)}>
+                            <Button variant="outline-danger" size="sm" className="ms-auto" onClick={() => handleDelete(build.id, buildName)}>
                                 <FaTrash />
                             </Button>
                         </div>
@@ -133,7 +139,8 @@ const MyBuilds = () => {
                     <h1 className="mb-0">My Computer Builds</h1>
                 </Col>
                 <Col xs="auto">
-                    <Button as={Link} to="/build/new" variant="success" size="lg">
+                    {/* Changed: Button now uses onClick handler instead of being a Link */}
+                    <Button onClick={handleCreateNewBuild} variant="success" size="lg">
                         <FaPlus className="me-2" /> สร้าง Build ใหม่
                     </Button>
                 </Col>

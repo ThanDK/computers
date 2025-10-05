@@ -1,14 +1,12 @@
-
-
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import * as CartService from '../services/CartService';
 
 const CartContext = createContext(null);
 
 /**
-
- @returns {object}
+ * Custom hook to use the CartContext.
+ * @returns {object} The cart context value.
  */
 export const useCart = () => {
     const context = useContext(CartContext);
@@ -18,17 +16,14 @@ export const useCart = () => {
     return context;
 };
 
-
 export const CartProvider = ({ children }) => {
     const { user } = useAuth();
     const [cartData, setCartData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); 
-    const [isUpdating, setIsUpdating] = useState(false); 
+    const [isLoading, setIsLoading] = useState(true); // For initial cart load
+    const [updatingProductId, setUpdatingProductId] = useState(null); // Tracks ID of product being added/updated/removed
     const [error, setError] = useState(null);
 
-    
-    const fetchCart = async () => {
-        
+    const fetchCart = useCallback(async () => {
         if (!user) {
             setCartData(null);
             setIsLoading(false);
@@ -43,52 +38,54 @@ export const CartProvider = ({ children }) => {
         } catch (err) {
             console.error("Failed to fetch cart:", err);
             setError(err.message || "Could not load cart.");
-           
             if (err.response?.status === 404) {
                 setCartData({ items: [], subtotal: 0, cartIconCount: 0, totalProductCount: 0 });
             }
         } finally {
             setIsLoading(false);
         }
-    };
-
-    
-    useEffect(() => {
-        fetchCart();
     }, [user]);
 
+    useEffect(() => {
+        fetchCart();
+    }, [user, fetchCart]);
+
     /**
-     
-     @param {{ productId: string, quantity: number, itemType: 'COMPONENT' | 'BUILD' }} itemData 
+     * Adds an item to the cart.
+     * @param {{ productId: string, quantity: number, itemType: 'COMPONENT' | 'BUILD' }} itemData
      */
     const addToCart = async (itemData) => {
         if (!user) {
             alert("กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า");
             throw new Error("User not logged in");
         }
-        if (isUpdating) return; 
+        if (updatingProductId) return;
 
-        setIsUpdating(true);
+        setUpdatingProductId(itemData.productId);
         try {
             await CartService.addItem(itemData);
-            await fetchCart(); 
+            await fetchCart();
         } catch (err) {
             console.error("Failed to add to cart:", err.response?.data || err.message);
-            
             alert(err.response?.data?.message || "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้");
-            throw err; 
+            throw err;
         } finally {
-            setIsUpdating(false);
+            setUpdatingProductId(null);
         }
     };
 
     /**
-     
-     @param {string} cartItemId 
+     * Removes an item from the cart.
+     * @param {string} cartItemId
      */
     const removeFromCart = async (cartItemId) => {
-        if (isUpdating) return;
-        setIsUpdating(true);
+        if (updatingProductId) return;
+        
+        const item = cartData?.items.find(i => i.cartItemId === cartItemId);
+        if (item) {
+            setUpdatingProductId(item.productId);
+        }
+
         try {
             await CartService.removeItem(cartItemId);
             await fetchCart();
@@ -96,23 +93,26 @@ export const CartProvider = ({ children }) => {
             console.error("Failed to remove from cart:", err.response?.data || err.message);
             alert(err.response?.data?.message || "เกิดข้อผิดพลาดในการลบสินค้า");
         } finally {
-            setIsUpdating(false);
+            setUpdatingProductId(null);
         }
     };
 
     /**
-     
-     @param {string} cartItemId 
-     @param {number} quantity
+     * Updates the quantity of a cart item.
+     * @param {string} cartItemId
+     * @param {number} quantity
      */
     const updateQuantity = async (cartItemId, quantity) => {
-        if (isUpdating) return;
+        if (updatingProductId) return;
 
-       
         if (quantity <= 0) {
             await removeFromCart(cartItemId);
         } else {
-            setIsUpdating(true);
+            const item = cartData?.items.find(i => i.cartItemId === cartItemId);
+            if (item) {
+                setUpdatingProductId(item.productId);
+            }
+
             try {
                 await CartService.updateItem(cartItemId, { quantity });
                 await fetchCart();
@@ -120,43 +120,31 @@ export const CartProvider = ({ children }) => {
                 console.error("Failed to update quantity:", err.response?.data || err.message);
                 alert(err.response?.data?.message || "ไม่สามารถอัปเดตจำนวนสินค้าได้");
             } finally {
-                setIsUpdating(false);
+                setUpdatingProductId(null);
             }
         }
     };
 
-    
-const clearCart = async () => {
-    if (isUpdating) return;
-    setIsUpdating(true);
+    const clearCart = async () => {
+        // Clearing the cart is a global action, so we can use a generic true/false state if needed,
+        // but for consistency we can set a special value. For now, we assume it's fast and doesn't need a spinner.
+        try {
+            await CartService.clearUserCart();
+            await fetchCart(); // Refetch to confirm it's empty
+        } catch (err) {
+            console.error("Failed to clear cart on server:", err.response?.data || err.message);
+            // Even if server fails, optimistic update on UI can be handled by refetching
+            await fetchCart();
+        }
+    };
 
-    
-    setCartData({ items: [], subtotal: 0, cartIconCount: 0, totalProductCount: 0 });
-
-    try {
-        
-        await CartService.clearUserCart();
-        
-        
-
-    } catch (err) {
-        console.error("Failed to clear cart on server:", err.response?.data || err.message);
-        
-    } finally {
-        setIsUpdating(false);
-    }
-
-    
-};
-
-    
     const contextValue = {
         cartItems: cartData?.items || [],
-        itemCount: cartData?.cartIconCount || 0, 
-        totalProductCount: cartData?.totalProductCount || 0, 
+        itemCount: cartData?.cartIconCount || 0,
+        totalProductCount: cartData?.totalProductCount || 0,
         totalAmount: cartData?.subtotal || 0,
-        isLoading, 
-        isUpdating, 
+        isLoading,
+        updatingProductId, // Replaced isUpdating
         error,
         fetchCart,
         addToCart,
