@@ -1,0 +1,77 @@
+/* --- Base Card Styles (Grid View) --- */
+.buildCard {
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.buildCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.totalPrice {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.specList .list-group-item {
+    padding: 0.3rem 0;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.specIcon {
+    color: var(--bs-primary);
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.actionButtonsGrid {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-start; /* Aligns to the left in grid view */
+}
+
+.actionButtonsGrid > button:last-child {
+    margin-left: auto; /* Pushes delete button to the right */
+}
+
+
+/* --- List View Styles --- */
+.buildCardList {
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.specListHorizontal {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.specItem {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* --- Empty State --- */
+.emptyState {
+    text-align: center;
+    padding: 4rem 2rem;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}

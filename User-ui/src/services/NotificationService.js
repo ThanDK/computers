@@ -4,10 +4,9 @@ import withReactContent from 'sweetalert2-react-content';
 
 const MySwal = withReactContent(Swal);
 
-// Minimal config to align button colors with the app's theme.
 const swalButtonConfig = {
     confirmButtonColor: '#d33',
-    cancelButtonColor: '#6e7881', // A standard bootstrap secondary/grey color
+    cancelButtonColor: '#6e7881',
 };
 
 export const showConfirmation = async (title, text) => {
@@ -16,8 +15,9 @@ export const showConfirmation = async (title, text) => {
         text,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Yes, proceed!',
-        ...swalButtonConfig // Re-introduce button styling
+        confirmButtonText: 'ยืนยัน',
+        cancelButtonText: 'ยกเลิก',
+        ...swalButtonConfig
     });
     return result.isConfirmed;
 };

@@ -9,6 +9,7 @@ const CartContext = createContext(null);
  * @returns {object} The cart context value.
  */
 export const useCart = () => {
+    // CORRECTED: The context being used must be CartContext.
     const context = useContext(CartContext);
     if (context === undefined) {
         throw new Error('useCart must be used within a CartProvider');
@@ -19,7 +20,7 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
     const { user } = useAuth();
     const [cartData, setCartData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); // For initial cart load
+    const [isLoading, setIsLoading] = useState(true); // For initial cart load ONLY
     const [updatingProductId, setUpdatingProductId] = useState(null); // Tracks ID of product being added/updated/removed
     const [error, setError] = useState(null);
 
@@ -63,8 +64,8 @@ export const CartProvider = ({ children }) => {
 
         setUpdatingProductId(itemData.productId);
         try {
-            await CartService.addItem(itemData);
-            await fetchCart();
+            const response = await CartService.addItem(itemData);
+            setCartData(response.data);
         } catch (err) {
             console.error("Failed to add to cart:", err.response?.data || err.message);
             alert(err.response?.data?.message || "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้");
@@ -87,8 +88,8 @@ export const CartProvider = ({ children }) => {
         }
 
         try {
-            await CartService.removeItem(cartItemId);
-            await fetchCart();
+            const response = await CartService.removeItem(cartItemId);
+            setCartData(response.data);
         } catch (err) {
             console.error("Failed to remove from cart:", err.response?.data || err.message);
             alert(err.response?.data?.message || "เกิดข้อผิดพลาดในการลบสินค้า");
@@ -114,8 +115,8 @@ export const CartProvider = ({ children }) => {
             }
 
             try {
-                await CartService.updateItem(cartItemId, { quantity });
-                await fetchCart();
+                const response = await CartService.updateItem(cartItemId, { quantity });
+                setCartData(response.data);
             } catch (err) {
                 console.error("Failed to update quantity:", err.response?.data || err.message);
                 alert(err.response?.data?.message || "ไม่สามารถอัปเดตจำนวนสินค้าได้");
@@ -126,14 +127,11 @@ export const CartProvider = ({ children }) => {
     };
 
     const clearCart = async () => {
-        // Clearing the cart is a global action, so we can use a generic true/false state if needed,
-        // but for consistency we can set a special value. For now, we assume it's fast and doesn't need a spinner.
         try {
-            await CartService.clearUserCart();
-            await fetchCart(); // Refetch to confirm it's empty
+            const response = await CartService.clearUserCart();
+            setCartData(response.data);
         } catch (err) {
             console.error("Failed to clear cart on server:", err.response?.data || err.message);
-            // Even if server fails, optimistic update on UI can be handled by refetching
             await fetchCart();
         }
     };
@@ -144,7 +142,7 @@ export const CartProvider = ({ children }) => {
         totalProductCount: cartData?.totalProductCount || 0,
         totalAmount: cartData?.subtotal || 0,
         isLoading,
-        updatingProductId, // Replaced isUpdating
+        updatingProductId,
         error,
         fetchCart,
         addToCart,
@@ -154,6 +152,7 @@ export const CartProvider = ({ children }) => {
     };
 
     return (
+        // CORRECTED: The Provider must be from CartContext.
         <CartContext.Provider value={contextValue}>
             {children}
         </CartContext.Provider>

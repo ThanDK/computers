@@ -12,7 +12,6 @@ import { BsCartX } from 'react-icons/bs';
 import styles from './CartPage.module.css';
 
 const CartPage = () => {
-    // Changed: Replaced isUpdating and removed non-existent updatingItemId with updatingProductId
     const { cartItems, removeFromCart, updateQuantity, totalAmount, clearCart, isLoading: isCartLoading, updatingProductId } = useCart();
     const { user, token, isLoading: isAuthLoading } = useAuth();
     const navigate = useNavigate();
@@ -240,7 +239,6 @@ const CartPage = () => {
             <Col lg={8}>
                 <h4 className='mb-3'>ตะกร้าสินค้า ({cartItems.length} รายการ)</h4>
                 {cartItems.map(item => (
-                    // Changed: The updating class is now correctly driven by updatingProductId
                     <Card key={item.cartItemId} className={`${styles.cartCard} mb-3 ${updatingProductId === item.productId ? styles.updating : ''}`}>
                         <Card.Body>
                             <Row className="align-items-center g-3">
@@ -261,7 +259,6 @@ const CartPage = () => {
                                         </Col>
                                         <Col xs={7} md={3} className="mt-2 mt-md-0">
                                             <div className={styles.quantityControl}>
-                                                {/* Changed: Disable controls if any item is being updated */}
                                                 <button className={styles.quantityButton} onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)} disabled={!!updatingProductId || item.quantity <= 1}><FaMinus size={12} /></button>
                                                 <span className={styles.quantityDisplay}>{item.quantity}</span>
                                                 <button className={styles.quantityButton} onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)} disabled={!!updatingProductId}><FaPlus size={12} /></button>
@@ -271,7 +268,6 @@ const CartPage = () => {
                                             <p className={`${styles.lineTotal} mb-0`}>฿{item.lineTotal.toLocaleString()}</p>
                                         </Col>
                                         <Col xs={12} md={2} className="text-md-end mt-2 mt-md-0">
-                                             {/* Changed: Disable button if any item is being updated */}
                                             <Button variant="link" className="text-danger p-0" onClick={() => removeFromCart(item.cartItemId)} disabled={!!updatingProductId}>
                                                <FaTrash /> <span className='d-inline d-md-none'>ลบ</span>
                                             </Button>
