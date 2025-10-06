@@ -14,14 +14,14 @@ import OrdersPage from './pages/OrdersPage/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage/OrderDetailPage';
 import ShippingProvidersPage from './pages/ShippingProvidersPage/ShippingProvidersPage';
 import UsersPage from './pages/UsersPage/UsersPage';
-import PaymentManagementPage from './pages/PaymentManagementPage/PaymentManagementPage'; // <-- NEW IMPORT
+import PaymentManagementPage from './pages/PaymentManagementPage/PaymentManagementPage';
+import ReportsPage from './pages/ReportsPage/ReportsPage'; // <-- ADDED IMPORT
 
 import AccessDeniedRedirect from './components/AccessDeniedRedirect/AccessDeniedRedirect';
 
 import './styles/common.css'; 
 import './styles/ImagePreview.css';
 
-// สร้าง component PrivateRoute ขึ้นมาเพื่อจัดการการเข้าถึงหน้าต่างๆ ของ admin
 const PrivateRoute = () => {
     const { user, isAdmin, isLoading } = useAuth(); 
 
@@ -40,7 +40,6 @@ const PrivateRoute = () => {
         return <AccessDeniedRedirect />;
     }
 
-    // ถ้าผ่านเงื่อนไขทั้งหมด ก็ให้แสดง AdminLayout ซึ่งจะมี <Outlet> สำหรับ render หน้าลูกๆ ต่อไป
     return <AdminLayout />;
 };
 
@@ -49,10 +48,10 @@ const AppRouter = () => {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       
-      {/* Route หลัก "/" จะใช้ PrivateRoute เป็นตัวคุม และ Route ลูกทั้งหมดจะถูก render ภายใน AdminLayout */}
       <Route path="/" element={<PrivateRoute />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="reports" element={<ReportsPage />} /> {/* <-- ADDED ROUTE */}
         <Route path="components" element={<ComponentsPage />} />
         <Route path="add-component" element={<AddComponentPage />} />
         <Route path="edit-component/:id" element={<EditComponentPage />} />

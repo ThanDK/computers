@@ -1,0 +1,63 @@
+.report-table-container {
+  width: 100%;
+  overflow-x: auto;
+  max-height: 65vh; /* Taller than dashboard for more data */
+  border: 1px solid #4a5a76;
+  border-radius: 8px;
+  background-color: var(--secondary-bg);
+}
+
+.report-table {
+  width: 100%;
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: #3a4a63;
+  --bs-table-color: var(--text-primary); 
+  --bs-table-hover-color: var(--text-primary);
+  border-collapse: collapse;
+}
+
+.report-table th,
+.report-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #4a5a76;
+  white-space: nowrap;
+  vertical-align: middle;
+  text-align: left;
+}
+
+.report-table thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background-color: var(--secondary-bg);
+  z-index: 1;
+}
+
+.report-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.report-table th.sortable:hover {
+  color: var(--text-primary);
+}
+
+.sort-indicator {
+  display: inline-block;
+  margin-left: 8px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.report-table th.sortable:hover .sort-indicator {
+    opacity: 1;
+}
+
+.no-data-row td {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}

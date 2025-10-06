@@ -24,7 +24,7 @@ const LoginSuccessPage = () => {
            
             const timer = setTimeout(() => {
                 navigate('/', { replace: true });
-            }, 3000);
+            }, 1500);
 
             
             return () => clearTimeout(timer);

@@ -1,0 +1,189 @@
+.custom-datepicker-container {
+    --dp-bg-color: var(--secondary-bg);
+    --dp-border-color: #4a5a76;
+    --dp-text-primary-color: var(--text-primary);
+    --dp-text-secondary-color: var(--text-secondary);
+    --dp-accent-color: var(--accent-color);
+    --dp-accent-text-color: #fff;
+    --dp-hover-bg-color: #3a4a63;
+    --dp-in-range-bg-color: rgba(136, 132, 216, 0.2);
+    --dp-today-border-color: #4ade80;
+
+    background-color: var(--dp-bg-color);
+    border: 1px solid var(--dp-border-color);
+    border-radius: 8px;
+    padding: 0.75rem;
+    width: 320px;
+}
+  
+.datepicker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--dp-border-color);
+}
+
+.datepicker-title {
+    background: none;
+    border: none;
+    color: var(--dp-text-primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+.datepicker-title:hover {
+    background-color: var(--dp-hover-bg-color);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.datepicker-header button {
+    background: none;
+    border: none;
+    color: var(--dp-text-secondary-color);
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: color 0.15s ease-in-out;
+}
+
+.datepicker-header button:hover {
+    color: var(--dp-text-primary-color);
+}
+
+.weekdays-grid, .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.weekday-cell {
+    color: var(--dp-text-secondary-color);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.day-cell {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--dp-text-primary-color);
+    height: 40px;
+    width: 100%;
+    border-radius: 0;
+    cursor: pointer;
+    position: relative; 
+    z-index: 1;
+}
+
+.day-cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: var(--dp-hover-bg-color);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+    z-index: -1; /* Place it behind the day number */
+}
+
+.day-cell:hover:not([class*="selected-"]):not(.in-range):not(:disabled)::before {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.day-cell.padding-day {
+    color: var(--dp-border-color);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.day-cell.today {
+    border-color: var(--dp-today-border-color);
+    border-radius: 50%;
+}
+
+.day-cell.in-range {
+    background-color: var(--dp-in-range-bg-color);
+    color: var(--dp-text-primary-color);
+    z-index: 2;
+}
+
+.day-cell.in-range.padding-day {
+    background-color: var(--dp-in-range-bg-color) !important;
+}
+
+.day-cell.selected-start, .day-cell.selected-end {
+    background-color: var(--dp-accent-color) !important;
+    color: var(--dp-accent-text-color) !important;
+    font-weight: 700;
+    z-index: 3;
+}
+
+.day-cell.selected-start {
+    border-top-left-radius: 50%;
+    border-bottom-left-radius: 50%;
+}
+.day-cell.selected-end {
+    border-top-right-radius: 50%;
+    border-bottom-right-radius: 50%;
+}
+.day-cell.in-range.start-of-week {
+    border-top-left-radius: 50%;
+    border-bottom-left-radius: 50%;
+}
+.day-cell.in-range.end-of-week {
+    border-top-right-radius: 50%;
+    border-bottom-right-radius: 50%;
+}
+.day-cell.selected-start.end-of-week, .day-cell.selected-end.start-of-week, .day-cell.selected-start.selected-end {
+    border-radius: 50%;
+}
+
+.datepicker-footer {
+    border-top: 1px solid var(--dp-border-color);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--dp-text-secondary-color);
+}
+
+.months-grid, .years-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.month-cell, .year-cell {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--dp-text-primary-color);
+    padding: 1.25rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    font-weight: 600;
+}
+
+.month-cell:hover, .year-cell:hover {
+    background-color: var(--dp-hover-bg-color);
+}
+
+.month-cell.current-month, .year-cell.current-year {
+    background-color: var(--dp-accent-color);
+    color: var(--dp-accent-text-color);
+}
+
+.month-cell.today-marker, .year-cell.today-marker {
+    border-color: var(--dp-today-border-color);
+}

@@ -1,0 +1,80 @@
+.order-filters-container {
+  padding: 1rem;
+  background-color: var(--secondary-bg-lighter);
+  border: 1px solid #4a5a76;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.filter-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #4a5a76;
+}
+
+.filters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filter-row-advanced .field-select {
+  width: 170px;
+  flex-shrink: 0;
+}
+.filter-row-advanced .operator-select {
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.filter-row-advanced .field-select,
+.filter-row-advanced .operator-select,
+.filter-row-advanced .value-input .form-control,
+.filter-row-advanced .value-input .form-select {
+  background-color: var(--primary-bg);
+  border: 1px solid #4a5a76;
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  height: 40px; /* Standard height */
+}
+
+.filter-row-advanced .value-input .form-control:focus,
+.filter-row-advanced .value-input .form-select:focus,
+.filter-row-advanced .field-select:focus,
+.filter-row-advanced .operator-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(136, 132, 216, 0.25);
+}
+
+.remove-filter-btn {
+  background: none;
+  border: none;
+  color: #f87171;
+  cursor: pointer;
+  padding: 0; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  line-height: 1; 
+  /* REWORKED: Add margin to visually center button next to top-aligned inputs */
+  margin-top: 5px;
+}
+
+.remove-filter-btn:hover {
+  background-color: rgba(248, 113, 113, 0.1);
+  color: #ef4444;
+}
+
+.no-filters-message {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem 0;
+}

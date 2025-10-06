@@ -8,7 +8,6 @@ services:
     container_name: computers-api-container
     ports:
       - "8080:8080"
-    # This correctly provides all .env variables to the backend at RUNTIME
     env_file:
       - .env
     depends_on:

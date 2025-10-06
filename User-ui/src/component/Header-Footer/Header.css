@@ -1,13 +1,118 @@
 .logo-color {
-    color: #f04e23 !important; 
+    color: #f04e23 !important;
 }
 
-#button-search {
-    background-color: #f04e23;
+.site-header {
+    padding: 0.75rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+.search-form {
+    position: relative;
+    width: 100%;
+    max-width: 450px;
+}
+
+.search-form .form-control {
+    border-radius: 50px;
+    padding-left: 1.25rem;
+    padding-right: 3.5rem;
+    border: 1px solid #e9ecef;
+    height: 44px;
+}
+
+.search-form .form-control:focus {
     border-color: #f04e23;
+    box-shadow: 0 0 0 2px rgba(240, 78, 35, 0.2);
 }
 
-#button-search:hover {
+.search-form .btn-search {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f04e23;
+    border: none;
+}
+
+.search-form .btn-search:hover {
     background-color: #d8421b;
-    border-color: #d8421b;
+}
+
+a.nav-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease-in-out;
+    color: #343a40;
+    background-color: #e9ecef;
+}
+
+a.nav-icon-btn:hover {
+    background-color: #dee2e6;
+    color: #000;
+}
+
+.profile-dropdown-toggle .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 50px;
+    background-color: #e9ecef;
+    border: none;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.profile-dropdown-toggle .dropdown-toggle:hover {
+    background-color: #dee2e6;
+}
+
+.profile-dropdown-toggle .dropdown-toggle::after {
+    margin-left: 0.25rem;
+    vertical-align: 0;
+}
+
+.profile-picture {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
+}
+
+.profile-icon-fallback {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #dee2e6;
+}
+
+.user-dropdown-header {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.user-dropdown-name {
+    font-weight: bold;
+}
+
+@media (min-width: 992px) {
+    .site-header {
+        padding: 1rem 0;
+    }
 }

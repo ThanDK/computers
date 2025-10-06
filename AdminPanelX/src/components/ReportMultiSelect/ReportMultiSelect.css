@@ -1,0 +1,55 @@
+.report-multi-select-wrapper {
+  /* This wrapper helps contain the component logic */
+  width: 100%;
+}
+
+.rms-selected-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.75rem; /* Add space between select and tags */
+  /* CRITICAL FIX: No min-height. Height is determined by content. */
+  align-items: center; 
+}
+
+.rms-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85em;
+  font-weight: 600;
+  padding: 0.4em 0.5em 0.4em 0.75em;
+  background-color: #4a5a76 !important;
+  border-radius: 12px;
+}
+
+.rms-tag-badge span {
+  margin-right: 0.5rem;
+}
+
+.rms-tag-remove-btn {
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  color: #fff;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  width: 18px;
+}
+
+.rms-tag-remove-btn:hover {
+  opacity: 1;
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.rms-no-options-text {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.85em;
+  padding-left: 0.25rem;
+}

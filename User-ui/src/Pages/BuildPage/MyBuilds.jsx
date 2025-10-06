@@ -251,7 +251,7 @@ const MyBuilds = () => {
             </Row>
 
             {builds.length > 0 && (
-                <Row className="mb-4 p-3 bg-light border rounded align-items-end">
+                <Row className="mb-4 p-3 bg-light border rounded align-items-center justify-content-md-between">
                     <Col md={5}>
                         <Form.Group>
                             <Form.Label>ค้นหาตามชื่อ Build</Form.Label>
@@ -269,12 +269,14 @@ const MyBuilds = () => {
                     <Col md={3}>
                         <Form.Group>
                             <Form.Label>จัดเรียงตาม</Form.Label>
-                            <Form.Select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-                                <option value="name-asc">ชื่อ (A-Z)</option>
-                                <option value="name-desc">ชื่อ (Z-A)</option>
-                                <option value="price-desc">ราคา (มากไปน้อย)</option>
-                                <option value="price-asc">ราคา (น้อยไปมาก)</option>
-                            </Form.Select>
+                            <InputGroup>
+                                <Form.Select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+                                    <option value="name-asc">ชื่อ (A-Z)</option>
+                                    <option value="name-desc">ชื่อ (Z-A)</option>
+                                    <option value="price-desc">ราคา (มากไปน้อย)</option>
+                                    <option value="price-asc">ราคา (น้อยไปมาก)</option>
+                                </Form.Select>
+                            </InputGroup>
                         </Form.Group>
                     </Col>
                 </Row>

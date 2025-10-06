@@ -1,61 +1,24 @@
 import React, { useState } from 'react';
-import { Row, Col, Spinner, Table, Button, Modal, ButtonGroup } from 'react-bootstrap';
+import { Row, Col, Spinner, Table, Button, Modal, ButtonGroup, Popover, OverlayTrigger } from 'react-bootstrap';
 import {
     BsArrowUpRight, BsArrowDownRight, BsBoxSeam, BsGraphUp,
-    BsHourglassSplit, BsFillBellFill, BsDownload, BsArchiveFill
+    BsHourglassSplit, BsFillBellFill, BsClipboardData, BsArchiveFill, BsCalendarEvent
 } from 'react-icons/bs';
 import { subDays, subMonths, subYears, format } from 'date-fns';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useLocation } from 'react-router-dom'; // MODIFIED: Imported useLocation
+import { CustomDatePicker } from '../../components/DatePicker/CustomDatePicker';
 
 import MainHeader from '../../components/MainHeader/MainHeader';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import RevenueChart from '../../components/Charts/RevenueChart';
 import TopSellingChart from '../../components/Charts/TopSellingChart';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
-import { fetchDashboardData, fetchOrdersForExport } from '../../services/DashboardService';
+import { fetchDashboardData } from '../../services/DashboardService';
 import { useAuth } from '../../context/AuthContext';
-import { handlePromise } from '../../services/NotificationService';
 
 import './Dashboard.css';
 
-// Helper function: Export data array เป็นไฟล์ CSV
-const exportToCsv = (filename, rows) => {
-    if (!rows || !rows.length) {
-        return;
-    }
-    const separator = ',';
-    const keys = Object.keys(rows[0]);
-    const csvContent = [
-        keys.join(separator),
-        ...rows.map(row => {
-            return keys.map(k => {
-                let cell = row[k] === null || row[k] === undefined ? '' : row[k];
-                cell = cell instanceof Date
-                    ? cell.toLocaleString()
-                    : cell.toString().replace(/"/g, '""');
-                if (cell.search(/("|,|\n)/g) >= 0) {
-                    cell = `"${cell}"`;
-                }
-                return cell;
-            }).join(separator);
-        })
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-};
-
-// Components ย่อยสำหรับ UI
 const LoadingOverlay = () => <div className="d-flex justify-content-center align-items-center h-100"><Spinner animation="border" /></div>;
 const NoDataMessage = ({ message }) => <div className="d-flex justify-content-center align-items-center h-100"><p className="text-secondary">{message}</p></div>;
 
@@ -102,39 +65,21 @@ const DateRangeControls = ({ selectedRange, onRangeChange }) => (
 
 function Dashboard() {
     const { token } = useAuth();
-    const [dateRange, setDateRange] = useState({ startDate: subDays(new Date(), 6), endDate: new Date() });
+    const navigate = useNavigate();
+    const location = useLocation(); // MODIFIED: Initialized useLocation
+    const [range, setRange] = useState({ from: subDays(new Date(), 6), to: new Date() });
     const [selectedRange, setSelectedRange] = useState('7d');
     const [showLowStockModal, setShowLowStockModal] = useState(false);
+    const [showPopover, setShowPopover] = useState(false);
 
-    // ดึงข้อมูล dashboard ตามช่วงวันที่, re-fetch อัตโนมัติเมื่อ `dateRange` เปลี่ยน
     const { data, isLoading, isFetching } = useQuery({
-        queryKey: ['dashboardData', dateRange],
-        queryFn: () => fetchDashboardData(token, dateRange.startDate, dateRange.endDate),
-        enabled: !!token,
-        // placeholderData: ใช้ข้อมูลเก่าแสดงค้างไว้ก่อน ระหว่างที่กำลัง fetch ข้อมูลใหม่
+        queryKey: ['dashboardData', range],
+        queryFn: () => fetchDashboardData(token, range.from, range.to),
+        enabled: !!token && !!range.from && !!range.to,
         placeholderData: (previousData) => previousData,
     });
 
-    // จัดการ export report
-    const exportMutation = useMutation({
-        mutationFn: () => fetchOrdersForExport(token, dateRange.startDate, dateRange.endDate),
-        onSuccess: (ordersToExport) => {
-            if (ordersToExport && ordersToExport.length > 0) {
-                const formattedStartDate = format(dateRange.startDate, 'yyyy-MM-dd');
-                const formattedEndDate = format(dateRange.endDate, 'yyyy-MM-dd');
-                const fileName = `orders-report-${formattedStartDate}-to-${formattedEndDate}.csv`;
-                exportToCsv(fileName, ordersToExport);
-            } else {
-                alert("No order data available to export for the selected range.");
-            }
-        },
-        onError: (error) => {
-             console.error("Export failed:", error);
-        }
-    });
-
-    // คำนวณช่วงวันที่ใหม่เมื่อ user กดปุ่ม
-    const handleRangeChange = (rangeKey) => {
+    const handleStaticRangeChange = (rangeKey) => {
         const endDate = new Date();
         let startDate;
 
@@ -149,21 +94,36 @@ function Dashboard() {
         }
 
         setSelectedRange(rangeKey);
-        setDateRange({ startDate, endDate });
+        setRange({ from: startDate, to: endDate });
     };
 
-    // เรียกใช้ mutation และ handle notification
-    const handleExport = () => {
-        const promise = exportMutation.mutateAsync();
-        handlePromise(promise, {
-            loading: 'Preparing export data...',
-            success: 'Export data ready for download!',
-            error: (err) => err.message || 'Failed to prepare export data.',
-        });
+    const handleCustomRangeChange = (newRange) => {
+        setRange(newRange);
+        if (newRange.from && newRange.to) {
+            setSelectedRange('custom');
+            setShowPopover(false);
+        }
+    }
+
+    const handleViewReports = () => {
+        // MODIFIED: Pass current location in state
+        navigate('/reports', { state: { from: location } });
     };
 
     const formatCurrency = (val) => `฿${(val || 0).toLocaleString('en-US')}`;
-    const formattedDateRange = `${format(dateRange.startDate, 'MMM d, yyyy')} - ${format(dateRange.endDate, 'MMM d, yyyy')}`;
+    
+    let formattedDateRange = "Loading...";
+    if (range?.from && range?.to) {
+        formattedDateRange = `${format(range.from, 'MMM d, yyyy')} - ${format(range.to, 'MMM d, yyyy')}`;
+    }
+
+    let datePickerButtonLabel = "Select Date Range";
+    if (range?.from) {
+        datePickerButtonLabel = format(range.from, "MMM d, yyyy");
+        if (range.to) {
+            datePickerButtonLabel += ` - ${format(range.to, "MMM d, yyyy")}`;
+        }
+    }
 
     const getPeriodLabel = () => {
         const option = rangeOptions.find(opt => opt.key === selectedRange);
@@ -173,7 +133,6 @@ function Dashboard() {
     const periodLabel = getPeriodLabel();
     const loading = isLoading || isFetching;
 
-    // แสดง skeleton UI ขณะที่ข้อมูลกำลังโหลดครั้งแรก
     const statCards = isLoading && !data ? (
         Array.from({ length: 5 }).map((_, i) => (
             <Col key={i} xs={12} md={6} lg={4} className="mb-4">
@@ -199,6 +158,14 @@ function Dashboard() {
             </Col>
         </>
     );
+    
+    const calendarPopover = (
+        <Popover id="date-range-popover" className="custom-datepicker-popover">
+            <Popover.Body>
+                <CustomDatePicker range={range} onRangeChange={handleCustomRangeChange} />
+            </Popover.Body>
+        </Popover>
+    );
 
     return (
         <>
@@ -206,17 +173,26 @@ function Dashboard() {
             <PageHeader title="DASHBOARD" subtitle={formattedDateRange} />
 
             <div className="dashboard-controls-container">
-                <DateRangeControls selectedRange={selectedRange} onRangeChange={handleRangeChange} />
+                <div className="d-flex align-items-center gap-2">
+                    <DateRangeControls selectedRange={selectedRange} onRangeChange={handleStaticRangeChange} />
+                    <OverlayTrigger
+                        trigger="click"
+                        placement="bottom-start"
+                        show={showPopover}
+                        onToggle={setShowPopover}
+                        overlay={calendarPopover}
+                        rootClose
+                    >
+                        <Button variant="outline-secondary" className="date-range-picker-button">
+                            <BsCalendarEvent className="me-2" />
+                            {datePickerButtonLabel}
+                        </Button>
+                    </OverlayTrigger>
+                </div>
+
                 <div>
-                    <Button variant="primary" className="export-button" onClick={handleExport} disabled={loading || exportMutation.isPending}>
-                        {exportMutation.isPending ? (
-                            <>
-                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/>
-                                <span className="ms-2">Exporting...</span>
-                            </>
-                        ) : (
-                            <><BsDownload /> Export Report</>
-                        )}
+                    <Button variant="primary" className="export-button" onClick={handleViewReports}>
+                        <BsClipboardData /> View Detailed Reports
                     </Button>
                 </div>
             </div>
@@ -299,7 +275,7 @@ function Dashboard() {
                         </Table>
                     </div>
                 </Modal.Body>
-            </Modal>
+            </Modal> 
         </>
     );
 }

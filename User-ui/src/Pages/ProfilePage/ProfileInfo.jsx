@@ -1,7 +1,5 @@
-
-
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Button, Spinner, Alert } from 'react-bootstrap';
+import { Card, Row, Col, Button, Spinner, Alert, Image } from 'react-bootstrap';
 import { FaUserCircle, FaEdit } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -24,9 +22,7 @@ const ProfileInfo = () => {
                 setLoading(true);
                 setError(null);
                 
-               
                 const response = await api.get('profile/me'); 
-
                 setProfileData(response.data);
 
             } catch (err) {
@@ -47,7 +43,6 @@ const ProfileInfo = () => {
 
     }, [user, authLoading]);
 
-   
     if (authLoading || loading) {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
@@ -79,7 +74,16 @@ const ProfileInfo = () => {
                     <Card.Body>
                         <Row className="align-items-center">
                             <Col xs="auto" className="pe-0">
-                                <FaUserCircle size={70} className="text-secondary" />
+                                {profileData.profilePictureUrl ? (
+                                    <Image 
+                                        src={profileData.profilePictureUrl} 
+                                        alt="Profile" 
+                                        roundedCircle 
+                                        style={{ width: '70px', height: '70px', objectFit: 'cover' }} 
+                                    />
+                                ) : (
+                                    <FaUserCircle size={70} className="text-secondary" />
+                                )}
                             </Col>
                             <Col>
                                 <h5 className="mb-1">{profileData.name}</h5>
