@@ -13,6 +13,7 @@ import OrderFilters from '../../components/ReportFilters/OrderFilters';
 import ReportLineChart from '../../components/Charts/ReportLineChart';
 import ReportBarChart from '../../components/Charts/ReportBarChart';
 import ReportGroupedBarChart from '../../components/Charts/ReportGroupedBarChart';
+import ReportControlsHeader from '../../components/ReportControlsHeader/ReportControlsHeader';
 
 import { useAuth } from '../../context/AuthContext';
 import { searchOrders, fetchTopSellingReport, fetchLowStockReport, downloadReportAsCsv } from '../../services/ReportService';
@@ -100,15 +101,13 @@ const ReportsPage = () => {
     setViewMode('table');
     if (key === 'orders') setChartType('revenueLine'); 
   };
-
-  // REWORKED: Removed handlePrint function
   
   const handleDownloadCsv = async () => {
     try {
         if (activeTab === 'orders') {
             const requestBody = {
-                startDate: dateRange.from.toISOString(),
-                endDate: dateRange.to.toISOString(),
+                startDate: dateRange.from,
+                endDate: dateRange.to,
                 logic: filterLogic,
                 filters: transformFiltersForApi(filters),
             };
@@ -251,7 +250,7 @@ const ReportsPage = () => {
           <OrderFilters filters={filters} onFiltersChange={setFilters} logic={filterLogic} onLogicChange={setFilterLogic} />
         )}
         
-        <div className="report-controls-header">
+        <ReportControlsHeader>
             {activeTab !== 'low-stock' ? (
                 <OverlayTrigger
                     trigger="click"
@@ -268,37 +267,35 @@ const ReportsPage = () => {
                 </OverlayTrigger>
             ) : <div />}
             
-            <div className="flex-grow-1" />
-
-            <ButtonGroup>
-              <Button variant={viewMode === 'table' ? 'primary' : 'outline-secondary'} onClick={() => setViewMode('table')}>
-                <BsTable className="me-1"/> Table
-              </Button>
-              <Dropdown as={ButtonGroup}>
-                <Button variant={viewMode === 'chart' ? 'primary' : 'outline-secondary'} onClick={() => setViewMode('chart')}>
-                  <BsBarChart className="me-1"/> Chart
-                </Button>
-                <Dropdown.Toggle split variant={viewMode === 'chart' ? 'primary' : 'outline-secondary'} id="dropdown-split-basic" />
-                <Dropdown.Menu>
-                  {activeTab === 'orders' && (
-                    <>
-                      <Dropdown.Item active={chartType === 'revenueLine'} onClick={() => { setViewMode('chart'); setChartType('revenueLine'); }}>Revenue Line Chart</Dropdown.Item>
-                      <Dropdown.Item active={chartType === 'statusBar'} onClick={() => { setViewMode('chart'); setChartType('statusBar'); }}>Status Bar Chart</Dropdown.Item>
-                    </>
-                  )}
-                   {activeTab === 'top-selling' && (
-                      <Dropdown.Item onClick={() => { setViewMode('chart'); }}>Quantity Sold Chart</Dropdown.Item>
-                   )}
-                   {activeTab === 'low-stock' && (
-                      <Dropdown.Item onClick={() => { setViewMode('chart'); }}>Stock Remaining Chart</Dropdown.Item>
-                   )}
-                </Dropdown.Menu>
-              </Dropdown>
-            </ButtonGroup>
-
-            <Button variant="outline-secondary" className="d-flex align-items-center gap-2" onClick={handleDownloadCsv} disabled={isLoading}><BsDownload/> Export CSV</Button>
-            {/* REWORKED: Removed Print button */}
-        </div>
+            <div className="d-flex align-items-center gap-3">
+                <ButtonGroup>
+                    <Button variant={viewMode === 'table' ? 'primary' : 'outline-secondary'} onClick={() => setViewMode('table')}>
+                        <BsTable className="me-1"/> Table
+                    </Button>
+                    <Dropdown as={ButtonGroup}>
+                        <Button variant={viewMode === 'chart' ? 'primary' : 'outline-secondary'} onClick={() => setViewMode('chart')}>
+                        <BsBarChart className="me-1"/> Chart
+                        </Button>
+                        <Dropdown.Toggle split variant={viewMode === 'chart' ? 'primary' : 'outline-secondary'} id="dropdown-split-basic" />
+                        <Dropdown.Menu>
+                        {activeTab === 'orders' && (
+                            <>
+                            <Dropdown.Item active={chartType === 'revenueLine'} onClick={() => { setViewMode('chart'); setChartType('revenueLine'); }}>Revenue Line Chart</Dropdown.Item>
+                            <Dropdown.Item active={chartType === 'statusBar'} onClick={() => { setViewMode('chart'); setChartType('statusBar'); }}>Status Bar Chart</Dropdown.Item>
+                            </>
+                        )}
+                        {activeTab === 'top-selling' && (
+                            <Dropdown.Item onClick={() => { setViewMode('chart'); }}>Quantity Sold Chart</Dropdown.Item>
+                        )}
+                        {activeTab === 'low-stock' && (
+                            <Dropdown.Item onClick={() => { setViewMode('chart'); }}>Stock Remaining Chart</Dropdown.Item>
+                        )}
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </ButtonGroup>
+                <Button variant="outline-secondary" className="d-flex align-items-center gap-2" onClick={handleDownloadCsv} disabled={isLoading}><BsDownload/> Export CSV</Button>
+            </div>
+        </ReportControlsHeader>
 
         {isLoading && <div className="loading-overlay"><Spinner animation="border" /> Loading Report...</div>}
         {isError && <div className="error-overlay">An error occurred while fetching the report.</div>}
@@ -315,7 +312,6 @@ const ReportsPage = () => {
                 {activeTab === 'orders' && chartType === 'statusBar' && (
                   <ReportGroupedBarChart data={groupedBarChartData} xAxisKey="date" dataKeys={statusBarDataKeys} isCurrency />
                 )}
-
                 {activeTab === 'top-selling' && <ReportBarChart data={currentData} yAxisKey="productName" dataKey="totalQuantitySold" name="Quantity Sold" color="#38bdf8" />}
                 {activeTab === 'low-stock' && <ReportBarChart data={currentData} yAxisKey="componentName" dataKey="quantityRemaining" name="Stock Remaining" color="#facc15" />}
               </div>

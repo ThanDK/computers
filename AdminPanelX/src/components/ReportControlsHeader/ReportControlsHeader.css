@@ -1,0 +1,42 @@
+.report-controls-header-wrapper {
+    background-color: var(--secondary-bg);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #344258;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap; 
+}
+
+.report-controls-header-wrapper .btn-group > .btn + .dropdown-toggle-split {
+  border-left: 1px solid var(--accent-color-darker);
+}
+
+.report-controls-header-wrapper .dropdown-menu {
+  background-color: var(--secondary-bg);
+  border: 1px solid #4a5a76;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  padding: 0.5rem 0;
+}
+
+.report-controls-header-wrapper .dropdown-item {
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+}
+
+.report-controls-header-wrapper .dropdown-item:hover,
+.report-controls-header-wrapper .dropdown-item:focus {
+  background-color: var(--accent-color);
+  color: var(--text-primary);
+}
+
+.report-controls-header-wrapper .dropdown-item.active,
+.report-controls-header-wrapper .dropdown-item:active {
+    background-color: var(--accent-color-darker);
+    color: #fff;
+}
