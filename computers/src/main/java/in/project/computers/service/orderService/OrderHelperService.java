@@ -27,13 +27,10 @@ public interface OrderHelperService {
     Order createAndValidateOrderFromCart(Cart cart, CreateOrderRequest request, UserEntity currentUser);
 
     /**
-     * ลดจำนวนสต็อกสินค้าคงคลังตามรายการใน Order
-     * <p>
-     * เมธอดนี้จะถูกเรียกใช้หลังจากยืนยันการชำระเงินสำเร็จแล้ว เพื่อให้แน่ใจว่าสินค้าถูกสงวนไว้สำหรับออเดอร์นี้
-     * </p>
-     * @param order ออเดอร์ที่ต้องการตัดสต็อก
+     * This method is now OBSOLETE. Its declaration is removed.
+     * Stock is now managed by the reservation system.
      */
-    void decrementStockForOrder(Order order);
+    // void decrementStockForOrder(Order order); // METHOD DECLARATION REMOVED
 
     /**
      * เพิ่มจำนวนสต็อกสินค้าคงคลังคืนตามรายการใน Order

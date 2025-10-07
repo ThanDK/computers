@@ -4,13 +4,14 @@ import in.project.computers.DTO.cart.cartRequest.AddItemToCartRequest;
 import in.project.computers.DTO.cart.cartRequest.UpdateCartItemRequest;
 import in.project.computers.DTO.cart.cartResponse.CartItemResponse;
 import in.project.computers.DTO.cart.cartResponse.CartResponse;
+import in.project.computers.DTO.inventory.StockConflictInfo;
 import in.project.computers.entity.component.Component;
 import in.project.computers.entity.computerBuild.ComputerBuild;
 import in.project.computers.entity.order.Cart;
 import in.project.computers.entity.order.CartItem;
 import in.project.computers.entity.order.LineItemType;
 import in.project.computers.entity.order.OrderItemSnapshot;
-
+import in.project.computers.exception.StockConflictException;
 import in.project.computers.repository.componentRepository.ComponentRepository;
 import in.project.computers.repository.componentRepository.InventoryRepository;
 import in.project.computers.repository.generalReposiroty.CartRepository;
@@ -25,11 +26,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -67,14 +65,27 @@ public class CartServiceImpl implements CartService {
         if (existingItemOpt.isPresent()) {
             CartItem existingItem = existingItemOpt.get();
             int newQuantity = existingItem.getQuantity() + requestedQuantity;
-            validateStock(existingItem.getProductId(), existingItem.getItemType(), newQuantity);
+
+            Map<String, Integer> requiredStock = getRequiredStockForCartItem(existingItem.getProductId(), existingItem.getItemType(), requestedQuantity);
+            List<StockConflictInfo> conflicts = inventoryRepository.attemptReservation(requiredStock);
+            if (!conflicts.isEmpty()) {
+                throw new StockConflictException(conflicts);
+            }
+
             existingItem.setQuantity(newQuantity);
-            log.info("Updated quantity for item {} in cart for user {}", request.getProductId(), userId);
+            log.info("Reserved additional {} units for item {} in cart for user {}", requestedQuantity, request.getProductId(), userId);
         } else {
-            validateStock(request.getProductId(), request.getItemType(), requestedQuantity);
+            Map<String, Integer> requiredStock = getRequiredStockForCartItem(request.getProductId(), request.getItemType(), requestedQuantity);
+            List<StockConflictInfo> conflicts = inventoryRepository.attemptReservation(requiredStock);
+            if (!conflicts.isEmpty()) {
+                throw new StockConflictException(conflicts);
+            }
+
             CartItem newItem = createNewCartItem(request);
+            newItem.setStockReserved(true);
+            newItem.setReservationExpiresAt(Instant.now().plus(12, ChronoUnit.HOURS));
             cart.getItems().add(newItem);
-            log.info("Added new item {} to cart for user {}", request.getProductId(), userId);
+            log.info("Added new item {} (type: {}) and reserved its stock for user {}", request.getProductId(), request.getItemType(), userId);
         }
 
         cart.setUpdatedAt(Instant.now());
@@ -92,11 +103,26 @@ public class CartServiceImpl implements CartService {
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found in cart."));
 
-        validateStock(itemToUpdate.getProductId(), itemToUpdate.getItemType(), request.getQuantity());
-        itemToUpdate.setQuantity(request.getQuantity());
+        int currentQuantity = itemToUpdate.getQuantity();
+        int newQuantity = request.getQuantity();
+        int quantityDifference = newQuantity - currentQuantity;
+
+        if (quantityDifference > 0) {
+            Map<String, Integer> requiredStock = getRequiredStockForCartItem(itemToUpdate.getProductId(), itemToUpdate.getItemType(), quantityDifference);
+            List<StockConflictInfo> conflicts = inventoryRepository.attemptReservation(requiredStock);
+            if (!conflicts.isEmpty()) {
+                throw new StockConflictException(conflicts);
+            }
+            log.info("Reserved an additional {} units for cart item {}", quantityDifference, cartItemId);
+        } else if (quantityDifference < 0) {
+            Map<String, Integer> stockToRelease = getRequiredStockForCartItem(itemToUpdate.getProductId(), itemToUpdate.getItemType(), -quantityDifference);
+            inventoryRepository.bulkAtomicUpdateQuantities(stockToRelease);
+            log.info("Released {} units for cart item {}", -quantityDifference, cartItemId);
+        }
+
+        itemToUpdate.setQuantity(newQuantity);
         cart.setUpdatedAt(Instant.now());
         cartRepository.save(cart);
-        log.info("Updated quantity for cart item {} for user {}", cartItemId, userId);
         return entityToResponse(cart);
     }
 
@@ -105,13 +131,25 @@ public class CartServiceImpl implements CartService {
     public CartResponse removeItemFromCart(String cartItemId) {
         String userId = userService.findByUserId();
         Cart cart = getCartEntityByUserId(userId);
-        boolean removed = cart.getItems().removeIf(item -> item.getCartItemId().equals(cartItemId));
-        if (!removed) {
+        Optional<CartItem> itemToRemoveOpt = cart.getItems().stream()
+                .filter(item -> item.getCartItemId().equals(cartItemId))
+                .findFirst();
+
+        if (itemToRemoveOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found in cart.");
         }
+
+        CartItem itemToRemove = itemToRemoveOpt.get();
+
+        if (itemToRemove.isStockReserved()) {
+            Map<String, Integer> stockToRelease = getRequiredStockForCartItem(itemToRemove.getProductId(), itemToRemove.getItemType(), itemToRemove.getQuantity());
+            inventoryRepository.bulkAtomicUpdateQuantities(stockToRelease);
+            log.info("Released stock for removed cart item {}", cartItemId);
+        }
+
+        cart.getItems().remove(itemToRemove);
         cart.setUpdatedAt(Instant.now());
         cartRepository.save(cart);
-        log.info("Removed cart item {} for user {}", cartItemId, userId);
         return entityToResponse(cart);
     }
 
@@ -119,10 +157,26 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void clearCart(String userId) {
         Cart cart = getCartEntityByUserId(userId);
+        if (cart.getItems().isEmpty()) {
+            return;
+        }
+
+        Map<String, Integer> stockToRelease = new HashMap<>();
+        for (CartItem item : cart.getItems()) {
+            if (item.isStockReserved()) {
+                Map<String, Integer> itemStock = getRequiredStockForCartItem(item.getProductId(), item.getItemType(), item.getQuantity());
+                itemStock.forEach((key, value) -> stockToRelease.merge(key, value, Integer::sum));
+            }
+        }
+
+        if (!stockToRelease.isEmpty()) {
+            inventoryRepository.bulkAtomicUpdateQuantities(stockToRelease);
+            log.info("Released all reserved stock while clearing cart for user {}", userId);
+        }
+
         cart.getItems().clear();
         cart.setUpdatedAt(Instant.now());
         cartRepository.save(cart);
-        log.info("Cleared all items from the cart for user {}", userId);
     }
 
     @Override
@@ -199,29 +253,19 @@ public class CartServiceImpl implements CartService {
         }
     }
 
-    private void validateStock(String productId, LineItemType type, int requestedQuantity) {
-        log.debug("Validating stock for productId: {}, type: {}, quantity: {}", productId, type, requestedQuantity);
+    private Map<String, Integer> getRequiredStockForCartItem(String productId, LineItemType type, int quantity) {
+        Map<String, Integer> requiredStock = new HashMap<>();
         if (type == LineItemType.COMPONENT) {
-            int availableStock = inventoryRepository.findByComponentId(productId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory for component not found."))
-                    .getQuantity();
-            if (availableStock < requestedQuantity) {
-                String componentName = componentRepository.findById(productId).map(Component::getName).orElse(productId);
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Insufficient stock for " + componentName);
-            }
+            requiredStock.put(productId, quantity);
         } else if (type == LineItemType.BUILD) {
             ComputerBuild build = buildRepository.findById(productId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Build not found."));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Build not found during stock calculation."));
             forEachComponentInBuild(build, (component, qtyInBuild) -> {
-                int totalRequired = qtyInBuild * requestedQuantity;
-                int availableStock = inventoryRepository.findByComponentId(component.getId())
-                        .orElseThrow(() -> new IllegalStateException("Missing inventory for " + component.getId()))
-                        .getQuantity();
-                if (availableStock < totalRequired) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Insufficient stock for '" + component.getName() + "' required for the build.");
-                }
+                int totalRequired = qtyInBuild * quantity;
+                requiredStock.merge(component.getId(), totalRequired, Integer::sum);
             });
         }
+        return requiredStock;
     }
 
     private void forEachComponentInBuild(ComputerBuild build, BiConsumer<Component, Integer> action) {
@@ -266,6 +310,8 @@ public class CartServiceImpl implements CartService {
                     .imageUrl(item.getImageUrl())
                     .lineTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                     .containedItemsSnapshot(item.getContainedItemsSnapshot())
+                    .stockReserved(item.isStockReserved())
+                    .reservationExpiresAt(item.getReservationExpiresAt())
                     .build();
         }).collect(Collectors.toList());
 

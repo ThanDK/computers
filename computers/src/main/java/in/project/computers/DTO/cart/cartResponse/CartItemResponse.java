@@ -4,7 +4,9 @@ import in.project.computers.entity.order.LineItemType;
 import in.project.computers.entity.order.OrderItemSnapshot;
 import lombok.Builder;
 import lombok.Data;
+
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -16,7 +18,11 @@ public class CartItemResponse {
     private int quantity;
     private LineItemType itemType;
     private BigDecimal unitPrice;
-    private String imageUrl;
     private BigDecimal lineTotal;
+    private String imageUrl;
     private List<OrderItemSnapshot> containedItemsSnapshot;
+
+    // --- NEW FIELDS FOR API RESPONSE ---
+    private boolean stockReserved;
+    private Instant reservationExpiresAt;
 }

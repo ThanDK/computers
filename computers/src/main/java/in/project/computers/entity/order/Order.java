@@ -46,4 +46,8 @@ public class Order {
     // --- ส่วนเวลา ---
     private Instant createdAt;
     private Instant updatedAt;
+
+    // --- NEW FIELD ---
+    @Field("hold_expires_at")
+    private Instant holdExpiresAt;
 }

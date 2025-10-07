@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -36,4 +37,12 @@ public class CartItem {
 
     @Field("contained_items_snapshot")
     private List<OrderItemSnapshot> containedItemsSnapshot;
+
+    // --- NEW FIELDS ---
+    @Field("stock_reserved")
+    @Builder.Default
+    private boolean stockReserved = false;
+
+    @Field("reservation_expires_at")
+    private Instant reservationExpiresAt;
 }

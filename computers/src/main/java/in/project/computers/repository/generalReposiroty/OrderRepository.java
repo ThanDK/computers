@@ -4,6 +4,7 @@ import com.mongodb.lang.NonNull;
 import in.project.computers.entity.order.Order;
 import in.project.computers.entity.order.OrderStatus;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
 
 import java.time.Instant;
@@ -22,5 +23,6 @@ public interface OrderRepository extends MongoRepository<Order, String> {
 
 
     long countByOrderStatusIn(List<OrderStatus> statuses);
-
+    @Query("{ 'orderStatus': 'PENDING_PAYMENT', 'hold_expires_at': { $lt: ?0 } }")
+    List<Order> findAbandonedPendingOrders(Instant now);
 }
