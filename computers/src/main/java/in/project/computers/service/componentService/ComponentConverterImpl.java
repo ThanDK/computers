@@ -18,13 +18,11 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-// คลาสสำหรับแปลงข้อมูลระหว่าง Request DTO, Entity, และ Response DTO ของ Component
 @org.springframework.stereotype.Component
 @RequiredArgsConstructor
 @Slf4j
 public class ComponentConverterImpl implements ComponentConverter {
 
-    // === [DEPENDENCIES] ประกาศ Dependencies และ Map สำหรับเก็บฟังก์ชันแปลงข้อมูล ===
     private final SocketRepository socketRepository;
     private final RamTypeRepository ramTypeRepository;
     private final FormFactorRepository formFactorRepository;
@@ -38,7 +36,6 @@ public class ComponentConverterImpl implements ComponentConverter {
     @PostConstruct
     private void initializeAllConverters() {
         log.info("Initializing component converters...");
-        // === [SETUP-1] กำหนดค่าเริ่มต้นให้กับ Map สำหรับการแปลง Request -> Entity ===
         entityConverters.put(CpuRequest.class, req -> buildCpuEntity((CpuRequest) req));
         entityConverters.put(MotherboardRequest.class, req -> buildMotherboardEntity((MotherboardRequest) req));
         entityConverters.put(RamKitRequest.class, req -> buildRamKitEntity((RamKitRequest) req));
@@ -48,7 +45,6 @@ public class ComponentConverterImpl implements ComponentConverter {
         entityConverters.put(CoolerRequest.class, req -> buildCoolerEntity((CoolerRequest) req));
         entityConverters.put(StorageDriveRequest.class, req -> buildStorageDriveEntity((StorageDriveRequest) req));
 
-        // === [SETUP-2] กำหนดค่าเริ่มต้นให้กับ Map สำหรับการแปลง Entity -> Response ===
         responseConverters.put(Cpu.class, entity -> buildCpuResponse((Cpu) entity));
         responseConverters.put(Motherboard.class, entity -> buildMotherboardResponse((Motherboard) entity));
         responseConverters.put(RamKit.class, entity -> buildRamKitResponse((RamKit) entity));
@@ -62,13 +58,11 @@ public class ComponentConverterImpl implements ComponentConverter {
 
     @Override
     public Component convertRequestToEntity(ComponentRequest request) {
-        // === [CREATE-3.2.1] ค้นหาฟังก์ชันแปลงที่เหมาะสมจาก Map ตามประเภทของ Request ===
         Function<ComponentRequest, Component> converter = entityConverters.get(request.getClass());
         if (converter == null) {
             log.error("No entity converter found for request type: {}", request.getType());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown request type: " + request.getType());
         }
-        // === [CREATE-3.2.2] เรียกใช้ฟังก์ชันแปลงเพื่อสร้าง Entity ===
         return converter.apply(request);
     }
 
@@ -77,13 +71,11 @@ public class ComponentConverterImpl implements ComponentConverter {
         if (entity == null) {
             return null;
         }
-        // === [RESPONSE-CONV-1] ค้นหาฟังก์ชันแปลงที่เหมาะสมจาก Map ตามประเภทของ Entity ===
         Function<Component, ComponentResponse> converter = responseConverters.get(entity.getClass());
         if (converter == null) {
             log.error("No response converter found for entity type: {}", entity.getType());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cannot create response for type: " + entity.getType());
         }
-        // === [RESPONSE-CONV-2] เรียกใช้ฟังก์ชันแปลงเพื่อสร้าง DTO Response ===
         return converter.apply(entity);
     }
 
@@ -99,10 +91,8 @@ public class ComponentConverterImpl implements ComponentConverter {
     @Override
     public void updateEntityFromRequest(Component entityToUpdate, ComponentRequest request) {
         log.debug("Updating entity of type {} from request of type {}", entityToUpdate.getClass().getSimpleName(), request.getClass().getSimpleName());
-        // === [UPDATE-4.1] อัปเดตคุณสมบัติพื้นฐาน (Common Properties) ที่มีในทุก Component ===
         updateCommonProperties(entityToUpdate, request);
 
-        // === [UPDATE-4.2] ใช้ switch-case เพื่อเรียกเมธอดอัปเดตเฉพาะสำหรับแต่ละประเภทของ Component ===
         switch (entityToUpdate) {
             case Cpu cpu -> updateCpuEntity(cpu, (CpuRequest) request);
             case Motherboard motherboard -> updateMotherboardEntity(motherboard, (MotherboardRequest) request);
@@ -119,7 +109,6 @@ public class ComponentConverterImpl implements ComponentConverter {
         }
     }
 
-    // --- Private Helper Methods: Common Property Setters ---
     private <B extends Component.ComponentBuilder<?, ?>> B setCommonEntityProperties(B builder, ComponentRequest request) {
         builder.mpn(request.getMpn())
                 .type(request.getType())
@@ -140,7 +129,9 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .imageUrl(entity.getImageUrl())
                 .quantity(inventoryOpt.map(Inventory::getQuantity).orElse(0))
                 .price(inventoryOpt.map(Inventory::getPrice).orElse(BigDecimal.ZERO))
-                .brandName(getOptionalName(entity.getBrand(), Brand::getName));
+                .brandName(getOptionalName(entity.getBrand(), Brand::getName))
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt());
         return builder;
     }
 
@@ -154,7 +145,6 @@ public class ComponentConverterImpl implements ComponentConverter {
         }
     }
 
-    // --- Private Helper Methods: Build Entity ---
     private Case buildCaseEntity(CaseRequest request) {
         return setCommonEntityProperties(Case.builder()
                 .supportedFormFactors(findFormFactorsByNames(request.getMotherboard_form_factor_support(), FormFactorType.MOTHERBOARD))
@@ -228,7 +218,6 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .build();
     }
 
-    // --- Private Helper Methods: Build Response DTO (per type) ---
     private CaseResponse buildCaseResponse(Case entity) {
         return setCommonResponseProperties(CaseResponse.builder()
                 .motherboard_form_factor_support(getOptionalNames(entity.getSupportedFormFactors(), FormFactor::getName))
@@ -302,7 +291,6 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .build();
     }
 
-    // --- Private Helper Methods: Update Entity (per type) ---
     private void updateCpuEntity(Cpu entity, CpuRequest request) {
         entity.setWattage(request.getWattage())
                 .setSocket(findSocketByName(request.getSocket()));
@@ -360,7 +348,6 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .setSupportedRadiatorSizesMm(request.getSupportedRadiatorSizesMm());
     }
 
-    // --- Private Helper Methods: Lookup Finders ---
     private Brand findBrandById(String id) {
         return brandRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Brand ID: " + id));
@@ -400,7 +387,6 @@ public class ComponentConverterImpl implements ComponentConverter {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid storage interface: " + name));
     }
 
-    // --- Private Helper Methods: Utility ---
     private <T> String getOptionalName(T entity, Function<T, String> nameExtractor) {
         return Optional.ofNullable(entity).map(nameExtractor).orElse(null);
     }

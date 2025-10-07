@@ -1,10 +1,10 @@
 import React from 'react';
 import { FaShoppingCart, FaPlus } from 'react-icons/fa';
-import { Link, useParams } from 'react-router-dom'; // REMOVED: useLocation, ADDED: useParams
+import { Link, useParams } from 'react-router-dom';
 import './ProductCard.css';
 
 const ProductCard = ({ product, onAddToCart, onSelect }) => {
-    const { buildId } = useParams(); // ADDED: To get buildId for navigation link
+    const { buildId } = useParams();
     const placeholderImage = 'https://placehold.co/400x400/eeeeee/cccccc?text=No+Image';
     const imageUrl = product.imageUrl || placeholderImage;
     const displayPrice = product.price?.toLocaleString('th-TH') || 'ติดต่อสอบถาม';
@@ -14,12 +14,9 @@ const ProductCard = ({ product, onAddToCart, onSelect }) => {
     if (!productId) {
         console.error("Product has no valid ID (_id or id):", product);
     }
-    
-    // CHANGED: Mode is now determined by the presence of the `onSelect` prop.
-    // This is the new single source of truth for the component's mode.
+
     const isSelectMode = !!onSelect;
     
-    // CHANGED: Construct the link with URLSearchParams for robustness
     let productLink = `/products/${productId}`;
     if (isSelectMode) {
         const params = new URLSearchParams();
@@ -48,14 +45,18 @@ const ProductCard = ({ product, onAddToCart, onSelect }) => {
         
     const buttonClassName = `add-to-cart-btn ${isSelectMode ? 'select-mode' : ''}`.trim();
 
-    if (!productId) {
+    // Render an inactive, unclickable card if isActive is false
+    if (!product.isActive) {
         return (
-            <div className="product-card h-100 disabled-card">
-                 <img src={imageUrl} alt={product.name || 'Untitled Product'} />
+            <div className="product-card h-100 inactive-card">
+                <div className="out-of-stock-overlay">
+                    <span>สินค้าหมด</span>
+                </div>
+                <img src={imageUrl} alt={product.name || 'Untitled Product'} />
                 <div className="card-body">
                     <h3 className="product-title">{product.name || 'Untitled Product'}</h3>
                     <div className="price-container">
-                        <span className="current-price">Invalid Product Data</span>
+                        <span className="current-price">฿{displayPrice}</span>
                     </div>
                 </div>
             </div>
@@ -77,7 +78,7 @@ const ProductCard = ({ product, onAddToCart, onSelect }) => {
                     className={buttonClassName} 
                     aria-label={buttonAriaLabel}
                     onClick={handleButtonClick}
-                    disabled={product.stock === 0} 
+                    disabled={product.quantity === 0} 
                 >
                     {isSelectMode ? <FaPlus /> : <FaShoppingCart />}
                 </button>

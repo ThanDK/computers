@@ -28,6 +28,9 @@ import SearchResultsPage from './Pages/ProductPage/SearchResultsPage';
 import MyBuilds from './Pages/BuildPage/MyBuilds';
 import PcBuilder from './Pages/BuildPage/PcBuilder';
 import NotFoundPage from './Pages/HomePage/NotFoundPage';
+import HowToOrder from './component/Header-Footer/HowToOrder';
+import HowToPayment from './component/Header-Footer/HowToPayment';
+import ContactUs from './component/Header-Footer/ContactUs';
 
 
 // --- Profile Page & Nested Components ---
@@ -91,6 +94,9 @@ function App() {
                   <Route path="/payment-successful" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
                   <Route path="/payment-cancelled" element={<ProtectedRoute><PaymentCancelPage /></ProtectedRoute>} />
                   <Route path="/payment-failed" element={<PaymentFailedPage />} />
+                  <Route path="/contact-us" element={<ContactUs />} />
+                  <Route path="/how-to-order" element={<HowToOrder />} />
+                  <Route path="/how-to-payment" element={<HowToPayment />} />
                   <Route
                     path="/profile"
                     element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}

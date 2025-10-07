@@ -39,7 +39,7 @@ const Header = () => {
                             <NavDropdown title="หมวดหมู่สินค้า" id="desktop-nav-dropdown">
                                 {categories.map((category) => (
                                     <NavDropdown.Item key={category.slug} as={Link} to={`/products/category/${category.slug}`}>
-                                        {category.name}
+                                        {category.name_th}
                                     </NavDropdown.Item>
                                 ))}
                             </NavDropdown>
@@ -105,7 +105,7 @@ const Header = () => {
                             <Nav.Link as={Link} to="/builds">จัดสเปคคอม</Nav.Link>
                             <NavDropdown title="หมวดหมู่สินค้า" id="mobile-nav-dropdown">
                                 {categories.map((category) => (
-                                    <NavDropdown.Item key={category.slug} as={Link} to={`/products/category/${category.slug}`}>{category.name}</NavDropdown.Item>
+                                    <NavDropdown.Item key={category.slug} as={Link} to={`/products/category/${category.slug}`}>{category.name_th}</NavDropdown.Item>
                                 ))}
                             </NavDropdown>
 

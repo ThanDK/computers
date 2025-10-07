@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -43,4 +44,7 @@ public abstract class ComponentResponse {
     private Integer quantity;
     private BigDecimal price;
     private String brandName;
+
+    private Instant createdAt;
+    private Instant updatedAt;
 }
