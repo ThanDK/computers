@@ -6,7 +6,8 @@
   margin-bottom: 1.5rem;
 }
 
-.filter-controls {
+/* MODIFIED: This selector is now scoped to its parent container */
+.order-filters-container .filter-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -39,7 +40,7 @@
   color: var(--text-primary);
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
-  height: 40px; /* Standard height */
+  height: 40px; 
 }
 
 .filter-row-advanced .value-input .form-control:focus,
@@ -63,7 +64,6 @@
   border-radius: 50%;
   transition: background-color 0.2s ease, color 0.2s ease;
   line-height: 1; 
-  /* REWORKED: Add margin to visually center button next to top-aligned inputs */
   margin-top: 5px;
 }
 
