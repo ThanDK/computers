@@ -82,7 +82,7 @@ function ComponentsPage() {
         // อัปเดต UI ทันที โดยไม่ต้องรอ server ตอบกลับ
         queryClient.setQueryData(['components'], (old) =>
           old.map((component) =>
-            component.id === variables.componentId ? { ...component, quantity: newStock } : component
+            component.id === variables.componentId ? { ...component, quantity: newStock, isActive: newStock > 0 } : component
           )
         );
         return { previousComponents };
@@ -215,7 +215,7 @@ function ComponentsPage() {
         // ปกติจะแสดงค่าสต็อก, double-click เพื่อแก้ไข
         return (
           <div className="status-dot-container" title="Double-click to edit stock" onDoubleClick={(e) => { e.stopPropagation(); setEditingRowId(row.id); }}>
-            <div className={`status-dot ${component.quantity > 0 ? 'status-dot-active' : 'status-dot-inactive'}`}></div>
+            <div className={`status-dot ${component.isActive ? 'status-dot-active' : 'status-dot-inactive'}`}></div>
             <span>{component.quantity}</span>
           </div>
         );

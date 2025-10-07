@@ -1,5 +1,6 @@
 package in.project.computers.entity.component;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import in.project.computers.entity.lookup.Brand;
@@ -40,7 +41,7 @@ public abstract class Component {
     private String id;
 
     private String mpn;
-
+    @JsonProperty("isActive")
     private boolean isActive;
 
     private String type;

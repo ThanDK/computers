@@ -73,11 +73,11 @@
     border-radius: 50%;
 }
 
-.status-dot-active {
+.status-dot.status-dot-active {
     background-color: #22c55e;
 }
 
-.status-dot-inactive {
+.status-dot.status-dot-inactive {
     background-color: #ef4444;
 }
 
