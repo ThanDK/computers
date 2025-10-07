@@ -17,6 +17,7 @@ import ImageModal from '../../components/ImageModal/ImageModal';
 import TableControls from '../../components/TableControls/TableControls';
 import TruncatedText from '../../components/TruncatedText/TruncatedText';
 import InlineStockEditor from '../../components/InlineStockEditor/InlineStockEditor';
+import DatePopover from '../../components/DatePopover/DatePopover';
 
 import { Button, Form, InputGroup } from 'react-bootstrap';
 import { BsSearch, BsPlusCircleFill, BsArrowCounterclockwise } from 'react-icons/bs';
@@ -195,8 +196,17 @@ function ComponentsPage() {
       },
     },
     { accessorKey: 'name', header: 'Name', cell: (info) => <TruncatedText text={info.getValue()} /> },
-    { accessorKey: 'mpn', header: 'MPN', cell: (info) => <TruncatedText text={info.getValue()} /> },
     { accessorKey: 'type', header: 'Type', meta: { width: '140px' } },
+    { accessorKey: 'mpn', header: 'MPN', cell: (info) => <TruncatedText text={info.getValue()} /> },
+    { // REPOSITIONED COLUMN
+      id: 'timestamps', header: 'Timestamps', meta: { cellClassName: 'text-center-cell', width: '120px' },
+      cell: ({ row }) => (
+        <DatePopover 
+          createdAt={row.original.createdAt} 
+          updatedAt={row.original.updatedAt} 
+        />
+      )
+    },
     { accessorKey: 'price', header: 'Price', meta: { width: '130px' }, cell: (info) => `฿ ${Number(info.getValue()).toFixed(2)}` },
     {
       accessorKey: 'quantity', header: 'Stock', meta: { cellClassName: 'text-center-cell', width: '145px' },

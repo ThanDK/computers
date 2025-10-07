@@ -1,0 +1,28 @@
+.timestamp-popover {
+    /* Override Bootstrap's default variables for this component's scope */
+    --bs-popover-bg: var(--secondary-bg);
+    --bs-popover-header-bg: var(--secondary-bg-lighter);
+    --bs-popover-body-color: var(--text-secondary);
+    --bs-popover-header-color: var(--text-primary);
+    --bs-popover-border-color: #4a5a76;
+}
+
+.timestamp-popover .popover-header {
+    font-weight: 600;
+}
+
+.timestamp-popover .popover-body {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+}
+
+.timestamp-popover .timestamp-entry {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.timestamp-popover .timestamp-label {
+    font-weight: 500;
+    color: var(--text-primary);
+}
